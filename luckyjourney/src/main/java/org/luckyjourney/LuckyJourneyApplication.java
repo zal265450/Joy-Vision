@@ -8,6 +8,7 @@ public class LuckyJourneyApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(LuckyJourneyApplication.class, args);
+
     }
 
 }
