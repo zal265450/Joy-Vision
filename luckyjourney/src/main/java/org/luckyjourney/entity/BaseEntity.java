@@ -1,6 +1,7 @@
 package org.luckyjourney.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
+import lombok.Data;
 
 import java.io.Serializable;
 import java.util.Date;
@@ -11,6 +12,7 @@ import java.util.Date;
  * @CreateTime: 2023-10-24 11:54
  */
 
+@Data
 public class BaseEntity implements Serializable {
 
     @TableId(value = "id", type = IdType.AUTO)
