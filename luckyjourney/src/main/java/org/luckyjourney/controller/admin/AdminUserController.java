@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
  */
 @RestController
 @RequestMapping("/admin/user")
-public class UserController {
+public class AdminUserController {
 
     @Resource
     private UserService userService;
@@ -40,8 +40,6 @@ public class UserController {
 
     @Resource
     private RoleService roleService;
-
-
 
     @GetMapping("/list")
     @Authority("admin:user:list")
