@@ -80,13 +80,15 @@
         form.on('submit(login)', function (data) {
             // 进行登录操作
             data = data.field;
-            $.ajax({
+            var json = {
+                "email":data.account,
+                "password":data.password
+            }
+
+                $.ajax({
                 url: ipURL+'/login',
                 method: 'post',
-                data:{
-                    username:data.account,
-                    password:data.password,
-                },
+                data:JSON.stringify(json),
                 success: function(res) {
                     if (res.state) {
                         localStorage.setItem('token',res.data.token);

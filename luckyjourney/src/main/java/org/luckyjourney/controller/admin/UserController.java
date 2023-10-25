@@ -54,7 +54,7 @@ public class UserController {
     public R list(BasePage basePage,
                   @RequestParam(required = false) String name){
         LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<User>();
-        wrapper.like(!ObjectUtils.isEmpty(name),User::getUserName,name);
+        wrapper.like(!ObjectUtils.isEmpty(name),User::getEmail,name);
         IPage<User> page = userService.page(basePage.page(), wrapper);
         // 查出用户角色中间表
         Map<Long, List<UserRole>> userRoleMap = userRoleService.list(null).stream().collect(Collectors.groupingBy(UserRole::getUserId));

@@ -2,6 +2,7 @@ package org.luckyjourney.service.user;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import org.luckyjourney.entity.user.User;
+import org.luckyjourney.entity.vo.RegisterVO;
 
 /**
  * <p>
@@ -13,4 +14,5 @@ import org.luckyjourney.entity.user.User;
  */
 public interface UserService extends IService<User> {
 
+    boolean register(RegisterVO registerVO) throws Exception;
 }
