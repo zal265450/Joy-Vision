@@ -66,24 +66,17 @@ public class JwtUtils {
         try {
             String jwtToken = request.getHeader("token");
             if(ObjectUtils.isEmpty(jwtToken)) return false;
-            Jwts.parser().setSigningKey(APP_SECRET).parseClaimsJws(jwtToken);
         } catch (Exception e) {
-            e.printStackTrace();
             return false;
         }
         return true;
     }
 
-    /**
-     * 根据token字符串获取会员id
-     * @param request
-     * @return
-     */
-    public static String getMemberIdByJwtToken(HttpServletRequest request) {
+
+    public static Long getUserId(HttpServletRequest request) {
         String jwtToken = request.getHeader("token");
-        if(ObjectUtils.isEmpty(jwtToken)) return "";
         Jws<Claims> claimsJws = Jwts.parser().setSigningKey(APP_SECRET).parseClaimsJws(jwtToken);
         Claims claims = claimsJws.getBody();
-        return (String)claims.get("id");
+        return Long.valueOf(claims.get("id").toString());
     }
 }

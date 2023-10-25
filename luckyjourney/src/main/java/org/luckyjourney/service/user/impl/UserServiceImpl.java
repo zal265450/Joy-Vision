@@ -58,9 +58,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     @Override
-    public UserVO getInfo(Long userId) {
+    public UserVO getInfo(Long userId) throws Exception {
 
         final User user = getById(userId);
+        if (ObjectUtils.isEmpty(user)){
+            throw new Exception("userId 为空");
+        }
         final UserVO userVO = new UserVO();
         BeanUtils.copyProperties(user,userVO);
         userVO.setPassword("");

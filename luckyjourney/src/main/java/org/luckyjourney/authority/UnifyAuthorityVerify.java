@@ -11,7 +11,7 @@ public class UnifyAuthorityVerify extends DefaultAuthorityVerify{
     @Override
     public Boolean authorityVerify(HttpServletRequest request,String... permissions) {
 
-        String uId = JwtUtils.getMemberIdByJwtToken(request);
+        Long uId = JwtUtils.getUserId(request);
         for (String permission : permissions) {
             if (!AuthorityUtils.verify(uId,permission)) {
                 return false;
