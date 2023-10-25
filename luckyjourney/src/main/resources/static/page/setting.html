@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>layui</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" href="../lib/layui-v2.7.3/css/layui.css" media="all">
+    <link rel="stylesheet" href="../css/public.css" media="all">
+</head>
+<body>
+<style>
+    .layui-form-item .layui-input-company {width: auto;padding-right: 10px;line-height: 38px;}
+</style>
+<div class="layuimini-container">
+    <div class="layuimini-main">
+<div class="layuimini-container layuimini-page-anim" >
+    <div class="layuimini-main">
+
+        <div class="layui-form layuimini-form" lay-filter="test">
+            <input type="hidden" name="id"/>
+            <div class="layui-form-item">
+                <label class="layui-form-label">单个文件上传</label>
+                <div class="layui-input-inline" style="width: 80px;">
+                    <input type="text" id="maxFileSize" name="maxFileSize" lay-verify="number"   value="2048" class="layui-input">
+                </div>
+                <div class="layui-input-inline layui-input-company">M</div>
+                <div class="layui-form-mid layui-word-aux">提示：1 M = 1024 KB</div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">多个文件上传</label>
+                <div class="layui-input-inline" style="width: 80px;">
+                    <input type="text" id="maxRequestSize" name="maxRequestSize" lay-verify="number" v-model="System.maxRequestSize"  value="2048" class="layui-input">
+                </div>
+                <div class="layui-input-inline layui-input-company">M</div>
+                <div class="layui-form-mid layui-word-aux">提示：1 M = 1024 KB</div>
+            </div>
+
+            <div class="layui-form-item">
+                <label class="layui-form-label">上传文件类型</label>
+                <div class="layui-input-block">
+                    <input type="text" name="cache" value="png|gif|jpg|jpeg|zip|rar"  v-model="System.fileType" class="layui-input">
+                </div>
+            </div>
+
+            <div class="layui-form-item">
+                <div class="layui-input-block">
+                    <button class="layui-btn" lay-submit lay-filter="save">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+    </div>
+</div>
+<script src="../lib/layui-v2.7.3/layui.js" charset="utf-8"></script>
+<script src="../js/lay-config.js?v=1.0.4" charset="utf-8"></script>
+<script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
+<script src="../api/urlConfig.js"></script>
+<script>
+
+    layui.use('form', function(){
+        var form = layui.form;
+
+
+        //监听提交
+        form.on('submit(save)', function(data){
+            $.ajax({
+                url: ipURL + '/admin/system/update',
+                type: 'get',
+                beforeSend: function (request) {
+                    request.setRequestHeader("token", localStorage.token);
+                },
+                success: function (data) {
+                    if (data.state){
+                        layer.msg(data.message);
+                    }else{
+                        layer.msg(data.message);
+                    }
+                },
+            });
+            return false;
+        });
+
+    });
+
+
+</script>
+</body>
