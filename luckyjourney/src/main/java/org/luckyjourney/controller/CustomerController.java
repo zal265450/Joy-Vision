@@ -26,7 +26,7 @@ public class CustomerController {
 
     // 获取个人信息
     @GetMapping("/getInfo/{userId}")
-    public R getInfo(@PathVariable Long userId){
+    public R getInfo(@PathVariable Long userId) throws Exception {
         return R.ok().data(userService.getInfo(userId));
     }
 
