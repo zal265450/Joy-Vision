@@ -60,7 +60,7 @@ public class PermissionServiceImpl extends ServiceImpl<PermissionMapper, Permiss
         Set<String> set = new HashSet<>();
 
         // 根据当期用户获取菜单
-        Integer uId = Integer.parseInt(JwtUtils.getMemberIdByJwtToken(request));
+        final Long uId = JwtUtils.getUserId(request);
 
         // 根据用户id查询对应的角色id
         List<Long> rIds = userRoleService.list(new LambdaQueryWrapper<UserRole>().eq(UserRole::getUserId,uId).select(UserRole::getRoleId)).stream().map(UserRole::getRoleId).collect(Collectors.toList());
@@ -95,7 +95,7 @@ public class PermissionServiceImpl extends ServiceImpl<PermissionMapper, Permiss
         }
 
         // 保存用户权限
-        AuthorityUtils.setAuthority(String.valueOf(uId),set);
+        AuthorityUtils.setAuthority(uId,set);
         MenuKey menuKey1 = new MenuKey();
         MenuKey menuKey2 = new MenuKey();
         menuKey1.setTitle("首页");

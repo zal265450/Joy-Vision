@@ -29,8 +29,6 @@ public class User extends BaseEntity {
 
     private static final long serialVersionUID = 1L;
 
-
-
     private String nickName;
 
     @Email
@@ -41,7 +39,8 @@ public class User extends BaseEntity {
 
     private String description;
 
-    private String sex;
+    // true 为男，false为女
+    private boolean sex;
 
     @TableField(exist = false)
     private Set<String> roleName;

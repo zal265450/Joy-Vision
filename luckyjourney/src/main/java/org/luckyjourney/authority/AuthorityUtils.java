@@ -9,7 +9,7 @@ public class AuthorityUtils {
 
 
     /**权限集合*/
-    private static Map<String, Collection<String>> map = new HashMap<>();
+    private static Map<Long, Collection<String>> map = new HashMap<>();
 
     /**过滤权限集合*/
     private static Set<String> filterPermission = new HashSet<>();
@@ -81,7 +81,7 @@ public class AuthorityUtils {
      * @param uId 用户id
      * @param authority 权限集合
      */
-    public static void setAuthority(String uId,Collection<String> authority){
+    public static void setAuthority(Long uId,Collection<String> authority){
         map.put(uId,authority);
     }
 
@@ -91,7 +91,7 @@ public class AuthorityUtils {
      * @param authority
      * @return
      */
-    public static Boolean verify(String uId,String authority){
+    public static Boolean verify(Long uId,String authority){
         if (isEmpty(uId)) {
             return false;
         }
@@ -120,7 +120,7 @@ public class AuthorityUtils {
      * @param uId
      * @return
      */
-    public static Boolean isEmpty(String uId){
+    public static Boolean isEmpty(Long uId){
         return ObjectUtils.isEmpty(map.get(uId));
     }
 }
