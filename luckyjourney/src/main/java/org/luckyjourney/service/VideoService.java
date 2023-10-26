@@ -2,6 +2,8 @@ package org.luckyjourney.service;
 
 import org.luckyjourney.entity.Video;
 import com.baomidou.mybatisplus.extension.service.IService;
+import org.luckyjourney.entity.vo.PageBean;
+import org.luckyjourney.entity.vo.BasePage;
 import org.luckyjourney.util.R;
 
 /**
@@ -15,4 +17,6 @@ import org.luckyjourney.util.R;
 public interface VideoService extends IService<Video> {
 
     R postVideo(Video video);
+
+    PageBean<Video> getVideoList(Long typeId, BasePage basePage);
 }
