@@ -89,7 +89,7 @@ function isBorderBox(element) {
  * @param direction
  * @param extra
  */
-function getExtraWidth(element, direction, extra) {
+function getExtraWth(element, direction, extra) {
     const position = direction === 'width' ? ['Left', 'Right'] : ['Top', 'Bottom'];
     return [0, 1].reduce((prev, _, index) => {
         let prop = extra + position[index];

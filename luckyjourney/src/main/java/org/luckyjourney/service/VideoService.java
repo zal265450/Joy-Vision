@@ -2,6 +2,7 @@ package org.luckyjourney.service;
 
 import org.luckyjourney.entity.Video;
 import com.baomidou.mybatisplus.extension.service.IService;
+import org.luckyjourney.util.R;
 
 /**
  * <p>
@@ -13,4 +14,5 @@ import com.baomidou.mybatisplus.extension.service.IService;
  */
 public interface VideoService extends IService<Video> {
 
+    R postVideo(Video video);
 }
