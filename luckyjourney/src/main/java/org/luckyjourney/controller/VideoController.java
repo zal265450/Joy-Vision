@@ -2,6 +2,7 @@ package org.luckyjourney.controller;
 
 
 import org.luckyjourney.entity.Video;
+import org.luckyjourney.entity.vo.BasePage;
 import org.luckyjourney.service.FileService;
 import org.luckyjourney.service.VideoService;
 import org.luckyjourney.util.R;
@@ -39,11 +40,21 @@ public class VideoController {
     }
 
     /**
+     * 根据分类id获取视频信息列表
+     *
+     * @return 视频列表信息
+     */
+    @GetMapping("/list")
+    public R getVideoList(BasePage basePage, Long typeId) {
+        return R.ok().data(videoService.getVideoList(typeId, basePage));
+    }
+
+    /**
      * 上传一个视频
      *
      * @return 视频信息
      */
-    @GetMapping("/post")
+    @PostMapping("/post")
     public R postVideo(@RequestBody @Validated Video video) {
         return videoService.postVideo(video);
     }
