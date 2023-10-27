@@ -38,7 +38,7 @@ public class Video extends BaseEntity {
     /**
      * 视频分类id
      */
-    @NotBlank(message = "分类不能为空")
+    @NotNull(message = "分类不能为空")
     private Long typeId;
 
 }

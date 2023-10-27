@@ -13,6 +13,7 @@ import org.luckyjourney.service.video.TypeService;
 import org.luckyjourney.util.RedisCacheUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 
 import java.util.*;
@@ -24,7 +25,8 @@ import java.util.stream.Collectors;
  * @Author: Xhy
  * @CreateTime: 2023-10-26 11:54
  */
-@Async // 暂时为异步
+ // 暂时为异步
+@Service
 public class InterestPushServiceImpl implements InterestPushService {
 
     @Autowired
@@ -36,14 +38,24 @@ public class InterestPushServiceImpl implements InterestPushService {
     final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
+    @Async
     public void pushSystemStockIn(Video video) {
         // 往系统库中添加
         final Long typeId = video.getTypeId();
         final Long videoId = video.getId();
-        redisCacheUtil.lPushLeft(RedisConstant.SYSTEM_STOCK+typeId,videoId);
+        redisCacheUtil.sSet(RedisConstant.SYSTEM_STOCK+typeId,videoId);
     }
 
     @Override
+    public void deleteSystemStockIn(Video video) {
+        // 往系统库中添加
+        final Long typeId = video.getTypeId();
+        final Long videoId = video.getId();
+        redisCacheUtil.setRemove(RedisConstant.SYSTEM_STOCK+typeId,videoId);
+    }
+
+    @Override
+    @Async
     public void initUserModel(Long userId, List<Long> typeIds) {
 
         final String key = RedisConstant.MODEL + userId;
@@ -63,6 +75,7 @@ public class InterestPushServiceImpl implements InterestPushService {
     }
 
     @Override
+    @Async
     public void updateUserModel(UserModel userModel) {
         // 可能出现游客
         // 添加概率
@@ -103,7 +116,7 @@ public class InterestPushServiceImpl implements InterestPushService {
     }
 
     @Override
-    public List<Long> listByUserModel(User user) {
+    public List<Long> listVideoByUserModel(User user) {
         // 创建结果集
         List<Long> videoIds = new ArrayList<>(10);
 
@@ -132,7 +145,7 @@ public class InterestPushServiceImpl implements InterestPushService {
                         }
                     }
                     // 可能没视频了，随机找一个视频
-                    videoIds.add(randomVideoId(sex,randomObject));
+                    videoIds.add(randomVideoId(sex));
                 }
                 // 添加
                 if (interestVideoId!=null){
@@ -142,7 +155,7 @@ public class InterestPushServiceImpl implements InterestPushService {
             // todo 找热门视频
 
             // 随机挑选一个视频,根据性别: 男：美女 女：宠物
-            videoIds.add(randomVideoId(sex,randomObject));
+            videoIds.add(randomVideoId(sex));
         }else {
             // 游客
             // 获取所有分类，随机挑选10个分类中的随机视频进行推送
@@ -150,45 +163,31 @@ public class InterestPushServiceImpl implements InterestPushService {
             final ArrayList<String> keyTypes = new ArrayList<>();
             int size = typeIds.size();
             final Random random = new Random();
-            final HashMap<String, Long> map = new HashMap<>();
             // 获取随机的分类
             for (int i = 0; i < 10; i++) {
-                final int typeId = random.nextInt(size);
-                typeIds.get(typeId);
+                final int typeId = random.nextInt(size)+1;
                 keyTypes.add(RedisConstant.SYSTEM_STOCK+typeId);
             }
-            // 获取分类对应的视频集合->用于随机获取
-            final List<Object> list = redisCacheUtil.lSize(keyTypes);
-            // 组装分类 -> 视频集合
-            for (int i = 0; i < keyTypes.size(); i++) {
-                map.put(keyTypes.get(i),Long.valueOf(list.get(i).toString()));
-            }
             // 获取videoId
-            videoIds = redisCacheUtil.lGetIndex(map).stream().map(id->Long.valueOf(id.toString())).collect(Collectors.toList());
+            videoIds = redisCacheUtil.sRandom(keyTypes).stream().map(id->Long.valueOf(id.toString())).collect(Collectors.toList());
         }
         return videoIds;
     }
 
 
 
-    public long randomVideoId(Boolean sex,Random randomObject){
-        long type = typeService.getOne(new LambdaQueryWrapper<Type>().eq(Type::getName,sex ? "美女":"宠物")).getId();
-        String key = RedisConstant.SYSTEM_STOCK+type;
-        long videoN = redisCacheUtil.lSize(key);
-        return Long.valueOf(redisCacheUtil.lGetIndex(key,randomObject.nextInt((int)videoN)).toString());
+    public long randomVideoId(Boolean sex){
+        long typeId = typeService.getOne(new LambdaQueryWrapper<Type>().eq(Type::getName,sex ? "美女":"宠物")).getId();
+        String key = RedisConstant.SYSTEM_STOCK+typeId;
+        return (long) redisCacheUtil.sRandom(key);
     }
 
     // 随机获取视频id
     public long getVideoId(Random random,long[] probabilityArray){
-        int randomNumber = random.nextInt(probabilityArray.length);
-        long typeId = probabilityArray[randomNumber];
+        long typeId = probabilityArray[random.nextInt(probabilityArray.length)+1];
         // 获取对应所有视频
         String key = RedisConstant.SYSTEM_STOCK+typeId;
-        // 获取对应视频长度
-        final long videoSize = redisCacheUtil.lSize(key);
-        // 随机数
-        int randomIndex = random.nextInt((int)videoSize);
-        final Long videoId = (Long) redisCacheUtil.lGetIndex(key, randomIndex);
+        final Long videoId = (long) redisCacheUtil.sRandom(key);
         return videoId;
     }
 

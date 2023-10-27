@@ -514,6 +514,24 @@ public class RedisCacheUtil {
         return redisTemplate.opsForList().size(key);
     }
 
+    public Object sRandom(String key){
+        return redisTemplate.opsForSet().randomMember(key);
+    }
+
+    public List<Object> sRandom(List<String> keys){
+        final List<Object> list = redisTemplate.executePipelined(new RedisCallback<Object>() {
+            @Override
+            public Object doInRedis(RedisConnection connection) throws DataAccessException {
+
+                for (String key : keys) {
+                    connection.sRandMember(key.getBytes());
+                }
+                return null;
+            }
+        });
+        return list;
+    }
+
 
     /**
      * 随机key中随机拿数据
@@ -521,7 +539,6 @@ public class RedisCacheUtil {
      * @return
      */
     public List<Object> lGetIndex(Map<String,Long> map){
-
         final List<Object> list = redisTemplate.executePipelined((RedisCallback<Long>) connection -> {
             map.forEach((k,v)->{
                 connection.lIndex(k.getBytes(),v);

@@ -2,21 +2,16 @@ package org.luckyjourney.controller;
 
 import org.luckyjourney.entity.Video;
 import org.luckyjourney.entity.VideoShare;
-import org.luckyjourney.entity.user.User;
-import org.luckyjourney.service.InterestPushService;
-import org.luckyjourney.service.user.UserService;
+import org.luckyjourney.entity.vo.VideoVO;
+import org.luckyjourney.service.video.TypeService;
 import org.luckyjourney.service.video.VideoService;
-import org.luckyjourney.util.JwtUtils;
+import org.luckyjourney.service.video.VideoShareService;
 import org.luckyjourney.util.R;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Collection;
-import java.util.List;
 
 /**
  * @description:
@@ -31,7 +26,16 @@ public class IndexController {
     @Autowired
     private VideoService videoService;
 
-    // 推送视频
+    @Autowired
+    private TypeService typeService;
+
+    @Autowired
+    private VideoShareService videoShareService;
+
+    /**
+     * 推送视频
+     * @return
+     */
     @GetMapping("/pushVideos")
     public R pushVideos(){
         return R.ok().data(videoService.pushVideos());
@@ -46,4 +50,59 @@ public class IndexController {
         Collection<Video> videos = videoService.searchVideo(title);
         return R.ok().data(videos);
     }
+
+    /**
+     * 根据视频分类获取
+     * @param typeId
+     * @return
+     */
+    @GetMapping("/video/type/{typeId}")
+    public R getVideoByTypeId(@PathVariable Long typeId){
+
+        return R.ok().data(videoService.getVideoByTypeId(typeId));
+    }
+
+    /**
+     * 获取所有分类
+     * @return
+     */
+    @GetMapping("/types")
+    public R getTypes(){
+
+        return R.ok().data(typeService.list(null));
+    }
+
+    /**
+     * 分享视频
+     * @param videoId
+     * @param request
+     * @return
+     */
+    @PostMapping("/share/{videoId}")
+    public R share(@PathVariable Long videoId, HttpServletRequest request){
+
+        String ip = null;
+        if (request.getHeader("x-forwarded-for") == null)
+            ip = request.getRemoteAddr();
+        else
+            ip = request.getHeader("x-forwarded-for");
+        final VideoShare videoShare = new VideoShare();
+        videoShare.setVideoId(videoId);
+        videoShare.setIp(ip);
+        videoShareService.record(videoShare);
+        return R.ok();
+    }
+
+    /**
+     * 根据id获取视频
+     * @param id
+     * @return
+     */
+    @GetMapping("/video/{id}")
+    public R getVideoById(@PathVariable Long id){
+
+        VideoVO videoVO = videoService.getVideoById(id);
+        return R.ok().data(videoVO);
+    }
+
 }

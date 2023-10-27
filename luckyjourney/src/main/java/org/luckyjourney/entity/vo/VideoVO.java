@@ -15,7 +15,7 @@ public class VideoVO extends Video {
     private Long PV;
 
     // 点赞量
-    private Long Likes;
+    private Long stars;
 
     // 分享量
     private Long shares;

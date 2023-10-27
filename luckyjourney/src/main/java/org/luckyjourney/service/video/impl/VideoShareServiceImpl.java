@@ -24,8 +24,14 @@ public class VideoShareServiceImpl extends ServiceImpl<VideoShareMapper, VideoSh
 
     @Override
     public void record(VideoShare videoShare) {
+
         videoShare.setUserId(UserHolder.get());
-        this.save(videoShare);
+        try {
+            // 利用videoId和ip做为唯一索引,少一次查询
+            this.save(videoShare);
+        }catch (Exception e){
+
+        }
     }
 
     @Override

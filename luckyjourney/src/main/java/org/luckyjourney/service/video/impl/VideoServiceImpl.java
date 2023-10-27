@@ -12,7 +12,8 @@ import org.luckyjourney.service.user.UserService;
 import org.luckyjourney.service.video.TypeService;
 import org.luckyjourney.service.video.VideoService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import org.luckyjourney.util.R;
+import org.luckyjourney.service.video.VideoShareService;
+import org.luckyjourney.service.video.VideoStarService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -20,7 +21,6 @@ import org.springframework.stereotype.Service;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -43,11 +43,15 @@ VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements VideoService
     @Autowired
     private UserService userService;
 
-    @Override
-    public VideoVO getVideoById(Long id) {
+    @Autowired
+    private VideoStarService videoStarService;
 
-        final Long userId = UserHolder.get();
-        final Video video = this.getOne(new LambdaQueryWrapper<Video>().eq(Video::getId, id).eq(Video::getUserId, userId));
+    @Autowired
+    private VideoShareService videoShareService;
+
+    @Override
+    public VideoVO getVideoById(Long videoId) {
+        final Video video = this.getOne(new LambdaQueryWrapper<Video>().eq(Video::getId, videoId));
         final VideoVO videoVO = new VideoVO();
         if (video == null){
             return videoVO;
@@ -56,9 +60,9 @@ VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements VideoService
         // 获取浏览量 todo
 
         // 获取点赞量
-
+        videoVO.setStars(videoStarService.getStarCount(videoId));
         // 获取分享量
-
+        videoVO.setShares(videoShareService.getShareCount(videoId));
         return videoVO;
     }
 
@@ -80,7 +84,7 @@ VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements VideoService
             throw new IllegalArgumentException("分类不存在");
         }
         // 判断审核通过 todo
-
+        video.setUserId(userId);
         this.saveOrUpdate(video);
 
         // 公开后逻辑
@@ -102,17 +106,19 @@ VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements VideoService
 
         removeById(id);
         // todo 删除分享量 点赞量 浏览量
+
+        interestPushService.deleteSystemStockIn(video);
     }
 
     @Override
     public Collection<Video> pushVideos() {
 
         Long userId = UserHolder.get();
-        User user = new User();
+        User user = null;
         if (userId!=null){
-            user = userService.getById(user);
+            user = userService.getById(userId);
         }
-        final List<Long> videoIds = interestPushService.listByUserModel(user);
+        final List<Long> videoIds = interestPushService.listVideoByUserModel(user);
 
 
         return listByIds(videoIds);
@@ -133,10 +139,7 @@ VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements VideoService
         return this.list(new LambdaQueryWrapper<Video>().like(Video::getTitle,title));
     }
 
-    @Override
-    public void starVideo(Long id) {
 
-    }
 
 
 }

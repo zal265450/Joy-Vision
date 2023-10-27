@@ -58,5 +58,5 @@ public interface VideoService extends IService<Video> {
      */
     Collection<Video> searchVideo(String title);
 
-    void starVideo(Long id);
+
 }
