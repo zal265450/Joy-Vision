@@ -1,28 +1,20 @@
 package org.luckyjourney.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.luckyjourney.constant.RedisConstant;
 import org.luckyjourney.entity.Type;
 import org.luckyjourney.entity.Video;
-import org.luckyjourney.entity.VideoType;
 import org.luckyjourney.entity.user.User;
 import org.luckyjourney.entity.vo.Model;
 import org.luckyjourney.entity.vo.UserModel;
 import org.luckyjourney.service.InterestPushService;
 import org.luckyjourney.service.TypeService;
-import org.luckyjourney.service.VideoTypeService;
 import org.luckyjourney.util.RedisCacheUtil;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataAccessException;
-import org.springframework.data.redis.connection.RedisConnection;
-import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.util.ObjectUtils;
-import org.springframework.web.bind.annotation.RequestParam;
 
-import javax.validation.constraints.NotBlank;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -119,39 +111,22 @@ public class InterestPushServiceImpl implements InterestPushService {
             final Long userId = user.getId();
             // 从模型中拿概率
             final Map<Object, Object> modelMap = redisCacheUtil.hmget(RedisConstant.MODEL + userId);
+
             // 组成数组
-            Map<Long,Integer> probabilityMap = new HashMap<>();
-            int size = modelMap.size();
-            final AtomicInteger n = new AtomicInteger(0);
-            modelMap.forEach((k,v)->{
-                int probability = ((Double)v).intValue() / size;
-                n.getAndAdd(probability);
-                probabilityMap.put(Long.valueOf(k.toString()),probability);
-            });
-            final long[] probabilityArray = new long[n.get()];
-            final AtomicInteger index = new AtomicInteger(0);
-            // 初始化数组
-            probabilityMap.forEach((type,p)->{
-                int i = index.get();
-                int limit = i+p;
-                while (i < limit){
-                    probabilityArray[i++] = type;
-                }
-                index.set(limit);
-            });
+            final long[] probabilityArray = initProbabilityArray(modelMap);
             final Boolean sex = user.getSex();
             // 获取视频
             final Random randomObject = new Random();
             for (int i = 0; i < 8 ; i++) {
                 int count = 0;
-                final long videoId = getVideoId(randomObject, probabilityArray, n.get());
+                final long videoId = getVideoId(randomObject, probabilityArray);
                 // 查重
                 Object interestVideoId = redisCacheUtil.get(RedisConstant.HISTORY_VIDEO + videoId);
                 if (interestVideoId!=null){
                     // 尝试3次
                     while (count++ < 3){
                         // 重新走上面的逻辑
-                        interestVideoId = getVideoId(randomObject, probabilityArray, n.get());
+                        interestVideoId = getVideoId(randomObject, probabilityArray);
                         if (interestVideoId!=null){
                             break;
                         }
@@ -203,17 +178,42 @@ public class InterestPushServiceImpl implements InterestPushService {
         return Long.valueOf(redisCacheUtil.lGetIndex(key,randomObject.nextInt((int)videoN)).toString());
     }
 
-    public long getVideoId(Random randomObject,long[] probabilityArray,int probabilityArrayN){
-        int random = randomObject.nextInt(probabilityArrayN);
-        long typeId = probabilityArray[random];
+    // 随机获取视频id
+    public long getVideoId(Random random,long[] probabilityArray){
+        int randomNumber = random.nextInt(probabilityArray.length);
+        long typeId = probabilityArray[randomNumber];
         // 获取对应所有视频
         String key = RedisConstant.SYSTEM_STOCK+typeId;
         // 获取对应视频长度
         final long videoSize = redisCacheUtil.lSize(key);
         // 随机数
-        int randomIndex = randomObject.nextInt((int)videoSize);
+        int randomIndex = random.nextInt((int)videoSize);
         final Long videoId = (Long) redisCacheUtil.lGetIndex(key, randomIndex);
         return videoId;
     }
 
+    // 初始化概率数组
+    public long[] initProbabilityArray(Map<Object,Object> modelMap){
+        // 组成数组
+        Map<Long,Integer> probabilityMap = new HashMap<>();
+        int size = modelMap.size();
+        final AtomicInteger n = new AtomicInteger(0);
+        modelMap.forEach((k,v)->{
+            int probability = ((Double)v).intValue() / size;
+            n.getAndAdd(probability);
+            probabilityMap.put(Long.valueOf(k.toString()),probability);
+        });
+        final long[] probabilityArray = new long[n.get()];
+        final AtomicInteger index = new AtomicInteger(0);
+        // 初始化数组
+        probabilityMap.forEach((type,p)->{
+            int i = index.get();
+            int limit = i+p;
+            while (i < limit){
+                probabilityArray[i++] = type;
+            }
+            index.set(limit);
+        });
+        return probabilityArray;
+    }
 }
