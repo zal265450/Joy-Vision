@@ -30,10 +30,11 @@ public class Video extends BaseEntity {
 
     private Long userId;
 
+    private String cover;
     /**
      * 公开/私密，0：公开，1：私密，默认为0
      */
-    private Byte open;
+    private Boolean open;
     /**
      * 视频分类id
      */

@@ -1,19 +1,19 @@
 package org.luckyjourney.config;
 
+import com.qiniu.util.Auth;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 
 /**
- *  读取配置文件的配置到本类属性中
- * @author 郭建勇
+ * @author xhy
  * @date 2023-10-25
  **/
 @Data
 @Component
 @ConfigurationProperties(prefix = "qiniu.kodo")
-public class KodoConfig {
+public class QiNiuConfig {
     /**
      * 账号
      */
@@ -27,5 +27,12 @@ public class KodoConfig {
      */
     private String bucketName;
 
+    public Auth buildAuth(){
+        String accessKey = this.getAccessKey();
+        String secretKey = this.getSecretKey();
+
+        return Auth.create(accessKey, secretKey);
+
+    }
 
 }

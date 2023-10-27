@@ -1,4 +1,4 @@
-package org.luckyjourney.service;
+package org.luckyjourney.service.video;
 
 import org.luckyjourney.entity.VideoStar;
 import com.baomidou.mybatisplus.extension.service.IService;

@@ -9,7 +9,7 @@ import org.luckyjourney.entity.user.User;
 import org.luckyjourney.entity.vo.Model;
 import org.luckyjourney.entity.vo.UserModel;
 import org.luckyjourney.service.InterestPushService;
-import org.luckyjourney.service.TypeService;
+import org.luckyjourney.service.video.TypeService;
 import org.luckyjourney.util.RedisCacheUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;

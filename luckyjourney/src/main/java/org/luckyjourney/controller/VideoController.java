@@ -2,12 +2,15 @@ package org.luckyjourney.controller;
 
 
 import org.luckyjourney.entity.Video;
+import org.luckyjourney.entity.vo.VideoVO;
 import org.luckyjourney.service.FileService;
-import org.luckyjourney.service.VideoService;
+import org.luckyjourney.service.video.VideoService;
 import org.luckyjourney.util.R;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Collection;
 
 /**
  * <p>
@@ -24,30 +27,70 @@ public class VideoController {
     @Autowired
     private VideoService videoService;
 
-    /**
-     * 根据id获取视频信息
-     *
-     * @return 视频信息
-     */
-    @GetMapping("/info/{videoId}")
-    public R getVideoInfo(@PathVariable Long videoId) {
-        Video video = videoService.getById(videoId);
-        if (video == null) {
-            return R.error();
-        }
-        return R.ok().data(video);
+
+    @Autowired
+    private FileService fileService;
+
+    @GetMapping("/token")
+    public R getToken(){
+        final String token = fileService.getToken();
+        return R.ok().data(token);
     }
 
     /**
-     * 上传一个视频
-     *
-     * @return 视频信息
+     * 根据id获取视频
+     * @param id
+     * @return
      */
-    @GetMapping("/post")
-    public R postVideo(@RequestBody @Validated Video video) {
-        return videoService.postVideo(video);
+    @GetMapping("/{id}")
+    public R getVideoById(@PathVariable Long id){
+
+        VideoVO videoVO = videoService.getVideoById(id);
+        return R.ok().data(videoVO);
+    }
+
+    /**
+     * 根据视频分类获取
+     * @param typeId
+     * @return
+     */
+    @GetMapping("/type/{typeId}")
+    public R getVideoByTypeId(@PathVariable Long typeId){
+
+        Collection<Video> video = videoService.getVideoByTypeId(typeId);
+
+        return R.ok();
     }
 
 
+    /**发布视频/修改视频
+     * @param video
+     * @return
+     */
+    @PostMapping
+    public R publishVideo(@RequestBody @Validated Video video){
+        videoService.publishVideo(video);
+        return R.ok().message("发布成功");
+    }
+
+    /**
+     * 删除视频
+     * @param id
+     * @return
+     */
+    @DeleteMapping("/{id}")
+    public R deleteVideo(@PathVariable Long id){
+        videoService.deleteVideo(id);
+        return R.ok().message("删除成功");
+    }
+
+    /**
+     * 点赞视频
+     */
+    @PostMapping("/star/{id}")
+    public R starVideo(@PathVariable Long id){
+        videoService.starVideo(id);
+        return R.ok().message("点赞成功");
+    }
 }
 

@@ -1,8 +1,8 @@
-package org.luckyjourney.service.impl;
+package org.luckyjourney.service.video.impl;
 
 import org.luckyjourney.entity.Type;
-import org.luckyjourney.mapper.TypeMapper;
-import org.luckyjourney.service.TypeService;
+import org.luckyjourney.mapper.video.TypeMapper;
+import org.luckyjourney.service.video.TypeService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.stereotype.Service;
 

@@ -1,6 +1,6 @@
-package org.luckyjourney.mapper;
+package org.luckyjourney.mapper.video;
 
-import org.luckyjourney.entity.VideoType;
+import org.luckyjourney.entity.Video;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 /**
@@ -11,6 +11,6 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
  * @author xhy
  * @since 2023-10-24
  */
-public interface VideoTypeMapper extends BaseMapper<VideoType> {
+public interface VideoMapper extends BaseMapper<Video> {
 
 }

@@ -1,16 +1,19 @@
 package org.luckyjourney.service;
 
 import org.luckyjourney.util.R;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
- * @author EVA
+ * @author xhy
  */
 public interface FileService {
 
 
     /**
-     * kodo上传签名
-     * @return 返回签名
+     * 获取签名
+     * @return
      */
-    R policy();
+    String getToken();
+
+
 }
