@@ -13,9 +13,10 @@
   
           <v-list density="compact" nav>
             <v-list-item prepend-icon="mdi-home" title="首页" value="home"></v-list-item>
-            <v-list-item prepend-icon="mdi-fire" title="推荐" value="fire"></v-list-item>
-            <v-list-item prepend-icon="mdi-account-multiple" title="粉丝/关注" value="shared"></v-list-item>
-            <v-list-item prepend-icon="mdi-star" title="收藏夹" value="starred"></v-list-item>
+            <v-list-item prepend-icon="mdi-video" title="推荐视频(高级)" value="video"></v-list-item>
+            <v-list-item prepend-icon="mdi-label-multiple" title="视频分类" value="fire"></v-list-item>
+            <v-list-item prepend-icon="mdi-account-multiple" title="粉丝/关注(高级)" value="shared"></v-list-item>
+            <v-list-item prepend-icon="mdi-star" title="收藏夹(高级)" value="starred"></v-list-item>
             
           </v-list>
         </v-navigation-drawer>
