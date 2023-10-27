@@ -2,12 +2,17 @@ package org.luckyjourney.util;
 
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
+import org.springframework.data.redis.connection.RedisConnection;
+import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 @Service(value = "redisCacheUtil")
 public class RedisCacheUtil {
@@ -509,6 +514,35 @@ public class RedisCacheUtil {
         return redisTemplate.opsForList().size(key);
     }
 
+
+    /**
+     * 随机key中随机拿数据
+     * @param map
+     * @return
+     */
+    public List<Object> lGetIndex(Map<String,Long> map){
+
+        final List<Object> list = redisTemplate.executePipelined((RedisCallback<Long>) connection -> {
+            map.forEach((k,v)->{
+                connection.lIndex(k.getBytes(),v);
+            });
+            return null;
+        });
+        return list;
+    }
+
+    public List<Object> lSize(List<String> keys){
+
+        final List<Object> list = redisTemplate.executePipelined((RedisCallback<Object>) connection -> {
+            for (String key : keys) {
+                connection.lLen(key.getBytes());
+            }
+            return null;
+        });
+        return list;
+    }
+
+
     /**
      * 获取list缓存的长度
      *
@@ -686,6 +720,12 @@ public class RedisCacheUtil {
     }
 
 
+    // 接受一个管道
+    public void pipeline(RedisCallback redisCallback){
+        redisTemplate.executePipelined(redisCallback);
+    }
 
 }
+
+
 

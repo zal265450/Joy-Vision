@@ -2,6 +2,7 @@ package org.luckyjourney.service;
 
 import org.luckyjourney.entity.Video;
 import org.luckyjourney.entity.user.User;
+import org.luckyjourney.entity.vo.UserModel;
 
 import java.util.List;
 
@@ -12,9 +13,9 @@ import java.util.List;
  */
 public interface InterestPushService {
 
-
     /**
      * 用户发布视频后调用
+     * 传videoId,typeId
      * @param video
      */
     void pushSystemStockIn(Video video);
@@ -26,18 +27,15 @@ public interface InterestPushService {
      */
     void initUserModel(Long userId, List<Long> typeIds);
 
-
     /**
      * 用户刷视频更新概率
-     * @param userId 用户id
-     * @param typeId 视频分类id
-     * @param flag 增加/减少
+     * @param userModel 模型
      */
-    void updateUserModel(Long userId,Long typeId,Long videoId,Boolean flag);
+    void updateUserModel(UserModel userModel);
 
     /**
      * 用于给用户推送视频
-     * @param user
+     * @param user 传id和sex
      * @return videoIds
      */
     List<Long> listByUserModel(User user);
