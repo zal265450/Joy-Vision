@@ -498,6 +498,7 @@ public class RedisCacheUtil {
     }
 
 
+
     /**
      * 获取集中对元素个数
      *
@@ -538,6 +539,10 @@ public class RedisCacheUtil {
 
     public void lPushRight(String key, Object value) {
         redisTemplate.opsForList().rightPush(key, value);
+    }
+
+    public void lPushLeft(String key, Object value) {
+        redisTemplate.opsForList().leftPush(key, value);
     }
 
     /**

@@ -7,5 +7,9 @@ package org.luckyjourney.constant;
  */
 public interface RedisConstant {
 
-    public static  String MODEL = "model:";
+    String MODEL = "model:";
+
+    String HISTORY_VIDEO = "history:video:";
+
+    String SYSTEM_STOCK = "system:stock:";
 }
