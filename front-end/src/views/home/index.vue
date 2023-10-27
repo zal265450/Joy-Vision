@@ -1,14 +1,16 @@
 <template>
   <v-container style="height: 500px;">
     <v-btn-toggle
+  
           v-model="currentLabel"
           borderless
           color="#5865f2"
           class="mb-1"
+          style="border-width: 1px;"
+
         >
           <v-btn value="left">
             <span class="hidden-sm-and-down">热门视频</span>
-
             <v-icon end>
               mdi-fire
             </v-icon>
@@ -31,14 +33,16 @@
     <v-row dense >
       <v-divider class="ma-2"/>
       <v-col v-for="card in cards" :key="card.title" :cols="card.flex">
-        <v-card ripple="3" :elevation="0" :variant="'outlined'" style="border-color: rgba(69, 69, 69, 0.237);" rounded="lg">
+        <v-card hover ripple :elevation="0" style="border-color: rgba(37,38,50);" rounded="lg">
           <v-img :src="card.src" class="align-end" gradient="to bottom, rgba(0,0,0,.1), rgba(0,0,0,.5)" height="300px"
             cover>
             <v-card-text class="text-white"><v-icon >mdi-heart</v-icon> 200w</v-card-text>
           </v-img>
 
-          <v-card-actions style="background-color: #36393f;">
-            <span style="max-height: 20px;color: white;" class="ml-1 overflow-hidden">{{ card.title }}</span>
+          <v-card-actions>
+            <v-card-title>wdad</v-card-title>
+            <!-- <span style="max-height: 20px;color: white;" class="ml-1 overflow-hidden">{{ card.title }}</span> -->
+            <v-card-subtitle>wadad</v-card-subtitle>
             <v-spacer></v-spacer>
             <v-btn size="small" color="red" variant="tonal"  icon="mdi-heart"></v-btn>
           </v-card-actions>
@@ -63,3 +67,6 @@ export default {
   },
 }
 </script>
+<style scoped>
+
+</style>

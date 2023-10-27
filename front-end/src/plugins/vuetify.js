@@ -6,9 +6,12 @@ import 'vuetify/styles';
 const myCustomLightTheme = {
   dark: false,
   colors: {
-    background: "rgb(74 76 81)",
+    background: "#252632",
     surface: '#36393f',
     primary: '#5865f2',
+    'primary-darken-1': '#3700B3',
+    secondary: '#03DAC6',
+    'secondary-darken-1': '#018786',
     
   },
 }
