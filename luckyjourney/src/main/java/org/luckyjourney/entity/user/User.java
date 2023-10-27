@@ -40,7 +40,7 @@ public class User extends BaseEntity {
     private String description;
 
     // true 为男，false为女
-    private boolean sex;
+    private Boolean sex;
 
     @TableField(exist = false)
     private Set<String> roleName;
