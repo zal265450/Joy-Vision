@@ -1,6 +1,7 @@
 package org.luckyjourney.service.video.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import org.luckyjourney.constant.VideoStatus;
 import org.luckyjourney.entity.Type;
 import org.luckyjourney.entity.Video;
 import org.luckyjourney.entity.user.User;
@@ -9,11 +10,8 @@ import org.luckyjourney.holder.UserHolder;
 import org.luckyjourney.mapper.video.VideoMapper;
 import org.luckyjourney.service.InterestPushService;
 import org.luckyjourney.service.user.UserService;
-import org.luckyjourney.service.video.TypeService;
-import org.luckyjourney.service.video.VideoService;
+import org.luckyjourney.service.video.*;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import org.luckyjourney.service.video.VideoShareService;
-import org.luckyjourney.service.video.VideoStarService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -31,8 +29,7 @@ import java.util.List;
  * @since 2023-10-24
  */
 @Service
-public class
-VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements VideoService {
+public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements VideoService {
 
     @Autowired
     private TypeService typeService;
@@ -48,6 +45,9 @@ VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements VideoService
 
     @Autowired
     private VideoShareService videoShareService;
+
+    @Autowired
+    private VideoAuditService videoAuditService;
 
     @Override
     public VideoVO getVideoById(Long videoId) {
@@ -83,10 +83,18 @@ VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements VideoService
         if (type == null){
             throw new IllegalArgumentException("分类不存在");
         }
-        // 判断审核通过 todo
+        // 修改状态
+        video.setStatus(VideoStatus.PROCESS);
         video.setUserId(userId);
-        this.saveOrUpdate(video);
+        // 进入审核队列
+        videoAuditService.audit(video);
 
+        this.saveOrUpdate(video);
+    }
+
+    @Override
+    public void publishVideoHandler(Video video) {
+        updateById(video);
         // 公开后逻辑
         interestPushService.pushSystemStockIn(video);
     }

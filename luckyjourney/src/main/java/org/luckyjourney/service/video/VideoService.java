@@ -32,6 +32,7 @@ public interface VideoService extends IService<Video> {
      */
     void publishVideo(Video video);
 
+    void publishVideoHandler(Video video);
     /**
      * 删除视频
      * @param id

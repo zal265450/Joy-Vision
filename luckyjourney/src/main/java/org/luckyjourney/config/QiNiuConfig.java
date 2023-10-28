@@ -30,9 +30,13 @@ public class QiNiuConfig {
     public Auth buildAuth(){
         String accessKey = this.getAccessKey();
         String secretKey = this.getSecretKey();
-
         return Auth.create(accessKey, secretKey);
+    }
 
+    public String getToken(String url,String method,String body,String contentType){
+        final Auth auth = buildAuth();
+        String qiniuToken = "Qiniu "+ auth.signQiniuAuthorization(url, method, body == null ? null : body.getBytes(), contentType);
+        return qiniuToken;
     }
 
 }

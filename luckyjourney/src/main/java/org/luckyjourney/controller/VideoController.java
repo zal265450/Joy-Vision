@@ -41,10 +41,6 @@ public class VideoController {
         return R.ok().data(token);
     }
 
-
-
-
-
     /**发布视频/修改视频
      * @param video
      * @return
@@ -52,7 +48,7 @@ public class VideoController {
     @PostMapping
     public R publishVideo(@RequestBody @Validated Video video){
         videoService.publishVideo(video);
-        return R.ok().message("发布成功");
+        return R.ok().message("发布成功,请等待审核");
     }
 
     /**
