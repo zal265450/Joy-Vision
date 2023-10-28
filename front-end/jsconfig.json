@@ -3,5 +3,9 @@
         "types": [
             "vuetify"
         ]
-    }
+    },
+    "include": [
+        "src/**/*.js",
+        "src/**/*.vue"
+    ],
 }

@@ -7,5 +7,5 @@ defineComponent({
 </script>
 
 <template>
-  <DefaultLayout/>
+  <DefaultLayout />
 </template>
