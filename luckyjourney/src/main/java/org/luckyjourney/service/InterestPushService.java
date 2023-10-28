@@ -21,6 +21,12 @@ public interface InterestPushService {
     void pushSystemStockIn(Video video);
 
     /**
+     * 删除视频
+     * @param video
+     */
+    void deleteSystemStockIn(Video video);
+
+    /**
      * 用户初始化模型
      * @param userId 用户id
      * @param typeIds 分类id
@@ -38,5 +44,5 @@ public interface InterestPushService {
      * @param user 传id和sex
      * @return videoIds
      */
-    List<Long> listByUserModel(User user);
+    List<Long> listVideoByUserModel(User user);
 }

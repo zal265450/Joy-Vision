@@ -32,7 +32,7 @@ public class CustomerController {
 
 
     // 填写信息,性别,兴趣
-    @PostMapping("/setModel")
+    @PostMapping("/initModel")
     public R setModel(@RequestBody @Validated ModelVO modelVO){
         userService.setModel(modelVO);
         return R.ok().message("填写完毕");

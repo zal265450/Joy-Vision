@@ -33,24 +33,6 @@ public class AuthorityAop {
     private HttpServletRequest request;
 
 
-    @Around("@annotation(authority)")
-    public Object postAuthority(ProceedingJoinPoint joinPoint, PostMapping authority) throws Throwable {
-
-        if (AuthorityUtils.getPostAuthority()){
-            String requestURI = request.getRequestURI();
-            if (!AuthorityUtils.filterPermission(requestURI)){
-                UnifyAuthorityVerify unifyAuthorityVerify = (UnifyAuthorityVerify) SpringUtil.getBean("postMappingAuthorityVerify");
-                if (!ObjectUtils.isEmpty(unifyAuthorityVerify)){
-                    Boolean result = unifyAuthorityVerify.authorityVerify(request,requestURI);
-                    if (!result) throw new AuthorityException(403,"权限不足");
-                }
-            }
-        }
-
-        Object data = joinPoint.proceed();
-        return data;
-    }
-
     /**
      * 自定义校验aop
      * @param joinPoint

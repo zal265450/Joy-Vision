@@ -26,5 +26,6 @@ public class VideoShare extends BaseEntity{
 
     private Long userId;
 
+    private String ip;
 
 }
