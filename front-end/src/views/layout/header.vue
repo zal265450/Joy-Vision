@@ -7,10 +7,16 @@
         class="flex-full-width" density="comfortable" item-props menu-icon="" placeholder="搜索视频/用户 (高级)"
         prepend-inner-icon="mdi-magnify" rounded hide-details theme="light"></v-autocomplete>
     </div>
-    <v-btn variant="elevated">登录</v-btn>
+    <v-toolbar-items variant="plain" class="pr-2">
+    <v-btn :ripple="false"><v-icon>mdi-account</v-icon>登录</v-btn>
+    </v-toolbar-items>
+    
   </v-app-bar>
 </template>
 <script setup>
+import { ref } from 'vue';
+
+const items = ref([])
 </script>
 <style scoped>
 ::v-deep(.v-field__outline) {

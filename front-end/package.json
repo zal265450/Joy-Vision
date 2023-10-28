@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "qiniu-js": "^3.4.1",
     "sass": "^1.69.4",
     "vue": "^3.3.4",
     "vue-router": "^4.2.5",
