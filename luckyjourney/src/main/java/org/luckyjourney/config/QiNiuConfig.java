@@ -34,6 +34,7 @@ public class QiNiuConfig {
     }
 
     public String getToken(String url,String method,String body,String contentType){
+
         final Auth auth = buildAuth();
         String qiniuToken = "Qiniu "+ auth.signQiniuAuthorization(url, method, body == null ? null : body.getBytes(), contentType);
         return qiniuToken;

@@ -32,7 +32,6 @@ public interface VideoService extends IService<Video> {
      */
     void publishVideo(Video video);
 
-    void publishVideoHandler(Video video);
     /**
      * 删除视频
      * @param id
@@ -59,5 +58,9 @@ public interface VideoService extends IService<Video> {
      */
     Collection<Video> searchVideo(String title);
 
-
+    /**
+     * 审核处理
+     * @param video
+     */
+    void auditProcess(Video video);
 }
