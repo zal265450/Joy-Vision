@@ -11,6 +11,7 @@
       <v-list-item prepend-icon="mdi-label-multiple" title="视频分类" to="/classify"></v-list-item>
       <v-list-item prepend-icon="mdi-account-multiple" title="粉丝/关注(高级)" to="/friends"></v-list-item>
       <v-list-item prepend-icon="mdi-star" title="收藏夹(高级)" to="/favorites"></v-list-item>
+      <v-list-item prepend-icon="mdi-upload" title="创作中心" to="/my"></v-list-item>
 
     </v-list>
   </v-navigation-drawer>
