@@ -1,5 +1,6 @@
 package org.luckyjourney.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -20,6 +21,9 @@ public class Video extends BaseEntity {
 
     private static final long serialVersionUID = 1L;
 
+    // YV ID 以YV+UUID
+    private String YV;
+
     @NotBlank(message = "标题不能为空")
     private String title;
 
@@ -36,7 +40,7 @@ public class Video extends BaseEntity {
      */
     private Boolean open;
 
-    // 审核状态:通过,未通过,审核中
+    // 审核状态:通过,未通过,审核中,人工审核。这里不该出现人工审核
     private Integer status;
 
     // 审核状态的消息，当前嵌套在这里，应该有一个审核表?
@@ -51,5 +55,7 @@ public class Video extends BaseEntity {
     @NotNull(message = "分类不能为空")
     private Long typeId;
 
+    @TableField(exist = false)
+    private String userName;
 }
 
