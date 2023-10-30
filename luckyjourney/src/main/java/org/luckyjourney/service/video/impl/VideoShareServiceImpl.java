@@ -23,20 +23,16 @@ import java.util.stream.Collectors;
 public class VideoShareServiceImpl extends ServiceImpl<VideoShareMapper, VideoShare> implements VideoShareService {
 
     @Override
-    public void record(VideoShare videoShare) {
+    public boolean share(VideoShare videoShare) {
 
-        videoShare.setUserId(UserHolder.get());
         try {
             // 利用videoId和ip做为唯一索引,少一次查询
             this.save(videoShare);
         }catch (Exception e){
-
+            // 不用删除
+            return false;
         }
-    }
-
-    @Override
-    public long getShareCount(Long videoId) {
-        return this.count(new LambdaQueryWrapper<VideoShare>().eq(VideoShare::getVideoId,videoId));
+        return true;
     }
 
     @Override

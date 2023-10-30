@@ -2,16 +2,13 @@ package org.luckyjourney.controller;
 
 
 import org.luckyjourney.entity.Video;
-import org.luckyjourney.entity.vo.VideoVO;
+import org.luckyjourney.holder.UserHolder;
 import org.luckyjourney.service.FileService;
 import org.luckyjourney.service.video.VideoService;
-import org.luckyjourney.service.video.VideoStarService;
 import org.luckyjourney.util.R;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Collection;
 
 /**
  * <p>
@@ -31,9 +28,6 @@ public class VideoController {
 
     @Autowired
     private FileService fileService;
-
-    @Autowired
-    private VideoStarService videoStarService;
 
     @GetMapping("/token")
     public R getToken(){
@@ -68,10 +62,26 @@ public class VideoController {
     @PostMapping("/star/{id}")
     public R starVideo(@PathVariable Long id){
         String msg = "已点赞";
-        if (!videoStarService.starVideo(id)) {
+        if (!videoService.startVideo(id)) {
             msg = "取消点赞";
         }
         return R.ok().message(msg);
+    }
+
+    /**
+     * 添加历史记录
+     * @return
+     */
+    @PostMapping("/history/{id}")
+    public R addHistory(@PathVariable Long id){
+        videoService.historyVideo(id, UserHolder.get());
+        return R.ok();
+    }
+
+    @GetMapping("/history")
+    public R getHistory(){
+
+        return R.ok().data(videoService.getHistory());
     }
 }
 

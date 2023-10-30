@@ -3,6 +3,7 @@ package org.luckyjourney.service.impl;
 import com.google.gson.Gson;
 import com.qiniu.common.QiniuException;
 import com.qiniu.http.Response;
+import com.qiniu.storage.BucketManager;
 import com.qiniu.storage.Configuration;
 import com.qiniu.storage.Region;
 import com.qiniu.storage.UploadManager;
@@ -11,6 +12,7 @@ import com.qiniu.util.Auth;
 import org.luckyjourney.config.QiNiuConfig;
 import org.luckyjourney.service.FileService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -58,6 +60,24 @@ public class FileServiceImpl implements FileService {
                 }
             }
         }
+    }
+
+    @Override
+    @Async
+    public void deleteFile(String url) {
+        Configuration cfg = new Configuration(Region.region0());
+        String bucket = qiNiuConfig.getBucketName();
+        final Auth auth = qiNiuConfig.buildAuth();
+        String key = url;
+        BucketManager bucketManager = new BucketManager(auth, cfg);
+        try {
+            bucketManager.delete(bucket, key);
+        } catch (QiniuException ex) {
+            //如果遇到异常，说明删除失败
+            System.err.println(ex.code());
+            System.err.println(ex.response.toString());
+        }
+
     }
 
 }

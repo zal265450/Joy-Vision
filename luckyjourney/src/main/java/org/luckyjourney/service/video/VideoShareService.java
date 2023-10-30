@@ -19,14 +19,9 @@ public interface VideoShareService extends IService<VideoShare> {
      * 添加分享记录
      * @param videoShare
      */
-    void record(VideoShare videoShare);
+    boolean share(VideoShare videoShare);
 
-    /**
-     * 获取分享数
-     * @param videoId
-     * @return
-     */
-    long getShareCount(Long videoId);
+
 
     /**
      * 获取分享用户id

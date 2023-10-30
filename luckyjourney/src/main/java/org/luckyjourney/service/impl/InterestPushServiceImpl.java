@@ -115,7 +115,7 @@ public class InterestPushServiceImpl implements InterestPushService {
                             }
                         });
                         connection.hMSet(key.getBytes(),byteMap);
-                        connection.set((historyVideoKey+userId).getBytes(),videoId.toString().getBytes());
+                        connection.set((historyVideoKey+videoId+":"+userId).getBytes(),videoId.toString().getBytes());
                     }
                     return null;
                 });
@@ -143,7 +143,7 @@ public class InterestPushServiceImpl implements InterestPushService {
                 int count = 0;
                 final long videoId = getVideoId(randomObject, probabilityArray);
                 // 查重
-                Object interestVideoId = redisCacheUtil.get(RedisConstant.HISTORY_VIDEO + videoId);
+                Object interestVideoId = redisCacheUtil.get(RedisConstant.HISTORY_VIDEO + videoId+":"+userId);
                 if (interestVideoId!=null){
                     // 尝试3次
                     while (count++ < 3){

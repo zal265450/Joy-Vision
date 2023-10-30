@@ -24,4 +24,9 @@ public interface FileService {
      */
     void uploadFile(File file);
 
+    /**
+     * 删除文件
+     * @param url
+     */
+    void deleteFile(String url);
 }
