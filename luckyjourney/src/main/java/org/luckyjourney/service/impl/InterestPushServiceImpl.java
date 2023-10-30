@@ -48,7 +48,6 @@ public class InterestPushServiceImpl implements InterestPushService {
 
     @Override
     public void deleteSystemStockIn(Video video) {
-        // 往系统库中添加
         final Long typeId = video.getTypeId();
         final Long videoId = video.getId();
         redisCacheUtil.setRemove(RedisConstant.SYSTEM_STOCK+typeId,videoId);

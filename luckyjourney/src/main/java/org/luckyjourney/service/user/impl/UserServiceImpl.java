@@ -18,6 +18,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 
+import javax.validation.constraints.NotBlank;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -50,8 +51,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if (count == 1){
             throw new Exception("邮箱已被注册");
         }
-        // todo 从缓存中对比
-        registerVO.getCode();
+        final String code = registerVO.getCode();
+        final Object o = redisCacheUtil.get(RedisConstant.EMAIL_CODE + code);
+        if (o == null){
+            throw new IllegalArgumentException("验证码为空");
+        }
         final User user = new User();
         user.setNickName(UUID.randomUUID().toString().substring(0,10));
         user.setEmail(registerVO.getEmail());

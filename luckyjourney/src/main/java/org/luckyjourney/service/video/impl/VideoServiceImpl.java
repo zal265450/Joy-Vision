@@ -58,7 +58,6 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
     @Autowired
     private VideoShareService videoShareService;
 
-
     @Autowired
     private RedisCacheUtil redisCacheUtil;
 
@@ -120,13 +119,18 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
         if (video == null){
             throw new IllegalArgumentException("删除指定的视频不存在");
         }
-
-        removeById(id);
-        // todo 删除分享量 点赞量 浏览量
-
-        // todo 删除七牛云中的视频
-        fileService.deleteFile(video.getUrl());
-        interestPushService.deleteSystemStockIn(video);
+        final boolean b = removeById(id);
+        if (b){
+            // 解耦
+            new Thread(()->{
+                // 删除分享量 点赞量
+                videoShareService.remove(new LambdaQueryWrapper<VideoShare>().eq(VideoShare::getVideoId,id).eq(VideoShare::getUserId,userId));
+                videoStarService.remove(new LambdaQueryWrapper<VideoStar>().eq(VideoStar::getVideoId,id).eq(VideoStar::getUserId,userId));
+                // 删除七牛云中的视频
+                fileService.deleteFile(video.getUrl());
+                interestPushService.deleteSystemStockIn(video);
+            }).start();
+        }
     }
 
     @Override
