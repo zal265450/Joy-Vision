@@ -104,6 +104,10 @@ public class IndexController {
         return R.ok().data(videoService.getVideoById(id));
     }
 
+    @GetMapping("/video/hot")
+    public R listHotRank(){
 
+        return R.ok().data(videoService.hotRank());
+    }
 
 }

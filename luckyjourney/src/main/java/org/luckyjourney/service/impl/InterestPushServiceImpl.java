@@ -12,6 +12,8 @@ import org.luckyjourney.service.InterestPushService;
 import org.luckyjourney.service.video.TypeService;
 import org.luckyjourney.util.RedisCacheUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.connection.RedisStringCommands;
+import org.springframework.data.redis.core.types.Expiration;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
@@ -114,7 +116,9 @@ public class InterestPushServiceImpl implements InterestPushService {
                             }
                         });
                         connection.hMSet(key.getBytes(),byteMap);
-                        connection.set((historyVideoKey+videoId+":"+userId).getBytes(),videoId.toString().getBytes());
+                        //
+
+                        connection.set((historyVideoKey+videoId+":"+userId).getBytes(),videoId.toString().getBytes(),Expiration.seconds(RedisConstant.HISTORY_TIME),RedisStringCommands.SetOption.UPSERT);
                     }
                     return null;
                 });

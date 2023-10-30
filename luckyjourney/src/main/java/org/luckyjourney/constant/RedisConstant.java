@@ -23,4 +23,5 @@ public interface RedisConstant {
 
     String EMAIL_CODE = "email:code:";
 
+    String HOT_RANK = "hot:rank";
 }

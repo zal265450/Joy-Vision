@@ -10,8 +10,10 @@ import org.luckyjourney.entity.video.VideoShare;
 import org.luckyjourney.entity.video.VideoStar;
 import org.luckyjourney.entity.response.AuditResponse;
 import org.luckyjourney.entity.user.User;
+import org.luckyjourney.entity.vo.HotVideo;
 import org.luckyjourney.holder.UserHolder;
 import org.luckyjourney.mapper.video.VideoMapper;
+import org.luckyjourney.schedul.HotRank;
 import org.luckyjourney.service.AuditService;
 import org.luckyjourney.service.FileService;
 import org.luckyjourney.service.InterestPushService;
@@ -22,6 +24,7 @@ import org.luckyjourney.service.video.*;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.luckyjourney.util.RedisCacheUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
@@ -226,6 +229,18 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
             return Collections.EMPTY_LIST;
         }
         return listByIds(videoIds);
+    }
+
+    @Override
+    public List<HotVideo> hotRank() {
+        final Set<ZSetOperations.TypedTuple<Object>> zSet = redisCacheUtil.getZSet(RedisConstant.HOT_RANK);
+        final ArrayList<HotVideo> hotVideos = new ArrayList<>();
+        for (ZSetOperations.TypedTuple<Object> objectTypedTuple : zSet) {
+            final HotVideo hotVideo = (HotVideo) objectTypedTuple.getValue();
+            hotVideo.setHot(objectTypedTuple.getScore());
+            hotVideos.add(hotVideo);
+        }
+        return hotVideos;
     }
 
 
