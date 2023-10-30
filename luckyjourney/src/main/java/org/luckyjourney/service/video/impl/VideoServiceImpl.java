@@ -1,22 +1,30 @@
 package org.luckyjourney.service.video.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import org.luckyjourney.constant.AuditStatus;
+import org.luckyjourney.constant.RedisConstant;
 import org.luckyjourney.entity.Type;
 import org.luckyjourney.entity.Video;
+import org.luckyjourney.entity.VideoShare;
+import org.luckyjourney.entity.VideoStar;
 import org.luckyjourney.entity.response.AuditResponse;
 import org.luckyjourney.entity.user.User;
 import org.luckyjourney.entity.vo.VideoVO;
 import org.luckyjourney.holder.UserHolder;
 import org.luckyjourney.mapper.video.VideoMapper;
 import org.luckyjourney.service.AuditService;
+import org.luckyjourney.service.FileService;
 import org.luckyjourney.service.InterestPushService;
 import org.luckyjourney.service.poll.VideoAuditThreadPoll;
 import org.luckyjourney.service.user.UserService;
 import org.luckyjourney.service.video.*;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import org.luckyjourney.util.RedisCacheUtil;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.ZSetOperations;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -52,29 +60,23 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
 
 
     @Autowired
-    AuditService auditService;
+    private RedisCacheUtil redisCacheUtil;
+
+    @Autowired
+    private AuditService auditService;
+
+    @Autowired
+    private FileService fileService;
+
 
     ThreadPoolExecutor executor;
 
-
-
-
-
     @Override
-    public VideoVO getVideoById(Long videoId) {
+    public Video getVideoById(Long videoId) {
         final Video video = this.getOne(new LambdaQueryWrapper<Video>().eq(Video::getId, videoId));
-        final VideoVO videoVO = new VideoVO();
-        if (video == null){
-            return videoVO;
-        }
-        BeanUtils.copyProperties(video,videoVO);
-        // 获取浏览量 todo
-
-        // 获取点赞量
-        videoVO.setStars(videoStarService.getStarCount(videoId));
-        // 获取分享量
-        videoVO.setShares(videoShareService.getShareCount(videoId));
-        return videoVO;
+        if (video == null) throw new IllegalArgumentException("指定视频不存在");
+        video.setUserName(userService.getById(video.getUserId()).getNickName());
+        return video;
     }
 
     @Override
@@ -122,6 +124,8 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
         removeById(id);
         // todo 删除分享量 点赞量 浏览量
 
+        // todo 删除七牛云中的视频
+        fileService.deleteFile(video.getUrl());
         interestPushService.deleteSystemStockIn(video);
     }
 
@@ -164,6 +168,52 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
         }
     }
 
+    @Override
+    public boolean startVideo(Long videoId) {
+        final Video video = getById(videoId);
+        if (video == null) throw new IllegalArgumentException("指定视频不存在");
+
+        final VideoStar videoStar = new VideoStar();
+        videoStar.setVideoId(videoId);
+        videoStar.setUserId(UserHolder.get());
+        final boolean result = videoStarService.starVideo(videoStar);
+        updateStar(video,result ? 1L : -1L);
+        return result;
+    }
+
+    @Override
+    public boolean shareVideo(VideoShare videoShare) {
+        final Video video = getById(videoShare.getVideoId());
+        if (video == null) throw new IllegalArgumentException("指定视频不存在");
+        final boolean result = videoShareService.share(videoShare);
+        updateShare(video,result ? 1L : 0L);
+        return result;
+    }
+
+    @Override
+    @Async
+    public void historyVideo(Long videoId,Long userId) {
+        String key = RedisConstant.HISTORY_VIDEO + videoId + ":" + userId;
+        final Object o = redisCacheUtil.get(key);
+        if (o == null){
+            redisCacheUtil.set(key,videoId,RedisConstant.HISTORY_TIME);
+            final Video video = getById(videoId);
+            video.setUserName(userService.getById(video.getUserId()).getNickName());
+            video.setTypeName(typeService.getById(video.getTypeId()).getName());
+            redisCacheUtil.zadd(RedisConstant.USER_HISTORY_VIDEO+userId,new Date().getTime(),video,RedisConstant.HISTORY_TIME);
+            updateHistory(video,1L);
+        }
+    }
+
+    @Override
+    public Collection<Video> getHistory() {
+
+        final Long userId = UserHolder.get();
+        String key = RedisConstant.USER_HISTORY_VIDEO + userId;
+        final Set videoIds = redisCacheUtil.zGet(key);
+        return videoIds;
+    }
+
 
     public void audit(Video video){
         submit(video);
@@ -182,7 +232,38 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
         });
     }
 
+    /**
+     * 点赞数
+     * @param video
+     */
+    public void updateStar(Video video,Long value){
+        final UpdateWrapper<Video> updateWrapper = new UpdateWrapper<>();
+        updateWrapper.setSql("start_count = start_count + " + value);
+        updateWrapper.lambda().eq(Video::getId,video.getId()).eq(Video::getStartCount,video.getStartCount());
+        update(video,updateWrapper);
+    }
 
+    /**
+     * 分享数
+     * @param video
+     */
+    public void updateShare(Video video,Long value){
+        final UpdateWrapper<Video> updateWrapper = new UpdateWrapper<>();
+        updateWrapper.setSql("share_count = share_count + " + value);
+        updateWrapper.lambda().eq(Video::getId,video.getId()).eq(Video::getShareCount,video.getShareCount());
+        update(video,updateWrapper);
+    }
+
+    /**
+     * 浏览量
+     * @param video
+     */
+    public void updateHistory(Video video,Long value){
+        final UpdateWrapper<Video> updateWrapper = new UpdateWrapper<>();
+        updateWrapper.setSql("history_count = history_count + " + value);
+        updateWrapper.lambda().eq(Video::getId,video.getId()).eq(Video::getHistoryCount,video.getHistoryCount());
+        update(video,updateWrapper);
+    }
 
     // 用于初始化线程
     @Override

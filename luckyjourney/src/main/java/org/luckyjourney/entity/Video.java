@@ -49,11 +49,20 @@ public class Video extends BaseEntity {
     // 审核快慢状态
     private Boolean auditStatus;
 
+    private Long startCount;
+
+    private Long shareCount;
+
+    private Long historyCount;
+
     /**
      * 视频分类id
      */
     @NotNull(message = "分类不能为空")
     private Long typeId;
+
+    @TableField(exist = false)
+    private String typeName;
 
     @TableField(exist = false)
     private String userName;

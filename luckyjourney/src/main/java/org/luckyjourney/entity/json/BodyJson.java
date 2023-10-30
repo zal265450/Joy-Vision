@@ -30,7 +30,7 @@ public class BodyJson {
         for (CutsJson cutsJson : types) {
             if (!ObjectUtils.isEmpty(cutsJson.details)){
                 for (DetailsJson detail : cutsJson.details) {
-                   if (!compare(min,max,detail.getScore())){
+                   if (compare(min,max,detail.getScore())){
                        return true;
                    }
                 }

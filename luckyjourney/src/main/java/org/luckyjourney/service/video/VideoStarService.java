@@ -17,16 +17,10 @@ public interface VideoStarService extends IService<VideoStar> {
 
     /**
      * 视频点赞
-     * @param videoId
+     * @param videoStar
      */
-    boolean starVideo(Long videoId);
+    boolean starVideo(VideoStar videoStar);
 
-    /**
-     * 视频点赞数
-     * @param videoId
-     * @return
-     */
-    long getStarCount(Long videoId);
 
     /**
      * 视频点赞用户

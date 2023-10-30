@@ -34,7 +34,7 @@ public interface InterestPushService {
     void initUserModel(Long userId, List<Long> typeIds);
 
     /**
-     * 用户刷视频更新概率
+     * 用户刷视频更新概率,如果flag == true 说明需要添加浏览量
      * @param userModel 模型
      */
     void updateUserModel(UserModel userModel);

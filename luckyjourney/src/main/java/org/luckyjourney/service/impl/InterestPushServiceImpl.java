@@ -74,6 +74,15 @@ public class InterestPushServiceImpl implements InterestPushService {
 
     }
 
+    /**
+     * todo
+     * 1.新增历史记录接口,将用户模型和历史记录拆分开
+     * 2.新增修改用户模型接口，可手动传入更新概率 -> 点赞,搜索
+     * 3.如用户无概率，则执行游客逻辑
+     * 4.热门视频 -> 当天视频浏览量
+     * @param userModel 模型
+     */
+
     @Override
     @Async
     public void updateUserModel(UserModel userModel) {
@@ -106,7 +115,7 @@ public class InterestPushServiceImpl implements InterestPushService {
                             }
                         });
                         connection.hMSet(key.getBytes(),byteMap);
-                        connection.set((historyVideoKey+userId).getBytes(),videoId.toString().getBytes());
+                        connection.set((historyVideoKey+videoId+":"+userId).getBytes(),videoId.toString().getBytes());
                     }
                     return null;
                 });
@@ -134,7 +143,7 @@ public class InterestPushServiceImpl implements InterestPushService {
                 int count = 0;
                 final long videoId = getVideoId(randomObject, probabilityArray);
                 // 查重
-                Object interestVideoId = redisCacheUtil.get(RedisConstant.HISTORY_VIDEO + videoId);
+                Object interestVideoId = redisCacheUtil.get(RedisConstant.HISTORY_VIDEO + videoId+":"+userId);
                 if (interestVideoId!=null){
                     // 尝试3次
                     while (count++ < 3){

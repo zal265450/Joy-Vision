@@ -56,6 +56,10 @@ public class RedisCacheUtil {
         return redisTemplate.opsForZSet().rangeWithScores(key, 0, -1);
     }
 
+    public Set zGet(String key){
+        return redisTemplate.opsForZSet().reverseRange(key,0,-1);
+    }
+
     public Set<Object> getZSetObject(String key) {
 
         return redisTemplate.opsForZSet().range(key, 0, -1);

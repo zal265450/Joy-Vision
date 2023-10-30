@@ -3,9 +3,10 @@ package org.luckyjourney.controller;
 import org.luckyjourney.entity.Video;
 import org.luckyjourney.entity.VideoShare;
 import org.luckyjourney.entity.vo.VideoVO;
+import org.luckyjourney.holder.UserHolder;
 import org.luckyjourney.service.video.TypeService;
 import org.luckyjourney.service.video.VideoService;
-import org.luckyjourney.service.video.VideoShareService;
+import org.luckyjourney.util.JwtUtils;
 import org.luckyjourney.util.R;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -19,7 +20,7 @@ import java.util.Collection;
  * @CreateTime: 2023-10-27 16:06
  */
 @RestController
-@RequestMapping("/index")
+@RequestMapping("/luckyjourney/index")
 public class IndexController {
 
 
@@ -28,9 +29,6 @@ public class IndexController {
 
     @Autowired
     private TypeService typeService;
-
-    @Autowired
-    private VideoShareService videoShareService;
 
     /**
      * 推送视频
@@ -45,9 +43,9 @@ public class IndexController {
      * 搜索视频
      * @return
      */
-    @GetMapping("/search/{title}")
-    public R searchVideo(@PathVariable String title){
-        Collection<Video> videos = videoService.searchVideo(title);
+    @GetMapping("/search")
+    public R searchVideo(@RequestParam(required = false) String searchName){
+        Collection<Video> videos = videoService.searchVideo(searchName);
         return R.ok().data(videos);
     }
 
@@ -87,9 +85,13 @@ public class IndexController {
         else
             ip = request.getHeader("x-forwarded-for");
         final VideoShare videoShare = new VideoShare();
+
         videoShare.setVideoId(videoId);
         videoShare.setIp(ip);
-        videoShareService.record(videoShare);
+        if (JwtUtils.checkToken(request)) {
+            videoShare.setUserId(JwtUtils.getUserId(request));
+        }
+        videoService.shareVideo(videoShare);
         return R.ok();
     }
 
@@ -101,8 +103,9 @@ public class IndexController {
     @GetMapping("/video/{id}")
     public R getVideoById(@PathVariable Long id){
 
-        VideoVO videoVO = videoService.getVideoById(id);
-        return R.ok().data(videoVO);
+        return R.ok().data(videoService.getVideoById(id));
     }
+
+
 
 }

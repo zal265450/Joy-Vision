@@ -2,6 +2,7 @@ package org.luckyjourney.service.video;
 
 import org.luckyjourney.entity.Video;
 import com.baomidou.mybatisplus.extension.service.IService;
+import org.luckyjourney.entity.VideoShare;
 import org.luckyjourney.entity.vo.VideoVO;
 import org.luckyjourney.util.R;
 
@@ -23,7 +24,7 @@ public interface VideoService extends IService<Video> {
      * @param id
      * @return
      */
-    VideoVO getVideoById(Long id);
+    Video getVideoById(Long id);
 
     /**
      * 发布/修改视频
@@ -63,4 +64,30 @@ public interface VideoService extends IService<Video> {
      * @param video
      */
     void auditProcess(Video video);
+
+    /**
+     * 视频点赞
+     * @param videoId
+     * @return
+     */
+    boolean startVideo(Long videoId);
+
+    /**
+     * 分享视频
+     * @param videoShare
+     * @return
+     */
+    boolean shareVideo(VideoShare videoShare);
+
+    /**
+     * 添加历史记录
+     * @param videoId
+     */
+    void historyVideo(Long videoId,Long userId);
+
+    /**
+     * 获取当前用户浏览记录
+     * @return
+     */
+    Collection<Video> getHistory();
 }

@@ -5,6 +5,7 @@ import org.luckyjourney.entity.Video;
 import org.luckyjourney.entity.VideoStar;
 import org.luckyjourney.holder.UserHolder;
 import org.luckyjourney.mapper.video.VideoStarMapper;
+import org.luckyjourney.service.InterestPushService;
 import org.luckyjourney.service.video.VideoService;
 import org.luckyjourney.service.video.VideoStarService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -27,33 +28,20 @@ import java.util.stream.Collectors;
 public class VideoStarServiceImpl extends ServiceImpl<VideoStarMapper, VideoStar> implements VideoStarService {
 
 
-    @Autowired
-    @Lazy
-    private VideoService videoService;
-
     @Override
-    public boolean starVideo(Long videoId) {
-        final VideoStar videoStar = new VideoStar();
-        videoStar.setVideoId(videoId);
-        final Long userId = UserHolder.get();
-        videoStar.setUserId(userId);
+    public boolean starVideo(VideoStar videoStar) {
         try {
-            // 对应视频是否存在
-            final Video video = videoService.getById(videoId);
-            if (video == null) throw new IllegalArgumentException("对应视频不存在");
+            // 添加概率
             this.save(videoStar);
         }catch (Exception e){
             // 存在则取消点赞
-            this.remove(new LambdaQueryWrapper<VideoStar>().eq(VideoStar::getVideoId,videoId).eq(VideoStar::getUserId,userId));
+            this.remove(new LambdaQueryWrapper<VideoStar>().eq(VideoStar::getVideoId,videoStar.getVideoId()).eq(VideoStar::getUserId,videoStar.getUserId()));
             return false;
         }
         return true;
     }
 
-    @Override
-    public long getStarCount(Long videoId) {
-        return this.count(new LambdaQueryWrapper<VideoStar>().eq(VideoStar::getVideoId,videoId));
-    }
+
 
     @Override
     public List<Long> getStarUserIds(Long videoId) {
