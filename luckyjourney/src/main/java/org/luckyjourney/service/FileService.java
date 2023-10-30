@@ -3,6 +3,9 @@ package org.luckyjourney.service;
 import org.luckyjourney.util.R;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.InputStream;
+
 /**
  * @author xhy
  */
@@ -15,5 +18,10 @@ public interface FileService {
      */
     String getToken();
 
+    /**
+     * 上传文件
+     * @param file
+     */
+    void uploadFile(File file);
 
 }

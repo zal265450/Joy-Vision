@@ -74,6 +74,15 @@ public class InterestPushServiceImpl implements InterestPushService {
 
     }
 
+    /**
+     * todo
+     * 1.新增历史记录接口,将用户模型和历史记录拆分开
+     * 2.新增修改用户模型接口，可手动传入更新概率 -> 点赞,搜索
+     * 3.如用户无概率，则执行游客逻辑
+     * 4.热门视频 -> 当天视频浏览量
+     * @param userModel 模型
+     */
+
     @Override
     @Async
     public void updateUserModel(UserModel userModel) {

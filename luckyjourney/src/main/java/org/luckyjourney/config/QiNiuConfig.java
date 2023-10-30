@@ -1,6 +1,7 @@
 package org.luckyjourney.config;
 
 import com.qiniu.util.Auth;
+import com.qiniu.util.StringMap;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
@@ -31,6 +32,12 @@ public class QiNiuConfig {
         String accessKey = this.getAccessKey();
         String secretKey = this.getSecretKey();
         return Auth.create(accessKey, secretKey);
+    }
+
+    public String uploadToken(){
+        final Auth auth = buildAuth();
+        return auth.uploadToken(bucketName,null,3600,new
+                StringMap().put("mimeLimit","video/*"));
     }
 
     public String getToken(String url,String method,String body,String contentType){

@@ -5,6 +5,7 @@ import org.luckyjourney.entity.Video;
 import org.luckyjourney.entity.VideoStar;
 import org.luckyjourney.holder.UserHolder;
 import org.luckyjourney.mapper.video.VideoStarMapper;
+import org.luckyjourney.service.InterestPushService;
 import org.luckyjourney.service.video.VideoService;
 import org.luckyjourney.service.video.VideoStarService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -31,6 +32,9 @@ public class VideoStarServiceImpl extends ServiceImpl<VideoStarMapper, VideoStar
     @Lazy
     private VideoService videoService;
 
+    @Autowired
+    private InterestPushService interestPushService;
+
     @Override
     public boolean starVideo(Long videoId) {
         final VideoStar videoStar = new VideoStar();
@@ -41,6 +45,7 @@ public class VideoStarServiceImpl extends ServiceImpl<VideoStarMapper, VideoStar
             // 对应视频是否存在
             final Video video = videoService.getById(videoId);
             if (video == null) throw new IllegalArgumentException("对应视频不存在");
+            // 添加概率
             this.save(videoStar);
         }catch (Exception e){
             // 存在则取消点赞

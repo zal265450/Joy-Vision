@@ -155,6 +155,7 @@ public class VideoAuditServiceImpl implements AuditService {
 
         AuditResponse auditResponse = new AuditResponse();
         auditResponse.setFlag(true);
+        auditResponse.setAuditStatus(scoreJson.getAuditStatus());
 
         final Double minPolitician = scoreJson.getMinPolitician();
         final Double maxPolitician = scoreJson.getMaxPolitician();
@@ -169,7 +170,7 @@ public class VideoAuditServiceImpl implements AuditService {
                 final AuditResponse response = getInfo(bodyJson.getPolitician(), minPolitician, "group");
                 auditResponse.setMsg(response.getMsg());
                 auditResponse.setOffset(response.getOffset());
-                if (!auditResponse.getMsg().equals("正常")){
+                if (response.getFlag()) {
                     return auditResponse;
                 }
             }
@@ -179,7 +180,7 @@ public class VideoAuditServiceImpl implements AuditService {
                 final AuditResponse response = getInfo(bodyJson.getPulp(), minPulp, "normal");
                 auditResponse.setMsg(response.getMsg() + "\n" + auditResponse.getMsg());
                 auditResponse.setOffset(response.getOffset());
-                if (!auditResponse.getMsg().equals("正常")){
+                if (response.getFlag()) {
                     return auditResponse;
                 }
             }
@@ -189,7 +190,7 @@ public class VideoAuditServiceImpl implements AuditService {
                 final AuditResponse response = getInfo(bodyJson.getTerror(), minTerror, "normal");
                 auditResponse.setMsg(response.getMsg() + "\n" + auditResponse.getMsg());
                 auditResponse.setOffset(response.getOffset());
-                if (!auditResponse.getMsg().equals("正常")){
+                if (response.getFlag()) {
                     return auditResponse;
                 }
             }
@@ -218,12 +219,11 @@ public class VideoAuditServiceImpl implements AuditService {
                         info = AuditMsgMap.getInfo(detail.getLabel());
                         auditResponse.setMsg(info);
                         auditResponse.setOffset(type.getOffset());
+                        auditResponse.setFlag(true);
                     }
                 }
             }
         }
-
-
         return auditResponse;
     }
 

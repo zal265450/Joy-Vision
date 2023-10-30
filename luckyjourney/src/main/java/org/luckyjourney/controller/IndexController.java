@@ -45,9 +45,9 @@ public class IndexController {
      * 搜索视频
      * @return
      */
-    @GetMapping("/search/{title}")
-    public R searchVideo(@PathVariable String title){
-        Collection<Video> videos = videoService.searchVideo(title);
+    @GetMapping("/search")
+    public R searchVideo(@RequestParam(required = false) String searchName){
+        Collection<Video> videos = videoService.searchVideo(searchName);
         return R.ok().data(videos);
     }
 
