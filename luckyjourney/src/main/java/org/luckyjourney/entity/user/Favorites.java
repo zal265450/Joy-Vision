@@ -2,17 +2,12 @@ package org.luckyjourney.entity.user;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import java.util.Date;
-
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import java.io.Serializable;
-import java.util.Set;
-
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.luckyjourney.entity.BaseEntity;
 
-import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 
 /**
@@ -21,32 +16,21 @@ import javax.validation.constraints.NotBlank;
  * </p>
  *
  * @author xhy
- * @since 2023-10-24
+ * @since 2023-10-30
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
-public class User extends BaseEntity {
+public class Favorites extends BaseEntity {
 
     private static final long serialVersionUID = 1L;
 
-    private String nickName;
+    @TableId(value = "id", type = IdType.AUTO)
+    private Long id;
 
-    @Email
-    private String email;
-
-    @NotBlank(message = "密码不能为空")
-    private String password;
+    @NotBlank(message = "得给你的收藏夹取个名字吧?")
+    private String name;
 
     private String description;
 
-    // true 为男，false为女
-    private Boolean sex;
-
-    // 用户默认收藏夹id
-    private Long defaultFavoritesId;
-
-
-    @TableField(exist = false)
-    private Set<String> roleName;
-
+    private Long userId;
 }

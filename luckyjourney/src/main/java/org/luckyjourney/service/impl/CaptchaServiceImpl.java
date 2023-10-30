@@ -3,12 +3,14 @@ package org.luckyjourney.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.google.code.kaptcha.Producer;
+import org.luckyjourney.constant.RedisConstant;
 import org.luckyjourney.entity.Captcha;
 import org.luckyjourney.mapper.CaptchaMapper;
 import org.luckyjourney.service.CaptchaService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.luckyjourney.service.EmailService;
 import org.luckyjourney.util.DateUtil;
+import org.luckyjourney.util.RedisCacheUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -37,6 +39,9 @@ public class CaptchaServiceImpl extends ServiceImpl<CaptchaMapper, Captcha> impl
     @Autowired
     private EmailService emailService;
 
+    @Autowired
+    private RedisCacheUtil redisCacheUtil;
+
     @Override
     public BufferedImage getCaptcha(String uuId) {
         String code = this.producer.createText();
@@ -60,6 +65,7 @@ public class CaptchaServiceImpl extends ServiceImpl<CaptchaMapper, Captcha> impl
             return true;
         }
         String code = getSixCode();
+        redisCacheUtil.set(RedisConstant.EMAIL_CODE+code,code,RedisConstant.EMAIL_CODE_TIME);
         emailService.send(email,"注册验证码:"+code+",验证码5分钟之内有效");
         return false;
     }

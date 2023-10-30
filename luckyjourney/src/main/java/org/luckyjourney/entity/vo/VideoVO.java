@@ -1,7 +1,7 @@
 package org.luckyjourney.entity.vo;
 
 import lombok.Data;
-import org.luckyjourney.entity.Video;
+import org.luckyjourney.entity.video.Video;
 
 /**
  * @description:

@@ -18,4 +18,9 @@ public interface RedisConstant {
     String SYSTEM_STOCK = "system:stock:";
 
     Long HISTORY_TIME = 432000L;
+
+    Long EMAIL_CODE_TIME = 300L;
+
+    String EMAIL_CODE = "email:code:";
+
 }

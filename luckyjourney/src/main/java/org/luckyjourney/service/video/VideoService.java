@@ -1,13 +1,10 @@
 package org.luckyjourney.service.video;
 
-import org.luckyjourney.entity.Video;
+import org.luckyjourney.entity.video.Video;
 import com.baomidou.mybatisplus.extension.service.IService;
-import org.luckyjourney.entity.VideoShare;
-import org.luckyjourney.entity.vo.VideoVO;
-import org.luckyjourney.util.R;
+import org.luckyjourney.entity.video.VideoShare;
 
 import java.util.Collection;
-import java.util.List;
 
 /**
  * <p>
@@ -90,4 +87,6 @@ public interface VideoService extends IService<Video> {
      * @return
      */
     Collection<Video> getHistory();
+
+    Collection<Video> listVideoByFavorites(Long favoritesId);
 }

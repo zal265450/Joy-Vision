@@ -3,8 +3,8 @@ package org.luckyjourney.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.luckyjourney.constant.RedisConstant;
-import org.luckyjourney.entity.Type;
-import org.luckyjourney.entity.Video;
+import org.luckyjourney.entity.video.Type;
+import org.luckyjourney.entity.video.Video;
 import org.luckyjourney.entity.user.User;
 import org.luckyjourney.entity.vo.Model;
 import org.luckyjourney.entity.vo.UserModel;
@@ -48,7 +48,6 @@ public class InterestPushServiceImpl implements InterestPushService {
 
     @Override
     public void deleteSystemStockIn(Video video) {
-        // 往系统库中添加
         final Long typeId = video.getTypeId();
         final Long videoId = video.getId();
         redisCacheUtil.setRemove(RedisConstant.SYSTEM_STOCK+typeId,videoId);

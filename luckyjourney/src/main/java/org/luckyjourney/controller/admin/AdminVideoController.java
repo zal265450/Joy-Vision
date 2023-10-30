@@ -3,7 +3,7 @@ package org.luckyjourney.controller.admin;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import org.luckyjourney.authority.Authority;
-import org.luckyjourney.entity.Video;
+import org.luckyjourney.entity.video.Video;
 import org.luckyjourney.entity.user.User;
 import org.luckyjourney.entity.vo.BasePage;
 import org.luckyjourney.service.user.UserService;

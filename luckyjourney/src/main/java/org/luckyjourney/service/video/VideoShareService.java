@@ -1,6 +1,6 @@
 package org.luckyjourney.service.video;
 
-import org.luckyjourney.entity.VideoShare;
+import org.luckyjourney.entity.video.VideoShare;
 import com.baomidou.mybatisplus.extension.service.IService;
 
 import java.util.List;

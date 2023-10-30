@@ -1,8 +1,7 @@
 package org.luckyjourney.service.video.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import org.luckyjourney.entity.VideoShare;
-import org.luckyjourney.holder.UserHolder;
+import org.luckyjourney.entity.video.VideoShare;
 import org.luckyjourney.mapper.video.VideoShareMapper;
 import org.luckyjourney.service.video.VideoShareService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
