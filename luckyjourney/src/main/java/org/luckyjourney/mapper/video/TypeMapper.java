@@ -1,6 +1,6 @@
 package org.luckyjourney.mapper.video;
 
-import org.luckyjourney.entity.Type;
+import org.luckyjourney.entity.video.Type;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 /**

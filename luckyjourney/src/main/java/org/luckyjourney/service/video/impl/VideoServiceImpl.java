@@ -4,28 +4,27 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import org.luckyjourney.constant.AuditStatus;
 import org.luckyjourney.constant.RedisConstant;
-import org.luckyjourney.entity.Type;
-import org.luckyjourney.entity.Video;
-import org.luckyjourney.entity.VideoShare;
-import org.luckyjourney.entity.VideoStar;
+import org.luckyjourney.entity.video.Type;
+import org.luckyjourney.entity.video.Video;
+import org.luckyjourney.entity.video.VideoShare;
+import org.luckyjourney.entity.video.VideoStar;
 import org.luckyjourney.entity.response.AuditResponse;
 import org.luckyjourney.entity.user.User;
-import org.luckyjourney.entity.vo.VideoVO;
 import org.luckyjourney.holder.UserHolder;
 import org.luckyjourney.mapper.video.VideoMapper;
 import org.luckyjourney.service.AuditService;
 import org.luckyjourney.service.FileService;
 import org.luckyjourney.service.InterestPushService;
 import org.luckyjourney.service.poll.VideoAuditThreadPoll;
+import org.luckyjourney.service.user.FavoritesService;
 import org.luckyjourney.service.user.UserService;
 import org.luckyjourney.service.video.*;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.luckyjourney.util.RedisCacheUtil;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ObjectUtils;
 
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -67,6 +66,8 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
     @Autowired
     private FileService fileService;
 
+    @Autowired
+    private FavoritesService favoritesService;
 
     ThreadPoolExecutor executor;
 
@@ -216,6 +217,15 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
         String key = RedisConstant.USER_HISTORY_VIDEO + userId;
         final Set videoIds = redisCacheUtil.zGet(key);
         return videoIds;
+    }
+
+    @Override
+    public Collection<Video> listVideoByFavorites(Long favoritesId) {
+        final List<Long> videoIds = favoritesService.listVideoIds(favoritesId, UserHolder.get());
+        if (ObjectUtils.isEmpty(videoIds)){
+            return Collections.EMPTY_LIST;
+        }
+        return listByIds(videoIds);
     }
 
 

@@ -1,7 +1,7 @@
 package org.luckyjourney.controller;
 
 
-import org.luckyjourney.entity.Video;
+import org.luckyjourney.entity.video.Video;
 import org.luckyjourney.holder.UserHolder;
 import org.luckyjourney.service.FileService;
 import org.luckyjourney.service.video.VideoService;
@@ -29,6 +29,13 @@ public class VideoController {
     @Autowired
     private FileService fileService;
 
+
+
+
+    /**
+     * 获取文件上传token
+     * @return
+     */
     @GetMapping("/token")
     public R getToken(){
         final String token = fileService.getToken();
@@ -78,10 +85,22 @@ public class VideoController {
         return R.ok();
     }
 
+    /**
+     * 添加浏览记录
+     * @return
+     */
     @GetMapping("/history")
     public R getHistory(){
-
         return R.ok().data(videoService.getHistory());
     }
+
+    /**
+     * 获取收藏夹下的视频
+     */
+    @GetMapping("/favorites/{favoritesId}")
+    public R listVideoByFavorites(@PathVariable Long favoritesId){
+        return R.ok().data(videoService.listVideoByFavorites(favoritesId));
+    }
+
 }
 

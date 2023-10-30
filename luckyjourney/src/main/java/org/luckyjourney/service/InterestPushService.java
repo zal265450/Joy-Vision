@@ -1,6 +1,6 @@
 package org.luckyjourney.service;
 
-import org.luckyjourney.entity.Video;
+import org.luckyjourney.entity.video.Video;
 import org.luckyjourney.entity.user.User;
 import org.luckyjourney.entity.vo.UserModel;
 

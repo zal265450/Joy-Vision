@@ -1,16 +1,10 @@
 package org.luckyjourney.service.video.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import org.luckyjourney.entity.Video;
-import org.luckyjourney.entity.VideoStar;
-import org.luckyjourney.holder.UserHolder;
+import org.luckyjourney.entity.video.VideoStar;
 import org.luckyjourney.mapper.video.VideoStarMapper;
-import org.luckyjourney.service.InterestPushService;
-import org.luckyjourney.service.video.VideoService;
 import org.luckyjourney.service.video.VideoStarService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

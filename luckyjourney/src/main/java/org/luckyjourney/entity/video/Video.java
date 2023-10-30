@@ -1,8 +1,9 @@
-package org.luckyjourney.entity;
+package org.luckyjourney.entity.video;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.luckyjourney.entity.BaseEntity;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;

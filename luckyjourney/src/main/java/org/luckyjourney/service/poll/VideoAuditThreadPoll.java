@@ -1,6 +1,6 @@
 package org.luckyjourney.service.poll;
 
-import org.luckyjourney.entity.Video;
+import org.luckyjourney.entity.video.Video;
 
 /**
  * @description: 视频审核线程池

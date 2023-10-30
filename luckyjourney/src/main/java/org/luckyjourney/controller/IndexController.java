@@ -1,9 +1,7 @@
 package org.luckyjourney.controller;
 
-import org.luckyjourney.entity.Video;
-import org.luckyjourney.entity.VideoShare;
-import org.luckyjourney.entity.vo.VideoVO;
-import org.luckyjourney.holder.UserHolder;
+import org.luckyjourney.entity.video.Video;
+import org.luckyjourney.entity.video.VideoShare;
 import org.luckyjourney.service.video.TypeService;
 import org.luckyjourney.service.video.VideoService;
 import org.luckyjourney.util.JwtUtils;
