@@ -76,15 +76,18 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
     ThreadPoolExecutor executor;
 
     @Override
-    public Video getVideoById(Long videoId) {
+    public Video getVideoById(Long videoId)   {
         final Video video = this.getOne(new LambdaQueryWrapper<Video>().eq(Video::getId, videoId));
         if (video == null) throw new IllegalArgumentException("指定视频不存在");
-        video.setUserName(userService.getById(video.getUserId()).getNickName());
+        video.setUser(userService.getInfo(video.getUserId()));
+        video.setUrl(QiNiuConfig.CNAME+"/"+video.getUrl());
         return video;
     }
 
     @Override
     public void publishVideo(Video video) {
+
+        UserHolder.set(1L);
         final Long userId = UserHolder.get();
 
         // 不允许修改视频
@@ -100,7 +103,12 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
         if (type == null){
             throw new IllegalArgumentException("分类不存在");
         }
-        video.setYV("YV"+UUID.randomUUID().toString().substring(8));
+        // 校验标签最多不能超过5个
+        if (video.getLabels().size() > 5){
+            throw new IllegalArgumentException("标签最多只能选择5个");
+        }
+
+        video.setYV("YV"+UUID.randomUUID().toString().replace("-","").substring(8));
         // 修改状态
         video.setStatus(AuditStatus.PROCESS);
         video.setUserId(userId);
@@ -201,13 +209,13 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
 
     @Override
     @Async
-    public void historyVideo(Long videoId,Long userId) {
+    public void historyVideo(Long videoId,Long userId)   {
         String key = RedisConstant.HISTORY_VIDEO + videoId + ":" + userId;
         final Object o = redisCacheUtil.get(key);
         if (o == null){
             redisCacheUtil.set(key,videoId,RedisConstant.HISTORY_TIME);
             final Video video = getById(videoId);
-            video.setUserName(userService.getById(video.getUserId()).getNickName());
+            video.setUser(userService.getInfo(video.getUserId()));
             video.setTypeName(typeService.getById(video.getTypeId()).getName());
             redisCacheUtil.zadd(RedisConstant.USER_HISTORY_VIDEO+userId,new Date().getTime(),video,RedisConstant.HISTORY_TIME);
             updateHistory(video,1L);

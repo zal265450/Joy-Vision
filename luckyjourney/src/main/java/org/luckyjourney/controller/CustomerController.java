@@ -42,7 +42,7 @@ public class CustomerController {
      * @throws Exception
      */
     @GetMapping("/getInfo/{userId}")
-    public R getInfo(@PathVariable Long userId) throws Exception {
+    public R getInfo(@PathVariable Long userId){
         return R.ok().data(userService.getInfo(userId));
     }
 

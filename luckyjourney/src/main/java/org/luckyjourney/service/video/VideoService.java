@@ -24,7 +24,7 @@ public interface VideoService extends IService<Video> {
      * @param id
      * @return
      */
-    Video getVideoById(Long id);
+    Video getVideoById(Long id)  ;
 
     /**
      * 发布/修改视频
@@ -83,7 +83,7 @@ public interface VideoService extends IService<Video> {
      * 添加历史记录
      * @param videoId
      */
-    void historyVideo(Long videoId,Long userId);
+    void historyVideo(Long videoId,Long userId) throws Exception;
 
     /**
      * 获取当前用户浏览记录

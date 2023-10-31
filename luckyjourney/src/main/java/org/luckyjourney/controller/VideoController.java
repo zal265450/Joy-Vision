@@ -77,7 +77,7 @@ public class VideoController {
      * @return
      */
     @PostMapping("/history/{id}")
-    public R addHistory(@PathVariable Long id){
+    public R addHistory(@PathVariable Long id) throws Exception {
         videoService.historyVideo(id, UserHolder.get());
         return R.ok();
     }

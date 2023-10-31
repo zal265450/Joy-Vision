@@ -32,7 +32,7 @@ public interface UserService extends IService<User> {
      * @param userId 用户id
      * @return
      */
-    UserVO getInfo(Long userId) throws Exception;
+    UserVO getInfo(Long userId);
 
     /**
      * 填写用户模型

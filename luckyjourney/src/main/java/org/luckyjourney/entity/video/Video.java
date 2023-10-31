@@ -4,9 +4,13 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.luckyjourney.entity.BaseEntity;
+import org.luckyjourney.entity.user.User;
+import org.luckyjourney.entity.vo.UserVO;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * <p>
@@ -47,26 +51,36 @@ public class Video extends BaseEntity {
     // 审核状态的消息，当前嵌套在这里，应该有一个审核表?
     private String msg;
 
-    // 审核快慢状态
+    // 审核快慢状态 0 慢速  1快速
     private Boolean auditStatus;
 
+    // 点赞数
     private Long startCount;
 
+    // 分享数
     private Long shareCount;
 
+    // 浏览次数
     private Long historyCount;
 
+    // 收藏次数
     private Long favoritesCount;
-    /**
-     * 视频分类id
-     */
+
+    @NotBlank(message = "给个标签吧,不然没人看到你的视频")
+    private String labelNames;
+
+
     @NotNull(message = "分类不能为空")
     private Long typeId;
 
     @TableField(exist = false)
-    private String typeName;
+    private UserVO user;
 
     @TableField(exist = false)
-    private String userName;
+    private String typeName;
+
+    public List<String> getLabels(){
+        return Arrays.asList(this.labelNames.split(","));
+    }
 }
 

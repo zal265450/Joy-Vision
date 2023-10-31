@@ -29,13 +29,17 @@ public interface InterestPushService {
     /**
      * 用户初始化模型
      * @param userId 用户id
-     * @param typeIds 分类id
+     * @param labels 分类id
      */
-    void initUserModel(Long userId, List<Long> typeIds);
+    void initUserModel(Long userId, List<Long> labels);
 
     /**
-     * 用户刷视频更新概率,如果flag == true 说明需要添加浏览量
-     * @param userModel 模型
+     * 用户模型修改概率 : 可分批次发送
+     * 修改场景:
+     * 1.观看浏览量到达总时长1/5  +1概率
+     * 2.观看浏览量未到总时长1/5 -0.5概率
+     * 3.点赞视频  +2概率
+     * 4.收藏视频  +3概率
      */
     void updateUserModel(UserModel userModel);
 

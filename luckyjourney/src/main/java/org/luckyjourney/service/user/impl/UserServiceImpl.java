@@ -81,15 +81,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     @Override
-    public UserVO getInfo(Long userId) throws Exception {
+    public UserVO getInfo(Long userId){
 
         final User user = getById(userId);
         if (ObjectUtils.isEmpty(user)){
-            throw new Exception("userId 为空");
+            return new UserVO();
         }
         final UserVO userVO = new UserVO();
         BeanUtils.copyProperties(user,userVO);
-        userVO.setPassword("");
 
         // 查出关注数量
         final long followCount = followService.getFollowCount(userId);

@@ -99,7 +99,7 @@ public class IndexController {
      * @return
      */
     @GetMapping("/video/{id}")
-    public R getVideoById(@PathVariable Long id){
+    public R getVideoById(@PathVariable Long id) throws Exception {
 
         return R.ok().data(videoService.getVideoById(id));
     }

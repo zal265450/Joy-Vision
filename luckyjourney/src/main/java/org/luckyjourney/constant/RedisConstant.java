@@ -7,7 +7,7 @@ package org.luckyjourney.constant;
  */
 public interface RedisConstant {
 
-    String MODEL = "model:";
+    String USER_MODEL = "user:model:";
 
     // 用于兴趣推送时去重
     String HISTORY_VIDEO = "history:video:";
@@ -17,11 +17,13 @@ public interface RedisConstant {
 
     String SYSTEM_STOCK = "system:stock:";
 
+    String EMAIL_CODE = "email:code:";
+
+    String HOT_RANK = "hot:rank";
+
     Long HISTORY_TIME = 432000L;
 
     Long EMAIL_CODE_TIME = 300L;
 
-    String EMAIL_CODE = "email:code:";
 
-    String HOT_RANK = "hot:rank";
 }
