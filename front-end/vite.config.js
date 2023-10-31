@@ -12,7 +12,14 @@ export default defineConfig({
     }
   },
   server: {
-    port: 5378
+    port: 5378,
+    proxy: {
+      '/api': {
+        target: 'http://101.35.228.84:8882/luckyjourney',
+        rewrite: (path) => path.replace(/^\/api/, ""),
+        changeOrigin: true
+      }
+    }
   },
   rules: [
     {

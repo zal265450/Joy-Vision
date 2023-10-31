@@ -14,17 +14,20 @@
                                 <VCardSubtitle>拖到此处可上传</VCardSubtitle>
                             </VListItem>
                             <VListItem>
-                                <VBtn>上传视频</VBtn>
+                                <VBtn @click="videoFileRef.click()">上传视频</VBtn>
                             </VListItem>
                             <VListItem>
-
                                 <v-chip class="ma-2 font-weight-bold" color="green" label>
                                     <v-icon start :icon="'mdi-file-cloud-outline'"></v-icon>
                                     审核队列: 快速
                                 </v-chip>
                             </VListItem>
                         </VList>
-
+                        <div style="display: none;">
+                            <form>
+                                <input v-on:change="uploadVideo" ref="videoFileRef" type="file"/>
+                            </form>
+                        </div>
                     </VCard>
                 </VCol>
                 <VCol cols="6">
@@ -105,6 +108,7 @@
 </template>
 <script setup>
 import { ref } from 'vue';
+import { apiVideoUpload } from '../../apis/video';
 const knowledge = ref(30)
 const items = ref([
     {
@@ -124,4 +128,16 @@ const items = ref([
         category: '存储',
     }
 ])
+
+const videoFileRef = ref()
+const uploadVideo = ()=>{
+    console.log(videoFileRef.value.value)
+    apiVideoUpload(videoFileRef.value.value, (e)=>{
+      console.log("进度:"+e)  
+    },(e)=>{
+        console.log("失败:"+e)
+    },(e)=>{
+        console.log("成功:"+e)
+    })
+}
 </script>
