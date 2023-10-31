@@ -26,15 +26,9 @@ public class FileServiceImpl implements FileService {
     @Autowired
     private QiNiuConfig qiNiuConfig;
 
-    String yuming = "s36d82b8z.hn-bkt.clouddn.com";
-
     @Override
     public String getToken() {
-
-        final Auth auth = qiNiuConfig.buildAuth();
-        String bucket = qiNiuConfig.getBucketName();
-        String upToken = auth.uploadToken(bucket);
-        return upToken;
+        return qiNiuConfig.uploadToken();
     }
 
     @Override

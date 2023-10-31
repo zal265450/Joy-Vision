@@ -56,6 +56,7 @@ public class Video extends BaseEntity {
 
     private Long historyCount;
 
+    private Long favoritesCount;
     /**
      * 视频分类id
      */

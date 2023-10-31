@@ -26,7 +26,7 @@ public class Type extends BaseEntity {
 
     private String description;
 
-    private String icon; // todo 加到表中
+    private String icon;
 
     private Boolean open;
 

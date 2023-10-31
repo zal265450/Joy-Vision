@@ -2,6 +2,7 @@ package org.luckyjourney.service.video.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
+import org.luckyjourney.config.QiNiuConfig;
 import org.luckyjourney.constant.AuditStatus;
 import org.luckyjourney.constant.RedisConstant;
 import org.luckyjourney.entity.video.Type;
@@ -243,23 +244,22 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
         return hotVideos;
     }
 
+    @Override
+    public boolean favorites(Long fId, Long vId) {
+        final Video video = getById(vId);
+        if (video == null){
+            throw new IllegalArgumentException("指定视频不存在");
+        }
+        final boolean favorites = favoritesService.favorites(fId, vId);
+        updateFavorites(video, favorites ? 1L : -1L);
+        return favorites;
+    }
+
 
     public void audit(Video video){
         submit(video);
     }
 
-    @Override
-    public void submit(Video video) {
-        executor.submit(()->{
-            final AuditResponse auditResponse = auditService.audit(video.getUrl(), video.getAuditStatus());
-            System.out.println(auditResponse);
-            video.setStatus(auditResponse.getAuditStatus());
-            if (auditResponse.getAuditStatus() == AuditStatus.SUCCESS) {
-                interestPushService.pushSystemStockIn(video);
-            }
-            updateById(video);
-        });
-    }
 
     /**
      * 点赞数
@@ -293,6 +293,37 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
         updateWrapper.lambda().eq(Video::getId,video.getId()).eq(Video::getHistoryCount,video.getHistoryCount());
         update(video,updateWrapper);
     }
+
+    public void updateFavorites(Video video,Long value){
+        final UpdateWrapper<Video> updateWrapper = new UpdateWrapper<>();
+        updateWrapper.setSql("favorites_count = favorites_count + " + value);
+        updateWrapper.lambda().eq(Video::getId,video.getId()).eq(Video::getFavoritesCount,video.getFavoritesCount());
+        update(video,updateWrapper);
+    }
+
+
+
+    @Override
+    public void submit(Video video) {
+        executor.submit(()->{
+            // 审核视频
+            final AuditResponse videoAuditResponse = auditService.audit(QiNiuConfig.CNAME+"/"+video.getUrl(), video.getAuditStatus());
+            //审核封面
+            final AuditResponse coverAuditResponse = auditService.audit(video.getCover(), video.getAuditStatus());
+            final Integer videoAuditStatus = videoAuditResponse.getAuditStatus();
+            final Integer coverAuditStatus = coverAuditResponse.getAuditStatus();
+            boolean f1 = videoAuditStatus == AuditStatus.SUCCESS;
+            boolean f2 = coverAuditStatus == AuditStatus.SUCCESS;
+            if (f1 && f2) {
+                video.setMsg("通过");
+                interestPushService.pushSystemStockIn(video);
+            }else {
+                video.setMsg(f1 ? coverAuditResponse.getMsg() : videoAuditResponse.getMsg());
+            }
+            updateById(video);
+        });
+    }
+
 
     // 用于初始化线程
     @Override

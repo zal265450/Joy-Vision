@@ -94,4 +94,6 @@ public interface VideoService extends IService<Video> {
     Collection<Video> listVideoByFavorites(Long favoritesId);
 
     List<HotVideo> hotRank();
+
+    boolean favorites(Long fId, Long vId);
 }

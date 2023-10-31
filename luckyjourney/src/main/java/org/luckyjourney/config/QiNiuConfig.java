@@ -31,6 +31,8 @@ public class QiNiuConfig {
      */
     private String bucketName;
 
+    public static final String CNAME = "oss.luckjourney.liuscraft.top";
+
     public Auth buildAuth(){
         String accessKey = this.getAccessKey();
         String secretKey = this.getSecretKey();
@@ -39,11 +41,7 @@ public class QiNiuConfig {
 
     public String uploadToken(){
         final Auth auth = buildAuth();
-        UserHolder.set(10);
-        final Long userId = UserHolder.get();
-        // 文件隔离
-        String key = userId+"/"+ UUID.randomUUID().toString();
-        return auth.uploadToken(bucketName,key,3600,new
+        return auth.uploadToken(bucketName,null,3600,new
                 StringMap().put("mimeLimit","video/*"));
     }
 

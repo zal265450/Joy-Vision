@@ -29,9 +29,6 @@ public class VideoController {
     @Autowired
     private FileService fileService;
 
-
-
-
     /**
      * 获取文件上传token
      * @return
@@ -100,6 +97,18 @@ public class VideoController {
     @GetMapping("/favorites/{favoritesId}")
     public R listVideoByFavorites(@PathVariable Long favoritesId){
         return R.ok().data(videoService.listVideoByFavorites(favoritesId));
+    }
+
+    /**
+     * 收藏视频
+     * @param fId
+     * @param vId
+     * @return
+     */
+    @PostMapping("/favorites/{fId}/{vId}")
+    public R favoritesVideo(@PathVariable Long fId,@PathVariable Long vId){
+        String msg = videoService.favorites(fId,vId) ? "已收藏" : "取消收藏";
+        return R.ok().message(msg);
     }
 
 }

@@ -13,6 +13,7 @@ import org.luckyjourney.service.video.TypeService;
 import org.luckyjourney.util.RedisCacheUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.connection.RedisStringCommands;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.types.Expiration;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -36,6 +37,10 @@ public class InterestPushServiceImpl implements InterestPushService {
 
     @Autowired
     private TypeService typeService;
+
+    @Autowired
+    private RedisTemplate redisTemplate;
+
 
     final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -80,7 +85,6 @@ public class InterestPushServiceImpl implements InterestPushService {
      * 1.新增历史记录接口,将用户模型和历史记录拆分开
      * 2.新增修改用户模型接口，可手动传入更新概率 -> 点赞,搜索
      * 3.如用户无概率，则执行游客逻辑
-     * 4.热门视频 -> 当天视频浏览量
      * @param userModel 模型
      */
 
@@ -165,7 +169,6 @@ public class InterestPushServiceImpl implements InterestPushService {
                 }
             }
             // todo 找热门视频
-
             // 随机挑选一个视频,根据性别: 男：美女 女：宠物
             videoIds.add(randomVideoId(sex));
         }else {
