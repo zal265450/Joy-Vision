@@ -88,10 +88,18 @@ public interface VideoService extends IService<Video> {
     void historyVideo(Long videoId,Long userId) throws Exception;
 
     /**
-     * 获取当前用户浏览记录
+     * 收藏视频
+     * @param fId
+     * @param vId
      * @return
      */
-    Collection<Video> getHistory();
+    boolean favoritesVideo(Long fId, Long vId);
+
+    /**
+     * 获取当前用户浏览记录,带分页
+     * @return
+     */
+    Collection<Video> getHistory(BasePage basePage);
 
     /**
      * 根据收藏夹获取视频
@@ -105,14 +113,6 @@ public interface VideoService extends IService<Video> {
      * @return
      */
     Collection<HotVideo> hotRank();
-
-    /**
-     * 收藏视频
-     * @param fId
-     * @param vId
-     * @return
-     */
-    boolean favorites(Long fId, Long vId);
 
     /**
      * 根据标签推送相似视频

@@ -36,7 +36,7 @@ public class Type extends BaseEntity {
 
     private String labelNames;
 
-    public List<String> getLabels(){
+    public List<String> buildLabel(){
         return Arrays.asList(labelNames.split(","));
     }
 }

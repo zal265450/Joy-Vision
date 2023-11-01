@@ -79,7 +79,7 @@ public class Video extends BaseEntity {
     @TableField(exist = false)
     private String typeName;
 
-    public List<String> getLabels(){
+    public List<String> buildLabel(){
         return Arrays.asList(this.labelNames.split(","));
     }
 }

@@ -14,6 +14,7 @@ import org.luckyjourney.entity.response.AuditResponse;
 import org.luckyjourney.entity.user.User;
 import org.luckyjourney.entity.vo.BasePage;
 import org.luckyjourney.entity.vo.HotVideo;
+import org.luckyjourney.entity.vo.UserModel;
 import org.luckyjourney.entity.vo.UserVO;
 import org.luckyjourney.holder.UserHolder;
 import org.luckyjourney.mapper.video.VideoMapper;
@@ -92,7 +93,6 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
     @Override
     public void publishVideo(Video video) {
 
-        UserHolder.set(1L);
         final Long userId = UserHolder.get();
 
         // 不允许修改视频
@@ -109,7 +109,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
             throw new IllegalArgumentException("分类不存在");
         }
         // 校验标签最多不能超过5个
-        if (video.getLabels().size() > 5){
+        if (video.buildLabel().size() > 5){
             throw new IllegalArgumentException("标签最多只能选择5个");
         }
 
@@ -120,6 +120,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
         // 首次才需要进入审核队列
         if (video.getId() == null){
             audit(video);
+            interestPushService.pushSystemTypeStockIn(video);
         }
         this.saveOrUpdate(video);
     }
@@ -211,7 +212,30 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
         videoStar.setUserId(UserHolder.get());
         final boolean result = videoStarService.starVideo(videoStar);
         updateStar(video,result ? 1L : -1L);
+        // 获取标签
+        final List<String> labels = video.buildLabel();
+
+        final UserModel userModel = UserModel.buildUserModel(labels, videoId, 1.0);
+        interestPushService.updateUserModel(userModel);
+
         return result;
+    }
+
+    @Override
+    public boolean favoritesVideo(Long fId, Long vId) {
+        final Video video = getById(vId);
+        if (video == null){
+            throw new IllegalArgumentException("指定视频不存在");
+        }
+        final boolean favorites = favoritesService.favorites(fId, vId);
+        updateFavorites(video, favorites ? 1L : -1L);
+
+        final List<String> labels = video.buildLabel();
+
+        final UserModel userModel = UserModel.buildUserModel(labels, vId, 2.0);
+        interestPushService.updateUserModel(userModel);
+
+        return favorites;
     }
 
     @Override
@@ -239,11 +263,13 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
     }
 
     @Override
-    public Collection<Video> getHistory() {
+    public Collection<Video> getHistory(BasePage basePage) {
 
         final Long userId = UserHolder.get();
         String key = RedisConstant.USER_HISTORY_VIDEO + userId;
-        final Set videoIds = redisCacheUtil.zGet(key);
+        // todo 这里的zset分页网上cp的，暂时未测试
+        final Set videoIds = redisCacheUtil.zSetGetByPage(key,basePage.getPage().intValue(),basePage.getLimit().intValue());
+
         return videoIds;
     }
 
@@ -268,16 +294,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
         return hotVideos;
     }
 
-    @Override
-    public boolean favorites(Long fId, Long vId) {
-        final Video video = getById(vId);
-        if (video == null){
-            throw new IllegalArgumentException("指定视频不存在");
-        }
-        final boolean favorites = favoritesService.favorites(fId, vId);
-        updateFavorites(video, favorites ? 1L : -1L);
-        return favorites;
-    }
+
 
     @Override
     public Collection<Video> listSimilarVideo(List<String> labels) {

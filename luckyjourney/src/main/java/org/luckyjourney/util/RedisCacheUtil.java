@@ -60,6 +60,26 @@ public class RedisCacheUtil {
         return redisTemplate.opsForZSet().reverseRange(key,0,-1);
     }
 
+    public Set zSetGetByPage(String key, int pageNum, int pageSize) {
+        try {
+            if (redisTemplate.hasKey(key)) {
+                int start = (pageNum - 1) * pageSize;
+                int end = pageNum * pageSize - 1;
+                Long size = redisTemplate.opsForZSet().size(key);
+                if (end > size) {
+                    end = -1;
+                }
+                return redisTemplate.opsForZSet().range(key, start, end);
+            } else {
+                return null;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+
     public Set<Object> getZSetObject(String key) {
 
         return redisTemplate.opsForZSet().range(key, 0, -1);

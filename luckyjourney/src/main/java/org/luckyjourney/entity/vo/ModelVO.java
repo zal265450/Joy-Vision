@@ -13,10 +13,7 @@ import java.util.List;
 @Data
 public class ModelVO {
 
-    // 性别
-    @NotBlank(message = "你好歹有个性别吧?")
-    private Boolean sex;
-
+    private Long userId;
     // 兴趣视频分类
-    private List<Long> videoTypes;
+    private List<String> labels;
 }
