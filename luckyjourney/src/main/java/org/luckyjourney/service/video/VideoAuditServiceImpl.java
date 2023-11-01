@@ -64,19 +64,19 @@ public class VideoAuditServiceImpl implements AuditService {
 
 
     @Override
-    public AuditResponse audit(String url, boolean auditStatus) {
+    public AuditResponse audit(String url, boolean auditStatus,String typeUrl) {
         AuditResponse auditResponse = null;
         if (auditStatus) {
-            quickly(url);
+            quickly(url,typeUrl);
         } else {
-            auditResponse = slow(url);
+            auditResponse = slow(url,typeUrl);
         }
         return auditResponse;
     }
 
-    public AuditResponse quickly(String url) {
+    public AuditResponse quickly(String url,String typeUrl) {
         final CompletableFuture<AuditResponse> quickly = new CompletableFuture<>();
-        quickly.supplyAsync(() -> slow(url));
+        quickly.supplyAsync(() -> slow(url,typeUrl));
         try {
             return quickly.get();
         } catch (InterruptedException e) {
@@ -89,11 +89,10 @@ public class VideoAuditServiceImpl implements AuditService {
 
 
     // 慢速
-    public AuditResponse slow(String url) {
+    public AuditResponse slow(String url,String typeUrl) {
         body = body.replace("${url}", url);
-        String qiniuUrl = "http://ai.qiniuapi.com/v3/video/censor";
         // 获取token
-        final String token = qiNiuConfig.getToken(qiniuUrl, method, body, contentType);
+        final String token = qiNiuConfig.getToken(typeUrl, method, body, contentType);
         StringMap header = new StringMap();
         header.put("Host", "ai.qiniuapi.com");
         header.put("Authorization", token);
@@ -103,28 +102,44 @@ public class VideoAuditServiceImpl implements AuditService {
         AuditResponse auditResponse = new AuditResponse();
         try {
 
-            Response response = client.post(qiniuUrl, body.getBytes(), header, contentType);
+            Response response = client.post(typeUrl, body.getBytes(), header, contentType);
 
             final Map map = objectMapper.readValue(response.getInfo().split(" \n")[2], Map.class);
-            final Object job = map.get("job");
-            qiniuUrl = "http://ai.qiniuapi.com/v3/jobs/video/" + job.toString();
-            method = "GET";
-            header = new StringMap();
-            header.put("Host", "ai.qiniuapi.com");
-            header.put("Authorization", qiNiuConfig.getToken(qiniuUrl, method, null, null));
-            while (true) {
-                Response response1 = client.get(qiniuUrl, header);
-                final BodyJson bodyJson = objectMapper.readValue(response1.getInfo().split(" \n")[2], BodyJson.class);
-                if (bodyJson.getStatus().equals("FINISHED")) {
-                    // 1.从系统配置表获取 pulp politician terror比例
-                    final Setting setting = settingService.getById(1);
-                    final SettingScoreJson settingScoreRule = objectMapper.readValue(setting.getAuditPolicy(), SettingScoreJson.class);
-                    final List<ScoreJson> auditRule = Arrays.asList(settingScoreRule.getManualScore(), settingScoreRule.getPassScore(), settingScoreRule.getSuccessScore());
-                    auditResponse = audit(auditRule, bodyJson);
-                    return auditResponse;
+            if (typeUrl.equals(QiNiuConfig.VIDEO_URL)){
+                final Object job = map.get("job");
+                typeUrl = "http://ai.qiniuapi.com/v3/jobs/video/" + job.toString();
+                method = "GET";
+                header = new StringMap();
+                header.put("Host", "ai.qiniuapi.com");
+                header.put("Authorization", qiNiuConfig.getToken(typeUrl, method, null, null));
+                while (true) {
+                    Response response1 = client.get(typeUrl, header);
+                    final BodyJson bodyJson = objectMapper.readValue(response1.getInfo().split(" \n")[2], BodyJson.class);
+                    if (bodyJson.getStatus().equals("FINISHED")) {
+                        // 1.从系统配置表获取 pulp politician terror比例
+                        final Setting setting = settingService.getById(1);
+                        final SettingScoreJson settingScoreRule = objectMapper.readValue(setting.getAuditPolicy(), SettingScoreJson.class);
+                        final List<ScoreJson> auditRule = Arrays.asList(settingScoreRule.getManualScore(), settingScoreRule.getPassScore(), settingScoreRule.getSuccessScore());
+                        auditResponse = audit(auditRule, bodyJson);
+                        return auditResponse;
+                    }
+                    Thread.sleep(2000L);
                 }
-                Thread.sleep(2000L);
+            }else {
+
+                final ResultChildJson result = objectMapper.convertValue(map.get("result"), ResultChildJson.class);
+                final BodyJson bodyJson = new BodyJson();
+                final ResultJson resultJson = new ResultJson();
+                resultJson.setResult(result);
+                bodyJson.setResult(resultJson);
+                final Setting setting = settingService.getById(1);
+                final SettingScoreJson settingScoreRule = objectMapper.readValue(setting.getAuditPolicy(), SettingScoreJson.class);
+                final List<ScoreJson> auditRule = Arrays.asList(settingScoreRule.getManualScore(), settingScoreRule.getPassScore(), settingScoreRule.getSuccessScore());
+                auditResponse = audit(auditRule, bodyJson);
+                return auditResponse;
             }
+
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -132,10 +147,12 @@ public class VideoAuditServiceImpl implements AuditService {
     }
 
     public AuditResponse audit(List<ScoreJson> scoreJsonList, BodyJson bodyJson) {
-        AuditResponse audit = null;
+        AuditResponse audit = new AuditResponse();
+        audit.setMsg("正常");
         // 遍历的是通过,人工,失败的审核规则,我当前没有办法知道是什么状态
         for (ScoreJson scoreJson : scoreJsonList) {
             audit = audit(scoreJson, bodyJson);
+            // 如果为true,说明违规，提前返回
             if (audit.getFlag()){
                 audit.setAuditStatus(scoreJson.getAuditStatus());
                 return audit;
@@ -169,8 +186,8 @@ public class VideoAuditServiceImpl implements AuditService {
             if (bodyJson.checkViolation(bodyJson.getPolitician(),minPolitician,maxPolitician)) {
                 final AuditResponse response = getInfo(bodyJson.getPolitician(), minPolitician, "group");
                 auditResponse.setMsg(response.getMsg());
-                auditResponse.setOffset(response.getOffset());
                 if (response.getFlag()) {
+                    auditResponse.setOffset(response.getOffset());
                     return auditResponse;
                 }
             }
@@ -179,8 +196,9 @@ public class VideoAuditServiceImpl implements AuditService {
             if (bodyJson.checkViolation(bodyJson.getPulp(),minPulp,maxPulp)) {
                 final AuditResponse response = getInfo(bodyJson.getPulp(), minPulp, "normal");
                 auditResponse.setMsg(response.getMsg() + "\n" + auditResponse.getMsg());
-                auditResponse.setOffset(response.getOffset());
+                // 如果违规则提前返回
                 if (response.getFlag()) {
+                    auditResponse.setOffset(response.getOffset());
                     return auditResponse;
                 }
             }
@@ -189,8 +207,8 @@ public class VideoAuditServiceImpl implements AuditService {
             if (bodyJson.checkViolation(bodyJson.getTerror(),minTerror,maxTerror)) {
                 final AuditResponse response = getInfo(bodyJson.getTerror(), minTerror, "normal");
                 auditResponse.setMsg(response.getMsg() + "\n" + auditResponse.getMsg());
-                auditResponse.setOffset(response.getOffset());
                 if (response.getFlag()) {
+                    auditResponse.setOffset(response.getOffset());
                     return auditResponse;
                 }
             }
@@ -209,14 +227,16 @@ public class VideoAuditServiceImpl implements AuditService {
     public AuditResponse getInfo(List<CutsJson> types, Double minPolitician, String key) {
         AuditResponse auditResponse = new AuditResponse();
         auditResponse.setMsg("正常");
+        auditResponse.setFlag(false);
         String info = null;
         // 获取信息
         for (CutsJson type : types) {
             for (DetailsJson detail : type.getDetails()) {
                 // 人工/PASS ? 交给七牛云状态，我只获取信息和offset
                 if (detail.getScore() > minPolitician) {
+                    // 如果违规,则填充额外信息
                     if (!detail.getLabel().equals("normal")) {
-                        info = AuditMsgMap.getInfo(detail.getLabel());
+                        info = AuditMsgMap.getInfo(key);
                         auditResponse.setMsg(info);
                         auditResponse.setOffset(type.getOffset());
                         auditResponse.setFlag(true);

@@ -5,6 +5,7 @@ import org.luckyjourney.entity.user.User;
 import org.luckyjourney.entity.vo.UserModel;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -20,6 +21,19 @@ public interface InterestPushService {
      * @param video
      */
     void pushSystemStockIn(Video video);
+
+    /**
+     * 往分类库中添加,用于后续随机推送分类视频
+     * @param video
+     */
+    void pushSystemTypeStockIn(Video video);
+
+    /**
+     * 根据分类随机推送视频
+     * @param typeId
+     * @return
+     */
+    Collection<Long> listVideoIdByTypeId(Long typeId);
 
     /**
      * 删除视频
@@ -49,12 +63,12 @@ public interface InterestPushService {
      * @param user 传id和sex
      * @return videoIds
      */
-    Collection<Long> listVideoByUserModel(User user);
+    Collection<Long> listVideoIdByUserModel(User user);
 
     /**
      * 根据标签获取视频id
      * @param labelNames
      * @return
      */
-    Collection<Long> listVideoByLabels(List<String> labelNames);
+    Collection<Long> listVideoIdByLabels(List<String> labelNames);
 }

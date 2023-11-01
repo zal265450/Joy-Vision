@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import org.luckyjourney.entity.video.Type;
 import org.luckyjourney.entity.video.Video;
 import org.luckyjourney.entity.video.VideoShare;
+import org.luckyjourney.entity.vo.BasePage;
 import org.luckyjourney.service.video.TypeService;
 import org.luckyjourney.service.video.VideoService;
 import org.luckyjourney.util.JwtUtils;
@@ -45,9 +46,8 @@ public class IndexController {
      * @return
      */
     @GetMapping("/search")
-    public R searchVideo(@RequestParam(required = false) String searchName){
-        Collection<Video> videos = videoService.searchVideo(searchName);
-        return R.ok().data(videos);
+    public R searchVideo(@RequestParam(required = false) String searchName, BasePage basePage){
+        return R.ok().data( videoService.searchVideo(searchName,basePage));
     }
 
     /**

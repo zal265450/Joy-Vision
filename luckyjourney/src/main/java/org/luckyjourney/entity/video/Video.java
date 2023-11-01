@@ -46,13 +46,13 @@ public class Video extends BaseEntity {
     private Boolean open;
 
     // 审核状态:通过,未通过,审核中,人工审核。这里不该出现人工审核
-    private Integer status;
+    private Integer auditStatus;
 
     // 审核状态的消息，当前嵌套在这里，应该有一个审核表?
     private String msg;
 
     // 审核快慢状态 0 慢速  1快速
-    private Boolean auditStatus;
+    private Boolean auditQueueStatus;
 
     // 点赞数
     private Long startCount;

@@ -94,7 +94,7 @@ public class VideoController {
     }
 
     /**
-     * 添加浏览记录
+     * 获取用户的浏览记录 todo加分页
      * @return
      */
     @GetMapping("/history")
@@ -122,5 +122,10 @@ public class VideoController {
         return R.ok().message(msg);
     }
 
+    // 返回当前审核队列状态
+    @GetMapping("/audit/queue/state")
+    public R getAuditQueueState(){
+        return R.ok().message(videoService.getAuditQueueState());
+    }
 }
 

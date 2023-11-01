@@ -23,6 +23,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 
+import javax.validation.constraints.NotNull;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -60,6 +61,25 @@ public class InterestPushServiceImpl implements InterestPushService {
             }
             return null;
         });
+    }
+
+    @Override
+    public void pushSystemTypeStockIn(Video video) {
+        final Long typeId = video.getTypeId();
+        redisCacheUtil.set(RedisConstant.SYSTEM_TYPE_STOCK + typeId,video.getId());
+    }
+
+    @Override
+    public Collection<Long> listVideoIdByTypeId(Long typeId) {
+        // 随机推送10个
+        final byte[] key = (RedisConstant.SYSTEM_TYPE_STOCK + typeId).getBytes();
+        final List<Long> list = redisTemplate.executePipelined((RedisCallback<Object>) connection -> {
+            for (int i = 0; i < 10; i++) {
+                connection.sRandMember(key);
+            }
+            return null;
+        });
+        return new HashSet<>(list);
     }
 
     @Override
@@ -131,7 +151,7 @@ public class InterestPushServiceImpl implements InterestPushService {
     }
 
     @Override
-    public Collection<Long> listVideoByUserModel(User user) {
+    public Collection<Long> listVideoIdByUserModel(User user) {
         // 创建结果集
         List<Long> videoIds = new ArrayList<>(10);
 
@@ -194,7 +214,7 @@ public class InterestPushServiceImpl implements InterestPushService {
     }
 
     @Override
-    public Collection<Long> listVideoByLabels(List<String> labelNames) {
+    public Collection<Long> listVideoIdByLabels(List<String> labelNames) {
         final ArrayList<String> labelKeys = new ArrayList<>();
         for (String labelName : labelNames) {
             labelKeys.add(RedisConstant.SYSTEM_STOCK + labelName);

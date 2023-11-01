@@ -48,7 +48,7 @@ public interface VideoService extends IService<Video> {
     Collection<Video> pushVideos();
 
     /**
-     * 根据视频分类获取视频
+     * 根据视频分类获取视频,乱序
      * @param typeId
      * @return
      */
@@ -59,7 +59,7 @@ public interface VideoService extends IService<Video> {
      * @param title
      * @return
      */
-    Collection<Video> searchVideo(String title);
+    IPage<Video> searchVideo(String title,BasePage basePage);
 
     /**
      * 审核处理
@@ -127,4 +127,6 @@ public interface VideoService extends IService<Video> {
      * @return
      */
     IPage<Video> listByUserId(Long userId, BasePage basePage);
+
+    String getAuditQueueState();
 }
