@@ -42,7 +42,7 @@ public class CustomerController {
      * @throws Exception
      */
     @GetMapping("/getInfo/{userId}")
-    public R getInfo(@PathVariable Long userId) throws Exception {
+    public R getInfo(@PathVariable Long userId){
         return R.ok().data(userService.getInfo(userId));
     }
 
@@ -134,16 +134,6 @@ public class CustomerController {
         return R.ok().message("删除成功");
     }
 
-    /**
-     * 收藏视频
-     * @param fId
-     * @param vId
-     * @return
-     */
-    @PostMapping("/favorites/video/{fId}/{vId}")
-    public R favoritesVideo(@PathVariable Long fId,@PathVariable Long vId){
-        String msg = favoritesService.favorites(fId,vId) ? "已收藏" : "取消收藏";
-        return R.ok().message(msg);
-    }
+
 
 }

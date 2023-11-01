@@ -9,7 +9,7 @@ import lombok.Data;
  */
 @Data
 public class Model {
-    private Long typeId;
+    private Long label;
     private Long videoId;
-    private Boolean flag;
+    private Double score;
 }

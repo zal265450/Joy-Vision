@@ -2,6 +2,7 @@ package org.luckyjourney.controller;
 
 
 import org.luckyjourney.entity.video.Video;
+import org.luckyjourney.entity.vo.BasePage;
 import org.luckyjourney.holder.UserHolder;
 import org.luckyjourney.service.FileService;
 import org.luckyjourney.service.video.VideoService;
@@ -29,9 +30,6 @@ public class VideoController {
     @Autowired
     private FileService fileService;
 
-
-
-
     /**
      * 获取文件上传token
      * @return
@@ -50,6 +48,16 @@ public class VideoController {
     public R publishVideo(@RequestBody @Validated Video video){
         videoService.publishVideo(video);
         return R.ok().message("发布成功,请等待审核");
+    }
+
+
+    /**
+     * 获取当前用户的视频
+     * @return
+     */
+    @GetMapping
+    public R listVideo(BasePage basePage){
+        return R.ok().data(videoService.listByUserId(UserHolder.get(),basePage));
     }
 
     /**
@@ -80,7 +88,7 @@ public class VideoController {
      * @return
      */
     @PostMapping("/history/{id}")
-    public R addHistory(@PathVariable Long id){
+    public R addHistory(@PathVariable Long id) throws Exception {
         videoService.historyVideo(id, UserHolder.get());
         return R.ok();
     }
@@ -100,6 +108,18 @@ public class VideoController {
     @GetMapping("/favorites/{favoritesId}")
     public R listVideoByFavorites(@PathVariable Long favoritesId){
         return R.ok().data(videoService.listVideoByFavorites(favoritesId));
+    }
+
+    /**
+     * 收藏视频
+     * @param fId
+     * @param vId
+     * @return
+     */
+    @PostMapping("/favorites/{fId}/{vId}")
+    public R favoritesVideo(@PathVariable Long fId,@PathVariable Long vId){
+        String msg = videoService.favorites(fId,vId) ? "已收藏" : "取消收藏";
+        return R.ok().message(msg);
     }
 
 }

@@ -9,7 +9,15 @@ import org.luckyjourney.entity.user.User;
  * @CreateTime: 2023-10-25 15:40
  */
 @Data
-public class UserVO extends User {
+public class UserVO{
+
+    private Long id;
+
+    private String nickName;
+
+    private Boolean sex;
+
+    private String description;
 
     private Long follow;
 

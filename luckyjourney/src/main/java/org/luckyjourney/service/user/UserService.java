@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import org.luckyjourney.entity.user.User;
 import org.luckyjourney.entity.vo.*;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -32,7 +33,7 @@ public interface UserService extends IService<User> {
      * @param userId 用户id
      * @return
      */
-    UserVO getInfo(Long userId) throws Exception;
+    UserVO getInfo(Long userId);
 
     /**
      * 填写用户模型
@@ -55,4 +56,6 @@ public interface UserService extends IService<User> {
      * @return
      */
     List<User> getFans(Long userId, BasePage basePage);
+
+    List<User> list(Collection<Long> userIds);
 }

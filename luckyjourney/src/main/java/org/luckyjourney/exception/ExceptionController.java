@@ -16,6 +16,7 @@ public class ExceptionController {
 
     @ExceptionHandler(Exception.class)
     public R ex(Exception e){
-        return R.error().message(e.getMessage());
+        e.printStackTrace();
+        return R.error().message(e.toString());
     }
 }

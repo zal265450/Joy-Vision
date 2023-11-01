@@ -44,7 +44,7 @@ public class AdminUserController {
     @GetMapping("/list")
     @Authority("admin:user:list")
     public R list(){
-        return R.ok().data(userService.list(null));
+        return R.ok().data(userService.list(new LambdaQueryWrapper<>()));
     }
 
     @GetMapping("/page")

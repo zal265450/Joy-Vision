@@ -1,10 +1,15 @@
 package org.luckyjourney.service.video;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import org.luckyjourney.entity.video.Video;
 import com.baomidou.mybatisplus.extension.service.IService;
 import org.luckyjourney.entity.video.VideoShare;
+import org.luckyjourney.entity.vo.BasePage;
+import org.luckyjourney.entity.vo.HotVideo;
+import org.luckyjourney.schedul.HotRank;
 
 import java.util.Collection;
+import java.util.List;
 
 /**
  * <p>
@@ -21,7 +26,7 @@ public interface VideoService extends IService<Video> {
      * @param id
      * @return
      */
-    Video getVideoById(Long id);
+    Video getVideoById(Long id)  ;
 
     /**
      * 发布/修改视频
@@ -80,7 +85,7 @@ public interface VideoService extends IService<Video> {
      * 添加历史记录
      * @param videoId
      */
-    void historyVideo(Long videoId,Long userId);
+    void historyVideo(Long videoId,Long userId) throws Exception;
 
     /**
      * 获取当前用户浏览记录
@@ -88,5 +93,38 @@ public interface VideoService extends IService<Video> {
      */
     Collection<Video> getHistory();
 
+    /**
+     * 根据收藏夹获取视频
+     * @param favoritesId
+     * @return
+     */
     Collection<Video> listVideoByFavorites(Long favoritesId);
+
+    /**
+     * 获取热度排行榜
+     * @return
+     */
+    Collection<HotVideo> hotRank();
+
+    /**
+     * 收藏视频
+     * @param fId
+     * @param vId
+     * @return
+     */
+    boolean favorites(Long fId, Long vId);
+
+    /**
+     * 根据标签推送相似视频
+     * @param labels
+     * @return
+     */
+    Collection<Video> listSimilarVideo(List<String> labels);
+
+    /**
+     * 根据userId获取对应视频
+     * @param userId
+     * @return
+     */
+    IPage<Video> listByUserId(Long userId, BasePage basePage);
 }

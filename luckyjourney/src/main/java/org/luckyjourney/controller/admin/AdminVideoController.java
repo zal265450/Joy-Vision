@@ -45,7 +45,8 @@ public class AdminVideoController {
         final Map<Long, String> userMap = userService.list(new LambdaQueryWrapper<User>().select(User::getId, User::getNickName))
                 .stream().collect(Collectors.toMap(User::getId, User::getNickName));
         for (Video video : page.getRecords()) {
-            video.setUserName(userMap.get(video.getUserId()));
+            // todo 填充昵称
+//            video.setUser(userMap.get(video.getUserId()));
         }
         return R.ok().data(page.getRecords()).count(page.getRecords().size());
     }

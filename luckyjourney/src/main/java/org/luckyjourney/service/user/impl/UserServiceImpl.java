@@ -81,15 +81,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     @Override
-    public UserVO getInfo(Long userId) throws Exception {
+    public UserVO getInfo(Long userId){
 
         final User user = getById(userId);
         if (ObjectUtils.isEmpty(user)){
-            throw new Exception("userId 为空");
+            return new UserVO();
         }
         final UserVO userVO = new UserVO();
         BeanUtils.copyProperties(user,userVO);
-        userVO.setPassword("");
 
         // 查出关注数量
         final long followCount = followService.getFollowCount(userId);
@@ -122,6 +121,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     public List<User> getFans(Long userId, BasePage basePage) {
         final List<Long> fansIds = followService.getFans(userId, basePage);
         return getUsers(fansIds);
+    }
+
+    @Override
+    public List<User> list(Collection<Long> userIds) {
+        return list(new LambdaQueryWrapper<User>().in(User::getId,userIds).select(User::getId,User::getNickName,User::getSex));
     }
 
 

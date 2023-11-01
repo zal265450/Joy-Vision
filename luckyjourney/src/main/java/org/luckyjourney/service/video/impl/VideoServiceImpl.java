@@ -2,6 +2,8 @@ package org.luckyjourney.service.video.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import org.luckyjourney.config.QiNiuConfig;
 import org.luckyjourney.constant.AuditStatus;
 import org.luckyjourney.constant.RedisConstant;
 import org.luckyjourney.entity.video.Type;
@@ -10,8 +12,12 @@ import org.luckyjourney.entity.video.VideoShare;
 import org.luckyjourney.entity.video.VideoStar;
 import org.luckyjourney.entity.response.AuditResponse;
 import org.luckyjourney.entity.user.User;
+import org.luckyjourney.entity.vo.BasePage;
+import org.luckyjourney.entity.vo.HotVideo;
+import org.luckyjourney.entity.vo.UserVO;
 import org.luckyjourney.holder.UserHolder;
 import org.luckyjourney.mapper.video.VideoMapper;
+import org.luckyjourney.schedul.HotRank;
 import org.luckyjourney.service.AuditService;
 import org.luckyjourney.service.FileService;
 import org.luckyjourney.service.InterestPushService;
@@ -22,6 +28,7 @@ import org.luckyjourney.service.video.*;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.luckyjourney.util.RedisCacheUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
@@ -30,6 +37,7 @@ import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -72,15 +80,18 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
     ThreadPoolExecutor executor;
 
     @Override
-    public Video getVideoById(Long videoId) {
+    public Video getVideoById(Long videoId)   {
         final Video video = this.getOne(new LambdaQueryWrapper<Video>().eq(Video::getId, videoId));
         if (video == null) throw new IllegalArgumentException("指定视频不存在");
-        video.setUserName(userService.getById(video.getUserId()).getNickName());
+        video.setUser(userService.getInfo(video.getUserId()));
+        video.setUrl(QiNiuConfig.CNAME+"/"+video.getUrl());
         return video;
     }
 
     @Override
     public void publishVideo(Video video) {
+
+        UserHolder.set(1L);
         final Long userId = UserHolder.get();
 
         // 不允许修改视频
@@ -96,7 +107,12 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
         if (type == null){
             throw new IllegalArgumentException("分类不存在");
         }
-        video.setYV("YV"+UUID.randomUUID().toString().substring(8));
+        // 校验标签最多不能超过5个
+        if (video.getLabels().size() > 5){
+            throw new IllegalArgumentException("标签最多只能选择5个");
+        }
+
+        video.setYV("YV"+UUID.randomUUID().toString().replace("-","").substring(8));
         // 修改状态
         video.setStatus(AuditStatus.PROCESS);
         video.setUserId(userId);
@@ -142,10 +158,14 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
         if (userId!=null){
             user = userService.getById(userId);
         }
-        final List<Long> videoIds = interestPushService.listVideoByUserModel(user);
+        final Collection<Long> videoIds = interestPushService.listVideoByUserModel(user);
+        Collection<Video> videos = new ArrayList<>();
 
-
-        return listByIds(videoIds);
+        if (!ObjectUtils.isEmpty(videoIds)){
+            videos = listByIds(videoIds);
+            setUserVO(videos);
+        }
+        return videos;
     }
 
     @Override
@@ -197,13 +217,13 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
 
     @Override
     @Async
-    public void historyVideo(Long videoId,Long userId) {
+    public void historyVideo(Long videoId,Long userId)   {
         String key = RedisConstant.HISTORY_VIDEO + videoId + ":" + userId;
         final Object o = redisCacheUtil.get(key);
         if (o == null){
             redisCacheUtil.set(key,videoId,RedisConstant.HISTORY_TIME);
             final Video video = getById(videoId);
-            video.setUserName(userService.getById(video.getUserId()).getNickName());
+            video.setUser(userService.getInfo(video.getUserId()));
             video.setTypeName(typeService.getById(video.getTypeId()).getName());
             redisCacheUtil.zadd(RedisConstant.USER_HISTORY_VIDEO+userId,new Date().getTime(),video,RedisConstant.HISTORY_TIME);
             updateHistory(video,1L);
@@ -228,23 +248,72 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
         return listByIds(videoIds);
     }
 
+    @Override
+    public List<HotVideo> hotRank() {
+        final Set<ZSetOperations.TypedTuple<Object>> zSet = redisCacheUtil.getZSet(RedisConstant.HOT_RANK);
+        final ArrayList<HotVideo> hotVideos = new ArrayList<>();
+        for (ZSetOperations.TypedTuple<Object> objectTypedTuple : zSet) {
+            final HotVideo hotVideo = (HotVideo) objectTypedTuple.getValue();
+            hotVideo.setHot(objectTypedTuple.getScore());
+            hotVideos.add(hotVideo);
+        }
+        return hotVideos;
+    }
+
+    @Override
+    public boolean favorites(Long fId, Long vId) {
+        final Video video = getById(vId);
+        if (video == null){
+            throw new IllegalArgumentException("指定视频不存在");
+        }
+        final boolean favorites = favoritesService.favorites(fId, vId);
+        updateFavorites(video, favorites ? 1L : -1L);
+        return favorites;
+    }
+
+    @Override
+    public Collection<Video> listSimilarVideo(List<String> labels) {
+
+        if (ObjectUtils.isEmpty(labels)) return Collections.EMPTY_LIST;
+        final ArrayList<String> labelNames = new ArrayList<>();
+        labelNames.addAll(labels);
+        labelNames.addAll(labels);
+        final Collection<Long> videoIds = interestPushService.listVideoByLabels(labelNames);
+
+        Collection<Video> videos = new ArrayList<>();
+
+        if (!ObjectUtils.isEmpty(videoIds)){
+            videos = listByIds(videoIds);
+            setUserVO(videos);
+        }
+        return videos;
+    }
+
+    @Override
+    public IPage<Video> listByUserId(Long userId, BasePage basePage) {
+
+        final IPage<Video> page = page(basePage.page(), new LambdaQueryWrapper<Video>().eq(Video::getUserId, userId).orderByDesc(Video::getGmtCreated));
+        final List<Video> videos = page.getRecords();
+        setUserVO(videos);
+        return page;
+    }
+
+
+    public void setUserVO(Collection<Video> videos){
+        final List<Long> userIds = videos.stream().map(Video::getUserId).collect(Collectors.toList());
+        final Map<Long, String> userMap = userService.list(userIds).stream().collect(Collectors.toMap(User::getId, User::getNickName));
+        for (Video video : videos) {
+            final UserVO userVO = new UserVO();
+            userVO.setId(video.getUserId());
+            userVO.setNickName(userMap.get(video.getUserId()));
+            video.setUser(userVO);
+        }
+    }
 
     public void audit(Video video){
         submit(video);
     }
 
-    @Override
-    public void submit(Video video) {
-        executor.submit(()->{
-            final AuditResponse auditResponse = auditService.audit(video.getUrl(), video.getAuditStatus());
-            System.out.println(auditResponse);
-            video.setStatus(auditResponse.getAuditStatus());
-            if (auditResponse.getAuditStatus() == AuditStatus.SUCCESS) {
-                interestPushService.pushSystemStockIn(video);
-            }
-            updateById(video);
-        });
-    }
 
     /**
      * 点赞数
@@ -278,6 +347,37 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
         updateWrapper.lambda().eq(Video::getId,video.getId()).eq(Video::getHistoryCount,video.getHistoryCount());
         update(video,updateWrapper);
     }
+
+    public void updateFavorites(Video video,Long value){
+        final UpdateWrapper<Video> updateWrapper = new UpdateWrapper<>();
+        updateWrapper.setSql("favorites_count = favorites_count + " + value);
+        updateWrapper.lambda().eq(Video::getId,video.getId()).eq(Video::getFavoritesCount,video.getFavoritesCount());
+        update(video,updateWrapper);
+    }
+
+
+
+    @Override
+    public void submit(Video video) {
+        executor.submit(()->{
+            // 审核视频
+            final AuditResponse videoAuditResponse = auditService.audit(QiNiuConfig.CNAME+"/"+video.getUrl(), video.getAuditStatus());
+            //审核封面
+            final AuditResponse coverAuditResponse = auditService.audit(video.getCover(), video.getAuditStatus());
+            final Integer videoAuditStatus = videoAuditResponse.getAuditStatus();
+            final Integer coverAuditStatus = coverAuditResponse.getAuditStatus();
+            boolean f1 = videoAuditStatus == AuditStatus.SUCCESS;
+            boolean f2 = coverAuditStatus == AuditStatus.SUCCESS;
+            if (f1 && f2) {
+                video.setMsg("通过");
+                interestPushService.pushSystemStockIn(video);
+            }else {
+                video.setMsg(f1 ? coverAuditResponse.getMsg() : videoAuditResponse.getMsg());
+            }
+            updateById(video);
+        });
+    }
+
 
     // 用于初始化线程
     @Override

@@ -12,7 +12,7 @@ import java.util.Map;
  */
 @Data
 public class UserModel {
-    private List<Model> modelList;
+    private List<Model> models;
     private Long userId;
 
 }
