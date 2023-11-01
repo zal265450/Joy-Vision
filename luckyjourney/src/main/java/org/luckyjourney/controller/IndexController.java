@@ -5,6 +5,7 @@ import org.luckyjourney.entity.video.Type;
 import org.luckyjourney.entity.video.Video;
 import org.luckyjourney.entity.video.VideoShare;
 import org.luckyjourney.entity.vo.BasePage;
+import org.luckyjourney.holder.UserHolder;
 import org.luckyjourney.service.video.TypeService;
 import org.luckyjourney.service.video.VideoService;
 import org.luckyjourney.util.JwtUtils;
@@ -101,8 +102,7 @@ public class IndexController {
      * @return
      */
     @GetMapping("/video/{id}")
-    public R getVideoById(@PathVariable Long id) throws Exception {
-
+    public R getVideoById(@PathVariable Long id){
         return R.ok().data(videoService.getVideoById(id));
     }
 
@@ -132,5 +132,12 @@ public class IndexController {
     @GetMapping("/video/hot")
     public R listHotVideo(){
         return R.ok().data(videoService.listHotVideo());
+    }
+
+    // 根据用户id获取视频
+    @GetMapping("/video/user")
+    public R listVideoByUserId(@RequestParam(required = false) Long userId,BasePage basePage){
+        userId = userId == null ? UserHolder.get() : userId;
+        return R.ok().data(videoService.listByUserId(userId,basePage));
     }
 }

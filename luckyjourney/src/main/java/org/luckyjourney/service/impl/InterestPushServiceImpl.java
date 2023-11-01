@@ -59,7 +59,7 @@ public class InterestPushServiceImpl implements InterestPushService {
     @Override
     public void pushSystemTypeStockIn(Video video) {
         final Long typeId = video.getTypeId();
-        redisCacheUtil.set(RedisConstant.SYSTEM_TYPE_STOCK + typeId,video.getId());
+        redisCacheUtil.sSet(RedisConstant.SYSTEM_TYPE_STOCK + typeId,video.getId());
     }
 
     @Override
@@ -157,7 +157,7 @@ public class InterestPushServiceImpl implements InterestPushService {
             final Map<Object, Object> modelMap = redisCacheUtil.hmget(RedisConstant.USER_MODEL + userId);
             if (modelMap != null) {
                 // 组成数组
-                final long[] probabilityArray = initProbabilityArray(modelMap);
+                final String[] probabilityArray = initProbabilityArray(modelMap);
                 final Boolean sex = user.getSex();
                 // 获取视频
                 final Random randomObject = new Random();
@@ -223,6 +223,12 @@ public class InterestPushServiceImpl implements InterestPushService {
         return videoIds;
     }
 
+    @Override
+    public void deleteSystemTypeStockIn(Video video) {
+        final Long typeId = video.getTypeId();
+        redisCacheUtil.setRemove(RedisConstant.SYSTEM_TYPE_STOCK + typeId,video.getId());
+    }
+
 
     public long randomHotVideoId(){
         final Object o = redisTemplate.opsForZSet().randomMember(RedisConstant.HOT_RANK);
@@ -235,26 +241,26 @@ public class InterestPushServiceImpl implements InterestPushService {
     }
 
     // 随机获取视频id
-    public long getVideoId(Random random, long[] probabilityArray) {
-        long typeId = probabilityArray[random.nextInt(probabilityArray.length)];
+    public long getVideoId(Random random, String[] probabilityArray) {
+        String labelName = probabilityArray[random.nextInt(probabilityArray.length)];
         // 获取对应所有视频
-        String key = RedisConstant.SYSTEM_STOCK + typeId;
+        String key = RedisConstant.SYSTEM_STOCK + labelName;
         final Long videoId = (long) redisCacheUtil.sRandom(key);
         return videoId;
     }
 
-    // 初始化概率数组
-    public long[] initProbabilityArray(Map<Object, Object> modelMap) {
+    // 初始化概率数组 -> 保存的元素是标签
+    public String[] initProbabilityArray(Map<Object, Object> modelMap) {
         // 组成数组
-        Map<Long, Integer> probabilityMap = new HashMap<>();
+        Map<String, Integer> probabilityMap = new HashMap<>();
         int size = modelMap.size();
         final AtomicInteger n = new AtomicInteger(0);
         modelMap.forEach((k, v) -> {
             int probability = ((Double) v).intValue() / size;
             n.getAndAdd(probability);
-            probabilityMap.put(Long.valueOf(k.toString()), probability);
+            probabilityMap.put(k.toString(), probability);
         });
-        final long[] probabilityArray = new long[n.get()];
+        final String[] probabilityArray = new String[n.get()];
         final AtomicInteger index = new AtomicInteger(0);
         // 初始化数组
         probabilityMap.forEach((type, p) -> {

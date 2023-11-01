@@ -71,4 +71,10 @@ public interface InterestPushService {
      * @return
      */
     Collection<Long> listVideoIdByLabels(List<String> labelNames);
+
+    /**
+     * 删除分类库中的视频
+     * @param video
+     */
+    void deleteSystemTypeStockIn(Video video);
 }

@@ -66,6 +66,11 @@ public class Video extends BaseEntity {
     // 收藏次数
     private Long favoritesCount;
 
+    // 视频时长
+    private String duration;
+
+    private String videoType;
+
     @NotBlank(message = "给个标签吧,不然没人看到你的视频")
     private String labelNames;
 

@@ -8,6 +8,8 @@ import lombok.ToString;
 import org.springframework.util.ObjectUtils;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -41,16 +43,44 @@ public class BodyJson implements Serializable {
     }
 
 
+    // 视频和图片分开处理
     public List<CutsJson> getTerror(){
-        return result.getResult().getScenes().getTerror().getCuts();
+        final TypeJson terror = result.getResult().getScenes().getTerror();
+        if (!ObjectUtils.isEmpty(terror.getCuts())){
+            return terror.getCuts();
+        }
+
+
+        final CutsJson cutsJson = new CutsJson();
+        cutsJson.setDetails(terror.getDetails());
+        cutsJson.setSuggestion(terror.getSuggestion());
+        return Collections.singletonList(cutsJson);
     }
 
     public List<CutsJson> getPolitician(){
-        return result.getResult().getScenes().getPolitician().getCuts();
+        final TypeJson politician = result.getResult().getScenes().getPolitician();
+        if (!ObjectUtils.isEmpty(politician.getCuts())){
+            return politician.getCuts();
+        }
+
+        final CutsJson cutsJson = new CutsJson();
+        cutsJson.setDetails(politician.getDetails());
+        cutsJson.setSuggestion(politician.getSuggestion());
+
+        return Collections.singletonList(cutsJson);
     }
 
     public List<CutsJson> getPulp(){
-        return result.getResult().getScenes().getPulp().getCuts();
+        final TypeJson pulp = result.getResult().getScenes().getPulp();
+        if (!ObjectUtils.isEmpty(pulp.getCuts())){
+            return pulp.cuts;
+        }
+
+        final CutsJson cutsJson = new CutsJson();
+        cutsJson.setDetails(pulp.getDetails());
+        cutsJson.setSuggestion(pulp.getSuggestion());
+
+        return Collections.singletonList(cutsJson);
     }
 
 

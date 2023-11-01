@@ -20,6 +20,7 @@ import org.luckyjourney.util.RedisCacheUtil;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
 
 import java.util.*;
@@ -131,6 +132,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     @Override
+    @Transactional
     public void subscribe(Set<Long> typeIds) {
         if (ObjectUtils.isEmpty(typeIds)) return;
         // 校验分类
@@ -146,6 +148,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             userSubscribe.setTypeId(typeId);
             userSubscribes.add(userSubscribe);
         }
+        // 删除之前的
+        userSubscribeService.remove(new LambdaQueryWrapper<UserSubscribe>().eq(UserSubscribe::getUserId,userId));
         userSubscribeService.saveBatch(userSubscribes);
         // 初始化模型
         final ModelVO modelVO = new ModelVO();

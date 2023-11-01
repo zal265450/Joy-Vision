@@ -8,6 +8,7 @@ import com.qiniu.storage.Configuration;
 import com.qiniu.storage.Region;
 import com.qiniu.storage.UploadManager;
 import com.qiniu.storage.model.DefaultPutRet;
+import com.qiniu.storage.model.FileInfo;
 import com.qiniu.util.Auth;
 import org.luckyjourney.config.QiNiuConfig;
 import org.luckyjourney.service.FileService;
@@ -72,6 +73,23 @@ public class FileServiceImpl implements FileService {
             System.err.println(ex.response.toString());
         }
 
+    }
+
+    @Override
+    public FileInfo getFileInfo(String url) {
+        Configuration cfg = new Configuration(Region.region0());
+//...其他参数参考类注释
+        final Auth auth = qiNiuConfig.buildAuth();
+        final String bucket = qiNiuConfig.getBucketName();
+
+        BucketManager bucketManager = new BucketManager(auth, cfg);
+        try {
+            FileInfo fileInfo = bucketManager.stat(bucket, url);
+            return fileInfo;
+        } catch (QiniuException ex) {
+            System.err.println(ex.response.toString());
+        }
+        return new FileInfo();
     }
 
 }
