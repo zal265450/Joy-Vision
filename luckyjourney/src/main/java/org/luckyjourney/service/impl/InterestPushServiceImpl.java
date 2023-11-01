@@ -1,9 +1,7 @@
 package org.luckyjourney.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.luckyjourney.constant.RedisConstant;
-import org.luckyjourney.entity.video.Type;
 import org.luckyjourney.entity.video.Video;
 import org.luckyjourney.entity.user.User;
 import org.luckyjourney.entity.vo.HotVideo;
@@ -13,17 +11,12 @@ import org.luckyjourney.service.InterestPushService;
 import org.luckyjourney.service.video.TypeService;
 import org.luckyjourney.util.RedisCacheUtil;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataAccessException;
-import org.springframework.data.redis.connection.RedisConnection;
-import org.springframework.data.redis.connection.RedisStringCommands;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.types.Expiration;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 
-import javax.validation.constraints.NotNull;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -53,7 +46,7 @@ public class InterestPushServiceImpl implements InterestPushService {
     @Async
     public void pushSystemStockIn(Video video) {
         // 往系统库中添加
-        final List<String> labels = video.getLabels();
+        final List<String> labels = video.buildLabel();
         final Long videoId = video.getId();
         redisTemplate.executePipelined((RedisCallback<Object>) connection -> {
             for (String label : labels) {
@@ -79,12 +72,19 @@ public class InterestPushServiceImpl implements InterestPushService {
             }
             return null;
         });
-        return new HashSet<>(list);
+        // 可能会有null
+        final HashSet<Long> result = new HashSet<>();
+        for (Long aLong : list) {
+            if (aLong!=null){
+                result.add(aLong);
+            }
+        }
+        return result;
     }
 
     @Override
     public void deleteSystemStockIn(Video video) {
-        final List<String> labels = video.getLabels();
+        final List<String> labels = video.buildLabel();
         final Long videoId = video.getId();
         redisTemplate.executePipelined((RedisCallback<Object>) connection -> {
             for (String label : labels) {
@@ -96,7 +96,7 @@ public class InterestPushServiceImpl implements InterestPushService {
 
     @Override
     @Async
-    public void initUserModel(Long userId, List<Long> labels) {
+    public void initUserModel(Long userId, List<String> labels) {
 
         final String key = RedisConstant.USER_MODEL + userId;
         Map<Object, Object> modelMap = redisCacheUtil.hmget(key);
@@ -107,18 +107,14 @@ public class InterestPushServiceImpl implements InterestPushService {
             final int size = labels.size();
             // 将标签分为等分概率,不可能超过100个分类
             double probabilityValue = 100 / size;
-            for (Long videoType : labels) {
-                modelMap.put(videoType, probabilityValue);
+            for (String labelName : labels) {
+                modelMap.put(labelName, probabilityValue);
             }
         }
         redisCacheUtil.hmset(key, modelMap);
 
     }
 
-    /**
-     * todo 对单独的视频添加相似推送
-     * @param userModel
-     */
 
     @Override
     @Async
@@ -139,7 +135,7 @@ public class InterestPushServiceImpl implements InterestPushService {
             for (Model model : models) {
                 // 修改用户模型
                 if (modelMap.containsKey(model.getLabel())) {
-                    modelMap.put(model.getLabel(), modelMap.get(model.getLabel().doubleValue() + model.getScore()));
+                    modelMap.put(model.getLabel(), modelMap.get(model.getLabel() + model.getScore()));
                 } else {
                     modelMap.put(model.getLabel(), model.getScore());
                 }
@@ -201,7 +197,7 @@ public class InterestPushServiceImpl implements InterestPushService {
         final Random random = new Random();
         // 获取随机的分类
         for (int i = 0; i < 10; i++) {
-            final int randomIndex = random.nextInt(size) + 1;
+            final int randomIndex = random.nextInt(size);
             labelNames.add(RedisConstant.SYSTEM_STOCK + labels.get(randomIndex));
         }
         // 获取videoId
@@ -240,7 +236,7 @@ public class InterestPushServiceImpl implements InterestPushService {
 
     // 随机获取视频id
     public long getVideoId(Random random, long[] probabilityArray) {
-        long typeId = probabilityArray[random.nextInt(probabilityArray.length) + 1];
+        long typeId = probabilityArray[random.nextInt(probabilityArray.length)];
         // 获取对应所有视频
         String key = RedisConstant.SYSTEM_STOCK + typeId;
         final Long videoId = (long) redisCacheUtil.sRandom(key);

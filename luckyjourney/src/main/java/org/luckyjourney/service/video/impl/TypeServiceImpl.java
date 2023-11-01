@@ -9,7 +9,6 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Stream;
 
 /**
  * <p>
@@ -25,7 +24,7 @@ public class TypeServiceImpl extends ServiceImpl<TypeMapper, Type> implements Ty
 
     @Override
     public List<String> getLabels(Long typeId) {
-        final List<String> labels = this.getById(typeId).getLabels();
+        final List<String> labels = this.getById(typeId).buildLabel();
         return labels;
     }
 
@@ -35,7 +34,7 @@ public class TypeServiceImpl extends ServiceImpl<TypeMapper, Type> implements Ty
         Collections.shuffle(types);
         final ArrayList<String> labels = new ArrayList<>();
         for (Type type : types) {
-            for (String label : type.getLabels()) {
+            for (String label : type.buildLabel()) {
                 if (labels.size() == 10){
                     return labels;
                 }

@@ -57,8 +57,29 @@ public class RedisCacheUtil {
     }
 
     public Set zGet(String key){
+
         return redisTemplate.opsForZSet().reverseRange(key,0,-1);
     }
+
+    public Set zSetGetByPage(String key, int pageNum, int pageSize) {
+        try {
+            if (redisTemplate.hasKey(key)) {
+                int start = (pageNum - 1) * pageSize;
+                int end = pageNum * pageSize - 1;
+                Long size = redisTemplate.opsForZSet().size(key);
+                if (end > size) {
+                    end = -1;
+                }
+                return redisTemplate.opsForZSet().range(key, start, end);
+            } else {
+                return null;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
 
     public Set<Object> getZSetObject(String key) {
 
@@ -277,6 +298,7 @@ public class RedisCacheUtil {
      * @return true成功 false失败
      */
     public boolean hmset(String key, Map<String, Object> map, long time) {
+
         try {
             redisTemplate.opsForHash().putAll(key, map);
             if (time > 0) {
@@ -533,7 +555,14 @@ public class RedisCacheUtil {
                 return null;
             }
         });
-        return list;
+        // 可能会有null
+        final List result = new ArrayList();
+        for (Object aLong : list) {
+            if (aLong!=null){
+                result.add(aLong);
+            }
+        }
+        return result;
     }
 
 
@@ -742,8 +771,8 @@ public class RedisCacheUtil {
 
 
     // 接受一个管道
-    public void pipeline(RedisCallback redisCallback){
-        redisTemplate.executePipelined(redisCallback);
+    public List pipeline(RedisCallback redisCallback){
+        return redisTemplate.executePipelined(redisCallback);
     }
 
 }

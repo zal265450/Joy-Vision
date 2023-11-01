@@ -44,9 +44,9 @@ public interface InterestPushService {
     /**
      * 用户初始化模型
      * @param userId 用户id
-     * @param labels 分类id
+     * @param labels 标签名
      */
-    void initUserModel(Long userId, List<Long> labels);
+    void initUserModel(Long userId, List<String> labels);
 
     /**
      * 用户模型修改概率 : 可分批次发送

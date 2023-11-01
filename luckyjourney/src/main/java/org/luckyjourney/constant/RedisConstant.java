@@ -15,16 +15,22 @@ public interface RedisConstant {
     // 用于用户浏览记录
     String USER_HISTORY_VIDEO = "user:history:video:";
 
+    // 系统视频库,每个公开的都会存在这
     String SYSTEM_STOCK = "system:stock:";
 
+    // 注册逻辑
     String EMAIL_CODE = "email:code:";
 
+    // 热门排行榜
     String HOT_RANK = "hot:rank";
+
+    // 热门视频
+    String HOT_VIDEO = "hot:video:";
 
     Long HISTORY_TIME = 432000L;
 
     Long EMAIL_CODE_TIME = 300L;
 
-
+    // 系统分类库，用于查询分类下的视频随机获取
     String SYSTEM_TYPE_STOCK = "system:type:stock:";
 }

@@ -110,7 +110,7 @@ public class IndexController {
      * 获取热度排行榜
      * @return
      */
-    @GetMapping("/video/hot")
+    @GetMapping("/video/hot/rank")
     public R listHotRank(){
         return R.ok().data(videoService.hotRank());
     }
@@ -125,4 +125,12 @@ public class IndexController {
         return R.ok().data(videoService.listSimilarVideo(Arrays.asList(labels.split(","))));
     }
 
+    /**
+     * 推送热门视频
+     * @return
+     */
+    @GetMapping("/video/hot")
+    public R listHotVideo(){
+        return R.ok().data(videoService.listHotVideo());
+    }
 }

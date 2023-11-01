@@ -2,10 +2,12 @@ package org.luckyjourney.service.user;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import org.luckyjourney.entity.user.User;
+import org.luckyjourney.entity.video.Type;
 import org.luckyjourney.entity.vo.*;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 /**
  * <p>
@@ -35,11 +37,7 @@ public interface UserService extends IService<User> {
      */
     UserVO getInfo(Long userId);
 
-    /**
-     * 填写用户模型
-     * @param modelVO
-     */
-    void setModel(ModelVO modelVO);
+
 
     /**
      * 获取关注
@@ -57,5 +55,20 @@ public interface UserService extends IService<User> {
      */
     List<User> getFans(Long userId, BasePage basePage);
 
+    /**
+     * 获取用户基本信息
+     * @param userIds
+     * @return
+     */
     List<User> list(Collection<Long> userIds);
+
+    /**
+     * 订阅分类
+     * @param typeIds
+     */
+    void subscribe(Set<Long> typeIds);
+
+    Collection<Type> listSubscribeType(Long userId);
+
+
 }

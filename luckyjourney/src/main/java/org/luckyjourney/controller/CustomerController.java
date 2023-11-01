@@ -15,7 +15,9 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -47,16 +49,7 @@ public class CustomerController {
     }
 
 
-    /**
-     * 用户模型
-     * @param modelVO
-     * @return
-     */
-    @PostMapping("/initModel")
-    public R setModel(@RequestBody @Validated ModelVO modelVO){
-        userService.setModel(modelVO);
-        return R.ok().message("填写完毕");
-    }
+
 
 
     /**
@@ -124,16 +117,35 @@ public class CustomerController {
 
     /**
      * 删除收藏夹
-     * @param ids
+     * @param id
      * @return
      */
-    @DeleteMapping("/favorites/{ids}")
-    public R deleteFavorites(@PathVariable String ids){
-        final List<Long> idList = Arrays.asList(ids.split(",")).stream().map(i -> Long.valueOf(i)).collect(Collectors.toList());
-        favoritesService.remove(idList,UserHolder.get());
+    @DeleteMapping("/favorites/{id}")
+    public R deleteFavorites(@PathVariable Long id){
+        favoritesService.remove(id,UserHolder.get());
         return R.ok().message("删除成功");
     }
 
 
+    /**
+     * 用户订阅分类
+     */
+    @PostMapping("/subscribe")
+    public R subscribe(@RequestParam(required = false) String types){
+        final HashSet<Long> typeSet = new HashSet<>();
+        for (String s : types.split(",")) {
+            typeSet.add(Long.parseLong(s));
+        }
+        userService.subscribe(typeSet);
+        return R.ok().message("订阅成功");
+    }
 
+    /**
+     * 获取用户订阅的分类
+     * @return
+     */
+    @GetMapping("/subscribe")
+    public R listSubscribeType(){
+        return R.ok().data(userService.listSubscribeType(UserHolder.get()));
+    }
 }

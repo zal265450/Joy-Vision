@@ -3,8 +3,9 @@ package org.luckyjourney.service.user.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import org.luckyjourney.constant.RedisConstant;
 import org.luckyjourney.entity.user.Favorites;
-import org.luckyjourney.entity.user.Follow;
 import org.luckyjourney.entity.user.User;
+import org.luckyjourney.entity.user.UserSubscribe;
+import org.luckyjourney.entity.video.Type;
 import org.luckyjourney.entity.vo.*;
 import org.luckyjourney.holder.UserHolder;
 import org.luckyjourney.mapper.user.UserMapper;
@@ -13,14 +14,14 @@ import org.luckyjourney.service.InterestPushService;
 import org.luckyjourney.service.user.FavoritesService;
 import org.luckyjourney.service.user.FollowService;
 import org.luckyjourney.service.user.UserService;
+import org.luckyjourney.service.user.UserSubscribeService;
+import org.luckyjourney.service.video.TypeService;
 import org.luckyjourney.util.RedisCacheUtil;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 
-import javax.validation.constraints.NotBlank;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -35,6 +36,11 @@ import java.util.stream.Collectors;
 @Service
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
 
+    @Autowired
+    private TypeService typeService;
+
+    @Autowired
+    private UserSubscribeService userSubscribeService;
 
     @Autowired
     private FollowService followService;
@@ -100,14 +106,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         return userVO;
     }
 
-    @Override
-    public void setModel(ModelVO modelVO) {
-        final Long userId = UserHolder.get();
-        final User user = getById(userId);
+
+    public void initModel(ModelVO modelVO) {
         // 初始化模型
-        interestPushService.initUserModel(userId,modelVO.getVideoTypes());
-        user.setSex(modelVO.getSex());
-        updateById(user);
+        interestPushService.initUserModel(modelVO.getUserId(),modelVO.getLabels());
     }
 
     @Override
@@ -126,6 +128,45 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     public List<User> list(Collection<Long> userIds) {
         return list(new LambdaQueryWrapper<User>().in(User::getId,userIds).select(User::getId,User::getNickName,User::getSex));
+    }
+
+    @Override
+    public void subscribe(Set<Long> typeIds) {
+        if (ObjectUtils.isEmpty(typeIds)) return;
+        // 校验分类
+        final Collection<Type> types = typeService.listByIds(typeIds);
+        if (typeIds.size()!=types.size()){
+            throw new IllegalArgumentException("不存在的分类");
+        }
+        final Long userId = UserHolder.get();
+        final ArrayList<UserSubscribe> userSubscribes = new ArrayList<>();
+        for (Long typeId : typeIds) {
+            final UserSubscribe userSubscribe = new UserSubscribe();
+            userSubscribe.setUserId(userId);
+            userSubscribe.setTypeId(typeId);
+            userSubscribes.add(userSubscribe);
+        }
+        userSubscribeService.saveBatch(userSubscribes);
+        // 初始化模型
+        final ModelVO modelVO = new ModelVO();
+        modelVO.setUserId(UserHolder.get());
+        // 获取分类下的标签
+        List<String> labels = new ArrayList();
+        for (Type type : types) {
+            labels.addAll(type.buildLabel());
+        }
+        modelVO.setLabels(labels);
+        initModel(modelVO);
+
+    }
+
+    @Override
+    public Collection<Type> listSubscribeType(Long userId) {
+        final List<Long> typeIds = userSubscribeService.list(new LambdaQueryWrapper<UserSubscribe>().eq(UserSubscribe::getUserId, userId))
+                .stream().map(UserSubscribe::getTypeId).collect(Collectors.toList());
+        final List<Type> types = typeService.list(new LambdaQueryWrapper<Type>()
+                .in(Type::getId, typeIds).select(Type::getId, Type::getName, Type::getIcon));
+        return types;
     }
 
 

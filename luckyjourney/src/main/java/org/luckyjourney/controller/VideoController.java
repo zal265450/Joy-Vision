@@ -94,12 +94,12 @@ public class VideoController {
     }
 
     /**
-     * 获取用户的浏览记录 todo加分页
+     * 获取用户的浏览记录
      * @return
      */
     @GetMapping("/history")
-    public R getHistory(){
-        return R.ok().data(videoService.getHistory());
+    public R getHistory(BasePage basePage){
+        return R.ok().data(videoService.getHistory(basePage));
     }
 
     /**
@@ -118,14 +118,21 @@ public class VideoController {
      */
     @PostMapping("/favorites/{fId}/{vId}")
     public R favoritesVideo(@PathVariable Long fId,@PathVariable Long vId){
-        String msg = videoService.favorites(fId,vId) ? "已收藏" : "取消收藏";
+        String msg = videoService.favoritesVideo(fId,vId) ? "已收藏" : "取消收藏";
         return R.ok().message(msg);
     }
 
-    // 返回当前审核队列状态
+    /**
+     * 返回当前审核队列状态
+     * @return
+     */
     @GetMapping("/audit/queue/state")
     public R getAuditQueueState(){
         return R.ok().message(videoService.getAuditQueueState());
     }
+
+    // 推送关注的人视频 todo
+
+
 }
 

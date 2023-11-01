@@ -38,19 +38,25 @@ public class HotRank {
     @Autowired
     private RedisTemplate redisTemplate;
 
+    Jackson2JsonRedisSerializer jackson2JsonRedisSerializer = new Jackson2JsonRedisSerializer(Object.class);
+    ObjectMapper om = new ObjectMapper();
+    {
+        jackson2JsonRedisSerializer.setObjectMapper(om);
+    }
 
+    /**
+     * 热门排行榜
+     */
     @Scheduled(cron = "0 0 */1 * * ?")
-    public void hot(){
-        // 存放videoId,title
+    public void hotRank(){
+        // 控制数量
         final PriorityQueue<HotVideo> hotRank = new PriorityQueue<>(50,(o1, o2) -> -(int)(o1.getHot() - o2.getHot()));
-        long index = 0;
+        long limit = 1000;
         // 每次拿1000个
         long id = 0;
-        List<Video> videos = videoService.list(new LambdaQueryWrapper<Video>().ge(Video::getId, id).last("limit " + index));
-
-        Jackson2JsonRedisSerializer jackson2JsonRedisSerializer = new Jackson2JsonRedisSerializer(Object.class);
-        ObjectMapper om = new ObjectMapper();
-        jackson2JsonRedisSerializer.setObjectMapper(om);
+        List<Video> videos = videoService.list(new LambdaQueryWrapper<Video>()
+                .select(Video::getId,Video::getShareCount,Video::getHistoryCount,Video::getStartCount,Video::getFavoritesCount,
+                        Video::getGmtCreated,Video::getTitle).ge(Video::getId, id).last("limit " + limit));
 
         while (!ObjectUtils.isEmpty(videos)){
             for (Video video : videos) {
@@ -60,16 +66,17 @@ public class HotRank {
                 Double favoritesCount = video.getFavoritesCount() * 1.5;
                 final Date date = new Date();
                 long t = date.getTime() - video.getGmtCreated().getTime();
-                final double hot = hot(shareCount + historyCount + startCount + favoritesCount, TimeUnit.MILLISECONDS.toDays(t));
+                // 随机获取6位数,用于去重
+                final double v = weightRandom();
+                final double hot = hot(shareCount + historyCount + startCount + favoritesCount + v, TimeUnit.MILLISECONDS.toDays(t));
                 final HotVideo hotVideo = new HotVideo(hot, video.getId(), video.getTitle());
                 hotRank.add(hotVideo);
             }
             id = videos.get(videos.size()-1).getId();
-            index = index + 1000;
-            videos = videoService.list(new LambdaQueryWrapper<Video>().ge(Video::getId, id).last("limit " + index));;
+            limit = limit + 1000;
+            videos = videoService.list(new LambdaQueryWrapper<Video>().ge(Video::getId, id).last("limit " + limit));;
         }
         final byte[] key = RedisConstant.HOT_RANK.getBytes();
-
 
         redisTemplate.executePipelined((RedisCallback<Object>) connection -> {
             for (HotVideo hotVideo : hotRank) {
@@ -88,10 +95,53 @@ public class HotRank {
         redisTemplate.opsForZSet().removeRange(RedisConstant.HOT_RANK,50,-1);
     }
 
+    // 热门视频,没有热度排行榜实时且重要
+    @Scheduled(cron = "0 0 */3 * * ?")
+    public void hotVideo(){
+        // 分片查询3天内的视频
+        int limit = 1000;
+        long id = 1;
+        List<Video> videos = videoService.selectNDaysAgeVideo(id,3,limit);
+
+        Calendar calendar = Calendar.getInstance();
+        int today = calendar.get(Calendar.DATE);
+
+        while (!ObjectUtils.isEmpty(videos)){
+            final ArrayList<Long> hotVideos = new ArrayList<>();
+            for (Video video : videos) {
+                Long shareCount = video.getShareCount();
+                Double historyCount = video.getHistoryCount()*0.8;
+                Long startCount = video.getStartCount();
+                Double favoritesCount = video.getFavoritesCount() * 1.5;
+                final Date date = new Date();
+                long t = date.getTime() - video.getGmtCreated().getTime();
+                final double hot = hot(shareCount + historyCount + startCount + favoritesCount, TimeUnit.MILLISECONDS.toDays(t));
+
+                // 大于1W热度说明是热门视频
+                if (hot > 10000){
+                    hotVideos.add(video.getId());
+                }
+
+            }
+            id = videos.get(videos.size()-1).getId();
+            limit = limit + 1000;
+            videos = videoService.list(new LambdaQueryWrapper<Video>().ge(Video::getId, id).last("limit " + limit));
+            // RedisConstant.HOT_VIDEO + 今日日期 作为key  达到元素过期效果
+            redisTemplate.opsForSet().add(RedisConstant.HOT_VIDEO + today,videos);
+        }
+
+
+    }
+
     static double a = 0.011;
 
     public static double hot(double weight,double t){
         return weight * Math.exp(-a * t);
+    }
+
+    public double weightRandom(){
+        int i = (int)((Math.random()*9+1)*100000);
+        return i/1000000.0;
     }
 
 }
