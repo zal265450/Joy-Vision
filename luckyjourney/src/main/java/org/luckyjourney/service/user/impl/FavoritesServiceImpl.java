@@ -36,12 +36,18 @@ public class FavoritesServiceImpl extends ServiceImpl<FavoritesMapper, Favorites
 
     @Override
     @Transactional
-    public void remove(List<Long> idList, Long userId) {
+    public void remove(Long id, Long userId) {
 
-        final boolean result = remove(new LambdaQueryWrapper<Favorites>().in(Favorites::getId, idList).eq(Favorites::getUserId, userId));
+        // 不能删除默认收藏夹
+        final Favorites favorites = getOne(new LambdaQueryWrapper<Favorites>().eq(Favorites::getId, id).eq(Favorites::getUserId, userId));
+        if (favorites.getName().equals("默认收藏夹")){
+            throw new IllegalArgumentException("默认收藏夹不允许被删除");
+        }
+
+        final boolean result = remove(new LambdaQueryWrapper<Favorites>().eq(Favorites::getId, id).eq(Favorites::getUserId, userId));
         // 如果能删除成功说明是自己的收藏夹
         if (result){
-            favoritesVideoService.remove(new LambdaQueryWrapper<FavoritesVideo>().in(FavoritesVideo::getFavoritesId,idList));
+            favoritesVideoService.remove(new LambdaQueryWrapper<FavoritesVideo>().eq(FavoritesVideo::getFavoritesId,id));
         }else {
             throw new IllegalArgumentException("你小子想删别人的收藏夹?");
         }

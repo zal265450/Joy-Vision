@@ -130,5 +130,9 @@ public class VideoController {
     public R getAuditQueueState(){
         return R.ok().message(videoService.getAuditQueueState());
     }
+
+    // 推送关注的人视频 todo
+
+
 }
 

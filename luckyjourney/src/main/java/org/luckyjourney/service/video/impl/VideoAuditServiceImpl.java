@@ -1,4 +1,4 @@
-package org.luckyjourney.service.video;
+package org.luckyjourney.service.video.impl;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -158,7 +158,26 @@ public class VideoAuditServiceImpl implements AuditService {
                 return audit;
             }
         }
+        // 如果出来了说明审核的内容没分数 / 审核比例没调好(人员问题)
+        // 比较suggest
+        final ScenesJson scenes = bodyJson.getResult().getResult().getScenes();
+        if (endCheck(scenes)){
+            audit.setAuditStatus(AuditStatus.SUCCESS);
+        }else {
+            audit.setAuditStatus(AuditStatus.PASS);
+            audit.setMsg("内容不合法");
+        }
         return audit;
+    }
+
+    public boolean endCheck(ScenesJson scenes){
+        final TypeJson terror = scenes.getTerror();
+        final TypeJson politician = scenes.getPolitician();
+        final TypeJson pulp = scenes.getPulp();
+        if (terror.getSuggestion().equals("block") || politician.getSuggestion().equals("block") || pulp.getSuggestion().equals("block")) {
+            return false;
+        }
+        return true;
     }
 
     /**

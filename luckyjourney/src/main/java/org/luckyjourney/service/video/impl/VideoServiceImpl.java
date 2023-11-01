@@ -3,6 +3,8 @@ package org.luckyjourney.service.video.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.luckyjourney.config.QiNiuConfig;
 import org.luckyjourney.constant.AuditStatus;
 import org.luckyjourney.constant.RedisConstant;
@@ -28,6 +30,9 @@ import org.luckyjourney.service.video.*;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.luckyjourney.util.RedisCacheUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
+import org.springframework.data.redis.connection.RedisConnection;
+import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -77,7 +82,13 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
     @Autowired
     private FavoritesService favoritesService;
 
+    @Autowired
+    private VideoMapper videoMapper;
+
     ThreadPoolExecutor executor;
+
+    final ObjectMapper objectMapper = new ObjectMapper();
+
 
     private Integer maxThreadCount = 8;
 
@@ -161,13 +172,15 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
         if (userId!=null){
             user = userService.getById(userId);
         }
-        final Collection<Long> videoIds = interestPushService.listVideoIdByUserModel(user);
+        Collection<Long> videoIds = interestPushService.listVideoIdByUserModel(user);
         Collection<Video> videos = new ArrayList<>();
 
-        if (!ObjectUtils.isEmpty(videoIds)){
-            videos = listByIds(videoIds);
-            setUserVoAndUrl(videos);
+        if (ObjectUtils.isEmpty(videoIds)){
+            videoIds = list(new LambdaQueryWrapper<Video>().orderByDesc(Video::getGmtCreated)).stream().map(Video::getId).collect(Collectors.toList());
+            videoIds = new HashSet<>(videoIds).stream().limit(10).collect(Collectors.toList());
         }
+        videos = listByIds(videoIds);
+        setUserVoAndUrl(videos);
         return videos;
     }
 
@@ -177,7 +190,12 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
         final Type type = typeService.getById(typeId);
         if (type == null) return Collections.EMPTY_LIST;
 
-        final Collection<Long> videoIds = interestPushService.listVideoIdByTypeId(typeId);
+        Collection<Long> videoIds = interestPushService.listVideoIdByTypeId(typeId);
+        if (ObjectUtils.isEmpty(videoIds)){
+            // 随便给点视频 测试用
+            videoIds = list(new LambdaQueryWrapper<Video>().orderByDesc(Video::getGmtCreated)).stream().map(Video::getId).collect(Collectors.toList());
+            videoIds = new HashSet<>(videoIds).stream().limit(10).collect(Collectors.toList());
+        }
         final Collection<Video> videos = listByIds(videoIds);
 
         setUserVoAndUrl(videos);
@@ -287,9 +305,14 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
         final Set<ZSetOperations.TypedTuple<Object>> zSet = redisCacheUtil.getZSet(RedisConstant.HOT_RANK);
         final ArrayList<HotVideo> hotVideos = new ArrayList<>();
         for (ZSetOperations.TypedTuple<Object> objectTypedTuple : zSet) {
-            final HotVideo hotVideo = (HotVideo) objectTypedTuple.getValue();
-            hotVideo.setHot(objectTypedTuple.getScore());
-            hotVideos.add(hotVideo);
+            final HotVideo hotVideo;
+            try {
+                hotVideo = objectMapper.readValue(objectTypedTuple.getValue().toString(), HotVideo.class);
+                hotVideo.setHot(objectTypedTuple.getScore());
+                hotVideos.add(hotVideo);
+            } catch (JsonProcessingException e) {
+                e.printStackTrace();
+            }
         }
         return hotVideos;
     }
@@ -327,6 +350,44 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
     public String getAuditQueueState() {
         final int activeCount = executor.getActiveCount();
         return activeCount < maxThreadCount ? "快速" : "慢速";
+    }
+
+    @Override
+    public List<Video> selectNDaysAgeVideo(long id,int days,int limit) {
+        return videoMapper.selectNDaysAgeVideo(id,days,limit);
+    }
+
+    @Override
+    public Collection<Video> listHotVideo() {
+
+        Calendar calendar = Calendar.getInstance();
+        int today = calendar.get(Calendar.DATE);
+
+        final HashMap<String, Integer> map = new HashMap<>();
+        map.put(RedisConstant.HOT_VIDEO+today,5);
+        map.put(RedisConstant.HOT_VIDEO+(today-1),3);
+        map.put(RedisConstant.HOT_VIDEO+(today-2),2);
+
+        // 游客不用记录
+        // 获取今天日期
+        final List<Long> videoIds = redisCacheUtil.pipeline(connection -> {
+            map.forEach((k, v) -> {
+                connection.sRandMember(k.getBytes(), v);
+            });
+            return null;
+        });
+        final HashSet<Long> vIds = new HashSet<>();
+        // 会返回结果有null，做下校验
+        for (Object videoId : videoIds) {
+            if (!ObjectUtils.isEmpty(videoId)){
+                vIds.addAll((Collection<? extends Long>) videoId);
+            }
+
+        }
+        // 和浏览记录做交集? 不需要做交集，热门视频和兴趣推送不一样
+        final Collection<Video> videos = listByIds(new HashSet<>(vIds));
+        setUserVoAndUrl(videos);
+        return videos;
     }
 
 

@@ -128,5 +128,24 @@ public interface VideoService extends IService<Video> {
      */
     IPage<Video> listByUserId(Long userId, BasePage basePage);
 
+    /**
+     * 获取当前审核队列
+     * @return
+     */
     String getAuditQueueState();
+
+    /**
+     * 获取N天前的视频
+     * @param id id
+     * @param days 天数
+     * @param limit 限制
+     * @return
+     */
+    List<Video> selectNDaysAgeVideo(long id,int days,int limit);
+
+    /**
+     * 获取热门视频
+     * @return
+     */
+    Collection<Video> listHotVideo();
 }

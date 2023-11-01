@@ -72,7 +72,14 @@ public class InterestPushServiceImpl implements InterestPushService {
             }
             return null;
         });
-        return new HashSet<>(list);
+        // 可能会有null
+        final HashSet<Long> result = new HashSet<>();
+        for (Long aLong : list) {
+            if (aLong!=null){
+                result.add(aLong);
+            }
+        }
+        return result;
     }
 
     @Override

@@ -117,13 +117,12 @@ public class CustomerController {
 
     /**
      * 删除收藏夹
-     * @param ids
+     * @param id
      * @return
      */
-    @DeleteMapping("/favorites/{ids}")
-    public R deleteFavorites(@PathVariable String ids){
-        final List<Long> idList = Arrays.asList(ids.split(",")).stream().map(i -> Long.valueOf(i)).collect(Collectors.toList());
-        favoritesService.remove(idList,UserHolder.get());
+    @DeleteMapping("/favorites/{id}")
+    public R deleteFavorites(@PathVariable Long id){
+        favoritesService.remove(id,UserHolder.get());
         return R.ok().message("删除成功");
     }
 

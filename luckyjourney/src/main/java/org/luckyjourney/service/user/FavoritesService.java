@@ -17,10 +17,10 @@ public interface FavoritesService extends IService<Favorites> {
 
     /**
      * 删除收藏夹,连收藏夹下的视频一块删除
-     * @param idList
+     * @param id
      * @param userId
      */
-    void remove(List<Long> idList, Long userId);
+    void remove(Long id, Long userId);
 
     /**
      * 根据用户获取收藏夹
