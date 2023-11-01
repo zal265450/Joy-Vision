@@ -7,7 +7,7 @@
 
     <v-list density="compact" nav>
       <v-list-item prepend-icon="mdi-home" title="首页" to="/"></v-list-item>
-      <v-list-item prepend-icon="mdi-video" title="推荐视频(高级)" to="/video"></v-list-item>
+      <!-- <v-list-item prepend-icon="mdi-video" title="推荐视频(高级)" to="/video"></v-list-item> -->
       <v-list-item prepend-icon="mdi-label-multiple" title="视频分类" to="/classify"></v-list-item>
       <v-list-item prepend-icon="mdi-account-multiple" title="粉丝/关注(高级)" to="/friends"></v-list-item>
       <v-list-item prepend-icon="mdi-star" title="收藏夹(高级)" to="/favorites"></v-list-item>

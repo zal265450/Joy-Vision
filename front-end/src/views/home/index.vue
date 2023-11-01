@@ -27,8 +27,8 @@
       <v-divider class="ma-2" />
       <v-col v-for="(video, index) in videoList" :key="index" :cols="3">
         <v-card hover ripple :elevation="0" style="border-color: rgba(37,38,50);" rounded="lg"
-          @click="currentVideo = video">
-          <v-img :src="video.img || '/not-found.png'" class="align-end"
+          @click="playVideo(video)">
+          <v-img :src="video.cover || '/not-found.png'" class="align-end"
             gradient="to bottom, rgba(0,0,0,.1), rgba(0,0,0,.5)" height="300px" cover>
             <v-card-text class="text-white"><v-icon>mdi-heart</v-icon> 200w</v-card-text>
           </v-img>
@@ -43,9 +43,9 @@
         </v-card>
       </v-col>
     </v-row>
-    <v-dialog height="100%" :model-value="currentVideo != null" fullscreen transition="dialog-bottom-transition">
+    <v-dialog v-model="videoDialog" height="100%" fullscreen transition="dialog-bottom-transition">
       <v-card v-if="currentVideo">
-        <Video :video-info="currentVideo" />
+        <Video :video-info="currentVideo" :close-video="()=>playVideo(null)" />
       </v-card>
     </v-dialog>
   </v-container>
@@ -54,7 +54,7 @@
 import { onMounted, ref, watch } from 'vue';
 import { apiVideoByClassfiy } from '../../apis/video';
 import Video from '../../components/video/index.vue';
-const dialog = ref(false)
+const videoDialog = ref(false)
 const isLoading = ref(false)
 const videoList = ref([])
 const currentClassify = ref(1)
@@ -71,6 +71,12 @@ const getCurrentClassifyVideo = (newV) => {
 watch(currentClassify, getCurrentClassifyVideo, {
   immediate: true
 })
+const playVideo = (video) => {
+  videoDialog.value = false
+  currentVideo.value = video
+  videoDialog.value = video ? true : false
+  console.log(videoDialog.value, video)
+}
 onMounted(() => {
   getCurrentClassifyVideo(currentClassify.value)
 })

@@ -11,6 +11,10 @@
                 <v-window-item value="0">
                     <UploadVideo></UploadVideo>
                 </v-window-item>
+                <!-- 管理稿件(视频) -->
+                <v-window-item value="1">
+                    <videoList></videoList>
+                </v-window-item>
             </v-window>
         </v-card>
     </VContainer>
@@ -18,6 +22,7 @@
 <script setup>
 import { ref } from 'vue';
 import UploadVideo from './upVideo.vue';
+import videoList from './videoList.vue';
 const tab = ref(0)
 const items = ref([
     '上传稿件', '稿件管理', '异常稿件'
