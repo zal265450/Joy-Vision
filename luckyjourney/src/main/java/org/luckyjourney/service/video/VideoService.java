@@ -1,8 +1,10 @@
 package org.luckyjourney.service.video;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import org.luckyjourney.entity.video.Video;
 import com.baomidou.mybatisplus.extension.service.IService;
 import org.luckyjourney.entity.video.VideoShare;
+import org.luckyjourney.entity.vo.BasePage;
 import org.luckyjourney.entity.vo.HotVideo;
 import org.luckyjourney.schedul.HotRank;
 
@@ -91,9 +93,38 @@ public interface VideoService extends IService<Video> {
      */
     Collection<Video> getHistory();
 
+    /**
+     * 根据收藏夹获取视频
+     * @param favoritesId
+     * @return
+     */
     Collection<Video> listVideoByFavorites(Long favoritesId);
 
-    List<HotVideo> hotRank();
+    /**
+     * 获取热度排行榜
+     * @return
+     */
+    Collection<HotVideo> hotRank();
 
+    /**
+     * 收藏视频
+     * @param fId
+     * @param vId
+     * @return
+     */
     boolean favorites(Long fId, Long vId);
+
+    /**
+     * 根据标签推送相似视频
+     * @param labels
+     * @return
+     */
+    Collection<Video> listSimilarVideo(List<String> labels);
+
+    /**
+     * 根据userId获取对应视频
+     * @param userId
+     * @return
+     */
+    IPage<Video> listByUserId(Long userId, BasePage basePage);
 }

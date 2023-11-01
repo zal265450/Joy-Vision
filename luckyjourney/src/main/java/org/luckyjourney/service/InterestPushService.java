@@ -4,6 +4,7 @@ import org.luckyjourney.entity.video.Video;
 import org.luckyjourney.entity.user.User;
 import org.luckyjourney.entity.vo.UserModel;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -48,5 +49,12 @@ public interface InterestPushService {
      * @param user 传id和sex
      * @return videoIds
      */
-    List<Long> listVideoByUserModel(User user);
+    Collection<Long> listVideoByUserModel(User user);
+
+    /**
+     * 根据标签获取视频id
+     * @param labelNames
+     * @return
+     */
+    Collection<Long> listVideoByLabels(List<String> labelNames);
 }

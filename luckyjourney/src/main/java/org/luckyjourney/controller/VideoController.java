@@ -2,6 +2,7 @@ package org.luckyjourney.controller;
 
 
 import org.luckyjourney.entity.video.Video;
+import org.luckyjourney.entity.vo.BasePage;
 import org.luckyjourney.holder.UserHolder;
 import org.luckyjourney.service.FileService;
 import org.luckyjourney.service.video.VideoService;
@@ -47,6 +48,16 @@ public class VideoController {
     public R publishVideo(@RequestBody @Validated Video video){
         videoService.publishVideo(video);
         return R.ok().message("发布成功,请等待审核");
+    }
+
+
+    /**
+     * 获取当前用户的视频
+     * @return
+     */
+    @GetMapping
+    public R listVideo(BasePage basePage){
+        return R.ok().data(videoService.listByUserId(UserHolder.get(),basePage));
     }
 
     /**

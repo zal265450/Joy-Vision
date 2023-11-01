@@ -131,7 +131,7 @@ public class InterestPushServiceImpl implements InterestPushService {
     }
 
     @Override
-    public List<Long> listVideoByUserModel(User user) {
+    public Collection<Long> listVideoByUserModel(User user) {
         // 创建结果集
         List<Long> videoIds = new ArrayList<>(10);
 
@@ -176,17 +176,34 @@ public class InterestPushServiceImpl implements InterestPushService {
         // 游客
         // 随机获取10个标签
         final List<String> labels = typeService.random10Labels();
-        final ArrayList<String> keyTypes = new ArrayList<>();
+        final ArrayList<String> labelNames = new ArrayList<>();
         int size = labels.size();
         final Random random = new Random();
         // 获取随机的分类
         for (int i = 0; i < 10; i++) {
             final int randomIndex = random.nextInt(size) + 1;
-            keyTypes.add(RedisConstant.SYSTEM_STOCK + labels.get(randomIndex));
+            labelNames.add(RedisConstant.SYSTEM_STOCK + labels.get(randomIndex));
         }
         // 获取videoId
-        videoIds = redisCacheUtil.sRandom(keyTypes).stream().map(id -> Long.valueOf(id.toString())).collect(Collectors.toList());
+        final List<Object> list = redisCacheUtil.sRandom(labelNames);
+        if (!ObjectUtils.isEmpty(list)){
+            videoIds = list.stream().filter(id ->!ObjectUtils.isEmpty(id)).map(id -> Long.valueOf(id.toString())).collect(Collectors.toList());
+        }
 
+        return videoIds;
+    }
+
+    @Override
+    public Collection<Long> listVideoByLabels(List<String> labelNames) {
+        final ArrayList<String> labelKeys = new ArrayList<>();
+        for (String labelName : labelNames) {
+            labelKeys.add(RedisConstant.SYSTEM_STOCK + labelName);
+        }
+        List<Long> videoIds = new ArrayList<>();
+        final List<Object> list = redisCacheUtil.sRandom(labelKeys);
+        if (!ObjectUtils.isEmpty(list)){
+            videoIds = list.stream().filter(id ->!ObjectUtils.isEmpty(id)).map(id -> Long.valueOf(id.toString())).collect(Collectors.toList());
+        }
         return videoIds;
     }
 

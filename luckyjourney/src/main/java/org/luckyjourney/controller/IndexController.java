@@ -1,5 +1,7 @@
 package org.luckyjourney.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import org.luckyjourney.entity.video.Type;
 import org.luckyjourney.entity.video.Video;
 import org.luckyjourney.entity.video.VideoShare;
 import org.luckyjourney.service.video.TypeService;
@@ -10,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.Arrays;
 import java.util.Collection;
 
 /**
@@ -64,8 +67,7 @@ public class IndexController {
      */
     @GetMapping("/types")
     public R getTypes(){
-
-        return R.ok().data(typeService.list(null));
+        return R.ok().data(typeService.list(new LambdaQueryWrapper<Type>().select(Type::getIcon,Type::getId,Type::getName)));
     }
 
     /**
@@ -104,10 +106,23 @@ public class IndexController {
         return R.ok().data(videoService.getVideoById(id));
     }
 
+    /**
+     * 获取热度排行榜
+     * @return
+     */
     @GetMapping("/video/hot")
     public R listHotRank(){
-
         return R.ok().data(videoService.hotRank());
+    }
+
+    /**
+     * 根据视频标签推送相似视频
+     * @param labels
+     * @return
+     */
+    @GetMapping("/video/similar")
+    public R pushVideoSimilar(@RequestParam String labels){
+        return R.ok().data(videoService.listSimilarVideo(Arrays.asList(labels.split(","))));
     }
 
 }

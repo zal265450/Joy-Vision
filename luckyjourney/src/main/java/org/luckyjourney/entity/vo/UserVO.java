@@ -11,6 +11,8 @@ import org.luckyjourney.entity.user.User;
 @Data
 public class UserVO{
 
+    private Long id;
+
     private String nickName;
 
     private Boolean sex;

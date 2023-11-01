@@ -123,6 +123,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         return getUsers(fansIds);
     }
 
+    @Override
+    public List<User> list(Collection<Long> userIds) {
+        return list(new LambdaQueryWrapper<User>().in(User::getId,userIds).select(User::getId,User::getNickName,User::getSex));
+    }
+
 
     public List<User> getUsers(List<Long> ids){
         final Map<Long, String> userMap = listByIds(ids).stream().collect(Collectors.toMap(User::getId, User::getNickName));
