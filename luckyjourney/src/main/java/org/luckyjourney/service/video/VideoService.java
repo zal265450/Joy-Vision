@@ -148,4 +148,5 @@ public interface VideoService extends IService<Video> {
      * @return
      */
     Collection<Video> listHotVideo();
+
 }

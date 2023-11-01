@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * @description: 视频审核
@@ -43,9 +42,8 @@ public class VideoAuditServiceImpl implements AuditService {
 
     ObjectMapper objectMapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
-    static String method = "POST";
     static final String contentType = "application/json";
-    static String body = "{\n" +
+    static String videoUrl = "{\n" +
             "    \"data\": {\n" +
             "        \"uri\": \"${url}\",\n" +
             "        \"id\": \"video_censor_test\"\n" +
@@ -62,6 +60,18 @@ public class VideoAuditServiceImpl implements AuditService {
             "    }\n" +
             "}";
 
+    static String imageUrl = "{\n" +
+            "    \"data\": {\n" +
+            "        \"uri\": \"${url}\"\n" +
+            "    },\n" +
+            "    \"params\": {\n" +
+            "        \"scenes\": [\n" +
+            "            \"pulp\",\n" +
+            "            \"terror\",\n" +
+            "            \"politician\"\n" +
+            "        ]\n" +
+            "    }\n" +
+            "}";;
 
     @Override
     public AuditResponse audit(String url, boolean auditStatus,String typeUrl) {
@@ -90,9 +100,18 @@ public class VideoAuditServiceImpl implements AuditService {
 
     // 慢速
     public AuditResponse slow(String url,String typeUrl) {
-        body = body.replace("${url}", url);
+
+        final boolean flag = typeUrl.equals(QiNiuConfig.VIDEO_URL);
+        String body1 = null;
+
+        if (flag){
+            body1 = videoUrl.replace("${url}", url);
+        }else {
+            body1 = imageUrl.replace("${url}", url);
+        }
+        String method = "POST";
         // 获取token
-        final String token = qiNiuConfig.getToken(typeUrl, method, body, contentType);
+        final String token = qiNiuConfig.getToken(typeUrl, method, body1, contentType);
         StringMap header = new StringMap();
         header.put("Host", "ai.qiniuapi.com");
         header.put("Authorization", token);
@@ -102,10 +121,10 @@ public class VideoAuditServiceImpl implements AuditService {
         AuditResponse auditResponse = new AuditResponse();
         try {
 
-            Response response = client.post(typeUrl, body.getBytes(), header, contentType);
+            Response response = client.post(typeUrl, body1.getBytes(), header, contentType);
 
             final Map map = objectMapper.readValue(response.getInfo().split(" \n")[2], Map.class);
-            if (typeUrl.equals(QiNiuConfig.VIDEO_URL)){
+            if (flag){
                 final Object job = map.get("job");
                 typeUrl = "http://ai.qiniuapi.com/v3/jobs/video/" + job.toString();
                 method = "GET";
@@ -214,7 +233,7 @@ public class VideoAuditServiceImpl implements AuditService {
         if (!ObjectUtils.isEmpty(bodyJson.getPulp())) {
             if (bodyJson.checkViolation(bodyJson.getPulp(),minPulp,maxPulp)) {
                 final AuditResponse response = getInfo(bodyJson.getPulp(), minPulp, "normal");
-                auditResponse.setMsg(response.getMsg() + "\n" + auditResponse.getMsg());
+                auditResponse.setMsg(response.getMsg());
                 // 如果违规则提前返回
                 if (response.getFlag()) {
                     auditResponse.setOffset(response.getOffset());
@@ -225,7 +244,7 @@ public class VideoAuditServiceImpl implements AuditService {
         if (!ObjectUtils.isEmpty(bodyJson.getTerror())) {
             if (bodyJson.checkViolation(bodyJson.getTerror(),minTerror,maxTerror)) {
                 final AuditResponse response = getInfo(bodyJson.getTerror(), minTerror, "normal");
-                auditResponse.setMsg(response.getMsg() + "\n" + auditResponse.getMsg());
+                auditResponse.setMsg(response.getMsg());
                 if (response.getFlag()) {
                     auditResponse.setOffset(response.getOffset());
                     return auditResponse;

@@ -51,14 +51,7 @@ public class VideoController {
     }
 
 
-    /**
-     * 获取当前用户的视频
-     * @return
-     */
-    @GetMapping
-    public R listVideo(BasePage basePage){
-        return R.ok().data(videoService.listByUserId(UserHolder.get(),basePage));
-    }
+
 
     /**
      * 删除视频

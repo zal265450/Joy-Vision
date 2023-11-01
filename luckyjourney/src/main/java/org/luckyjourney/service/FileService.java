@@ -1,5 +1,6 @@
 package org.luckyjourney.service;
 
+import com.qiniu.storage.model.FileInfo;
 import org.luckyjourney.util.R;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -29,4 +30,6 @@ public interface FileService {
      * @param url
      */
     void deleteFile(String url);
+
+    FileInfo getFileInfo(String url);
 }

@@ -28,6 +28,7 @@ import org.luckyjourney.service.user.FavoritesService;
 import org.luckyjourney.service.user.UserService;
 import org.luckyjourney.service.video.*;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import org.luckyjourney.util.FileUtil;
 import org.luckyjourney.util.RedisCacheUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
@@ -96,6 +97,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
     public Video getVideoById(Long videoId)   {
         final Video video = this.getOne(new LambdaQueryWrapper<Video>().eq(Video::getId, videoId));
         if (video == null) throw new IllegalArgumentException("指定视频不存在");
+        if (!video.getOpen()) return new Video();
         video.setUser(userService.getInfo(video.getUserId()));
         video.setUrl(QiNiuConfig.CNAME+"/"+video.getUrl());
         return video;
@@ -105,11 +107,12 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
     public void publishVideo(Video video) {
 
         final Long userId = UserHolder.get();
-
+        Video old = null;
         // 不允许修改视频
-        if (video.getId()!=null){
+        final Long videoId = video.getId();
+        if (videoId !=null){
             // url不能一致
-            final Video old = this.getOne(new LambdaQueryWrapper<Video>().eq(Video::getId, video.getId()).eq(Video::getUserId, userId));
+            old = this.getOne(new LambdaQueryWrapper<Video>().eq(Video::getId, videoId).eq(Video::getUserId, userId));
             if (old.getUrl().equals(video.getUrl()) || old.getCover().equals(video.getCover())){
                 throw new IllegalArgumentException("不能更换视频源,只能修改视频信息");
             }
@@ -128,12 +131,31 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
         // 修改状态
         video.setAuditStatus(AuditStatus.PROCESS);
         video.setUserId(userId);
-        // 首次才需要进入审核队列
-        if (video.getId() == null){
-            audit(video);
-            interestPushService.pushSystemTypeStockIn(video);
+        // 发布视频并且公开放入系统库
+
+
+        video.setDuration(null);
+        video.setVideoType(null);
+
+        if (videoId!=null){
+            video.setLabelNames(null);
         }
+
         this.saveOrUpdate(video);
+        if (videoId == null){
+            audit(video);
+        }
+        // 修改的情况 需要更改系统库
+        if (old == null || old.getOpen() != video.getOpen()){
+            if (!video.getOpen()){
+                interestPushService.pushSystemTypeStockIn(video);
+                interestPushService.pushSystemStockIn(video);
+            }else {
+                interestPushService.deleteSystemStockIn(video);
+                interestPushService.deleteSystemTypeStockIn(video);
+            }
+        }
+
     }
 
 
@@ -157,8 +179,6 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
                 // 删除分享量 点赞量
                 videoShareService.remove(new LambdaQueryWrapper<VideoShare>().eq(VideoShare::getVideoId,id).eq(VideoShare::getUserId,userId));
                 videoStarService.remove(new LambdaQueryWrapper<VideoStar>().eq(VideoStar::getVideoId,id).eq(VideoStar::getUserId,userId));
-                // 删除七牛云中的视频
-                fileService.deleteFile(video.getUrl());
                 interestPushService.deleteSystemStockIn(video);
             }).start();
         }
@@ -297,7 +317,9 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
         if (ObjectUtils.isEmpty(videoIds)){
             return Collections.EMPTY_LIST;
         }
-        return listByIds(videoIds);
+        final Collection<Video> videos = listByIds(videoIds);
+        setUserVoAndUrl(videos);
+        return videos;
     }
 
     @Override
@@ -392,7 +414,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
 
 
     public void setUserVoAndUrl(Collection<Video> videos){
-        final List<Long> userIds = videos.stream().map(Video::getUserId).collect(Collectors.toList());
+        final Set<Long> userIds = videos.stream().map(Video::getUserId).collect(Collectors.toSet());
         final Map<Long, String> userMap = userService.list(userIds).stream().collect(Collectors.toMap(User::getId, User::getNickName));
         for (Video video : videos) {
             final UserVO userVO = new UserVO();
@@ -404,7 +426,6 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
     }
 
     public void audit(Video video){
-
         submit(video);
     }
 
@@ -454,8 +475,9 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
     @Override
     public void submit(Video video) {
         executor.submit(()->{
+            String url = QiNiuConfig.CNAME+"/"+video.getUrl();
             // 审核视频
-            final AuditResponse videoAuditResponse = auditService.audit(QiNiuConfig.CNAME+"/"+video.getUrl(), video.getAuditQueueStatus(),QiNiuConfig.VIDEO_URL);
+            final AuditResponse videoAuditResponse = auditService.audit(url, video.getAuditQueueStatus(),QiNiuConfig.VIDEO_URL);
             //审核封面
             final AuditResponse coverAuditResponse = auditService.audit(video.getCover(), video.getAuditQueueStatus(),QiNiuConfig.IMAGE_URL);
             final Integer videoAuditStatus = videoAuditResponse.getAuditStatus();
@@ -466,10 +488,15 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
                 video.setMsg("通过");
                 video.setAuditStatus(AuditStatus.SUCCESS);
                 interestPushService.pushSystemStockIn(video);
+                // 填充视频时长
             }else {
                 video.setAuditStatus(AuditStatus.PASS);
                 video.setMsg(f1 ? coverAuditResponse.getMsg() : videoAuditResponse.getMsg());
             }
+            final String duration = FileUtil.getVideoDuration(url);
+            video.setDuration(duration);
+            // 填充视频类型
+            video.setVideoType(fileService.getFileInfo(url).mimeType);
             updateById(video);
         });
     }

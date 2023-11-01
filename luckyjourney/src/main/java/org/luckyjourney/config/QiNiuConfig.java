@@ -1,5 +1,14 @@
 package org.luckyjourney.config;
 
+import com.google.gson.Gson;
+import com.qiniu.common.QiniuException;
+import com.qiniu.http.Response;
+import com.qiniu.storage.BucketManager;
+import com.qiniu.storage.Configuration;
+import com.qiniu.storage.Region;
+import com.qiniu.storage.UploadManager;
+import com.qiniu.storage.model.DefaultPutRet;
+import com.qiniu.storage.model.FileInfo;
 import com.qiniu.util.Auth;
 import com.qiniu.util.StringMap;
 import lombok.Data;
@@ -35,11 +44,13 @@ public class QiNiuConfig {
     public static final String VIDEO_URL = "http://ai.qiniuapi.com/v3/video/censor";
     public static final String IMAGE_URL = "http://ai.qiniuapi.com/v3/image/censor";
 
+
     public Auth buildAuth(){
         String accessKey = this.getAccessKey();
         String secretKey = this.getSecretKey();
         return Auth.create(accessKey, secretKey);
     }
+
 
     public String uploadToken(){
         final Auth auth = buildAuth();

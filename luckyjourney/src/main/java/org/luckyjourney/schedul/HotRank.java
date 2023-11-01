@@ -56,7 +56,7 @@ public class HotRank {
         long id = 0;
         List<Video> videos = videoService.list(new LambdaQueryWrapper<Video>()
                 .select(Video::getId,Video::getShareCount,Video::getHistoryCount,Video::getStartCount,Video::getFavoritesCount,
-                        Video::getGmtCreated,Video::getTitle).ge(Video::getId, id).last("limit " + limit));
+                        Video::getGmtCreated,Video::getTitle).ge(Video::getId, id).eq(Video::getOpen,1).last("limit " + limit));
 
         while (!ObjectUtils.isEmpty(videos)){
             for (Video video : videos) {
