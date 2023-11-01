@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.ToString;
 import org.springframework.util.ObjectUtils;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
@@ -16,7 +17,7 @@ import java.util.List;
  */
 @Data
 //@ToString
-public class BodyJson {
+public class BodyJson implements Serializable {
     String id;
     String status;
     ResultJson result;

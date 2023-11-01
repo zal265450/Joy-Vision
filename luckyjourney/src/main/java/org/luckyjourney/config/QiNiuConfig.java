@@ -31,7 +31,9 @@ public class QiNiuConfig {
      */
     private String bucketName;
 
-    public static final String CNAME = "oss.luckjourney.liuscraft.top";
+    public static final String CNAME = "http://oss.luckjourney.liuscraft.top";
+    public static final String VIDEO_URL = "http://ai.qiniuapi.com/v3/video/censor";
+    public static final String IMAGE_URL = "http://ai.qiniuapi.com/v3/image/censor";
 
     public Auth buildAuth(){
         String accessKey = this.getAccessKey();

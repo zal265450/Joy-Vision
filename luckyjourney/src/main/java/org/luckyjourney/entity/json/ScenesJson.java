@@ -3,6 +3,8 @@ package org.luckyjourney.entity.json;
 import lombok.Data;
 import lombok.ToString;
 
+import java.io.Serializable;
+
 /**
  * @description:
  * @Author: Xhy
@@ -10,7 +12,7 @@ import lombok.ToString;
  */
 @Data
 @ToString
-public class ScenesJson {
+public class ScenesJson implements Serializable {
     private TypeJson terror;
     private TypeJson politician;
     private TypeJson pulp;

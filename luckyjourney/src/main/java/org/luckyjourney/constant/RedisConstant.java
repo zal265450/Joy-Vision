@@ -26,4 +26,5 @@ public interface RedisConstant {
     Long EMAIL_CODE_TIME = 300L;
 
 
+    String SYSTEM_TYPE_STOCK = "system:type:stock:";
 }

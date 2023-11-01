@@ -13,7 +13,7 @@ import lombok.ToString;
 public class AuditResponse {
 
     Integer auditStatus;
-    // 需要结果
+    // true:违规 false:正常
     Boolean flag;
     // 信息
     String msg;

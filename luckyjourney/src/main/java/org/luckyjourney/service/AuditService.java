@@ -13,7 +13,8 @@ public interface AuditService {
      *
      * @param url 对应链接
      * @param auditState 快慢审核
+     * @param urlType 用于审核类型
      * @return
      */
-    AuditResponse audit(String url,boolean auditState);
+    AuditResponse audit(String url,boolean auditState,String urlType);
 }
