@@ -4,32 +4,46 @@
         <VCardSubtitle style="display: inline;">所有视频分类</VCardSubtitle>
         <VDivider />
         <v-row dense class="ma-2">
-            <v-col>
-                <v-chip :size="'large'" closable >
+            <v-col v-for="(item, index) in classifyDataList" :key="index">
+                <v-chip :size="'large'" closable :close-icon="item.used? 'mdi-close-circle':'mdi-plus-circle'" @click:close="closeEvent(item.id)">
                     <template #prepend>
-                        <VAvatar :image="'/logo.png'" icon="mdi-walk" start></VAvatar>
+                        <VAvatar :image="item.image" :icon="item.icon || 'mdi-file-document-alert-outline'" start></VAvatar>
                     </template>
-                    体育频道
-                </v-chip>
-            </v-col>
-            <v-col>
-                <v-chip :size="'large'" closable close-icon="mdi-plus-circle">
-                    <template #prepend>
-                        <VAvatar :image="'/logo.png'" icon="mdi-walk" start></VAvatar>
-                    </template>
-                    二次元
-                </v-chip>
-            </v-col>
-            <v-col>
-                <v-chip :size="'large'" closable >
-                    <template #prepend>
-                        <VAvatar :image="'/logo.png'" icon="mdi-walk" start></VAvatar>
-                    </template>
-                    穿越火线
+                    {{ item.name }}
                 </v-chip>
             </v-col>
         </v-row>
     </div>
 </template>
 <script setup>
+import { computed } from 'vue';
+
+const props = defineProps({
+    classifyData: {
+        type: Array,
+        default: []
+    },
+    used: {
+        type: Array,
+        default: [
+
+        ]
+    },
+    closeEvent: {
+        type: Function,
+        default: ()=>{}
+    }
+})
+const classifyDataList = computed(() => {
+    return props.used.reduce((acc, cur) => {
+        const target = acc.find(e => e.id === cur.id);
+        if (target) {
+            Object.assign(target, cur);
+            target.used = true
+        } else {
+            acc.push(cur);
+        }
+        return acc;
+    }, props.classifyData)
+})
 </script>

@@ -8,7 +8,7 @@ const myCustomLightTheme = {
   colors: {
     background: "#252632",
     surface: '#36393f',
-    primary: '#5865f2',
+    primary: 'blue',
     'primary-darken-1': '#3700B3',
     secondary: '#03DAC6',
     'secondary-darken-1': '#018786',
@@ -23,7 +23,7 @@ const vuetify = createVuetify({
   components,
     directives,
     defaults: {
-      VBtn: { color: '#5865f2' }
+      VBtn: { color: '#blue' }
     },
     theme: {
       defaultTheme: "myCustomLightTheme",

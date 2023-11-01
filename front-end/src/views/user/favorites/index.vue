@@ -1,0 +1,110 @@
+<template>
+    <v-app full-height>
+        <v-navigation-drawer permanent :width="200">
+            <v-list mandatory :lines="false" nav v-model:selected="currentFavoriteIndex">
+                <v-list-subheader class="text-subtitle-1">我的收藏夹</v-list-subheader>
+                <FavoriteEdit :edit-data="editFavorite" :close-event="getUserFavorites">
+                    <template #default="{ props }">
+                        <v-btn v-bind="props" block class="mb-2" color="white" :variant="'outlined'">
+                            <v-icon>mdi-plus</v-icon>
+                            添加收藏夹</v-btn>
+                    </template>
+                </FavoriteEdit>
+                <v-divider />
+                <v-list-item variant="tonal" :active="currentFavoriteIndex == i" v-for="(item, i) in favoriteItems" :key="i"
+                    :value="i" color="primary">
+                    <template #append>
+                        <v-btn :variant="'plain'" icon density @click="showMenu(i)">
+                            <v-icon>mdi-pen</v-icon>
+                        </v-btn>
+                    </template>
+                    <v-list-item-title v-text="item.name"></v-list-item-title>
+                </v-list-item>
+                <VListSubheader v-if="favoriteItems.length == 0">您没有收藏夹</VListSubheader>
+                <v-menu v-model:model-value="isShowMenu">
+                    <v-list>
+                        <v-list-item v-for="(item, index) in items" :key="index" :value="index">
+                            <v-list-item-title>{{ item.title }}</v-list-item-title>
+                        </v-list-item>
+                    </v-list>
+                </v-menu>
+            </v-list>
+        </v-navigation-drawer>
+        <v-main class="ml-1">
+            <v-card color="background" elevation="0">
+                <v-row dense>
+                    <v-divider class="ma-2" />
+                    <v-col class="ma-2" v-for="(video, index) in videoList" :key="index" :cols="4">
+                        <VideoCard @click="playVideo(video)" :video-info="video" />
+                    </v-col>
+                    <v-col cols="12" v-if="videoList.length==0">
+                        <VCard height="300px" class="ma-4" :variant="'tonal'"
+                        style="text-align: center;line-height: 300px;">
+                        该收藏夹未找到视频
+                    </VCard>
+
+                    </v-col>
+                </v-row>
+            </v-card>
+            <v-dialog v-model="videoDialog" height="100%" fullscreen transition="dialog-bottom-transition">
+                <v-card v-if="currentVideo">
+                    <Video :video-info="currentVideo" :close-video="() => playVideo(null)" />
+                </v-card>
+            </v-dialog>
+        </v-main>
+    </v-app>
+</template>
+<script setup>
+import { computed, onMounted, ref, watch } from 'vue';
+import { apiGetFavorites } from '../../../apis/user/favorites';
+import { apiGetVideoByFavoriteId } from '../../../apis/video';
+import VideoCard from '../../../components/video/card.vue';
+import FavoriteEdit from './edit.vue';
+const favoriteItems = ref([])
+const videoList = ref([])
+const currentVideo = ref(null)
+const videoDialog = ref(false)
+const currentFavoriteIndex = ref(0)
+const currentFavorite = computed(() => currentFavoriteIndex.value > -1 ? favoriteItems.value[currentFavoriteIndex.value] : null)
+const getUserFavorites = () => {
+    apiGetFavorites().then(({ data }) => {
+        favoriteItems.value = data.data
+        if (favoriteItems.value.length == 0) {
+            currentFavoriteIndex.value = null
+            return;
+        }
+        if ((currentFavoriteIndex.value > -1 && currentFavoriteIndex.value < favoriteItems.value.length)) {
+            return;
+        } else if (favoriteItems.value.length > 0) {
+            currentFavoriteIndex.value = 0
+        }
+    })
+}
+const playVideo = (video) => {
+    videoDialog.value = false
+    currentVideo.value = video
+    videoDialog.value = video ? true : false
+    console.log(videoDialog.value, video)
+}
+const getFavoriteVideo = () => {
+    if (currentFavorite.value == null) {
+        return;
+    }
+    apiGetVideoByFavoriteId(currentFavorite.value.id).then(({ data }) => {
+        videoList.value = data.data
+    })
+}
+const isShowMenu = ref(false)
+const editFavorite = ref(null)
+const showMenu = (index) => {
+    editFavorite.value = favoriteItems.value[index]
+    isShowMenu.value = true
+}
+getUserFavorites()
+watch(currentFavorite, () => {
+    getFavoriteVideo()
+})
+onMounted(() => {
+    getFavoriteVideo()
+})
+</script>
