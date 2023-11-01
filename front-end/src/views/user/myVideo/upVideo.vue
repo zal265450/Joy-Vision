@@ -112,8 +112,8 @@
 </template>
 <script setup>
 import { computed, onMounted, ref } from 'vue';
-import { apiClassifyGetAll } from '../../apis/classify';
-import { apiVideoPush, apiVideoUpload } from '../../apis/video';
+import { apiClassifyGetAll } from '../../../apis/classify';
+import { apiVideoPush, apiVideoUpload } from '../../../apis/video';
 
 const items = ref([
     {

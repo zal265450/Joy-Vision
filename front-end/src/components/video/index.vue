@@ -1,22 +1,22 @@
 <template>
   <v-app full-height v-if="videoInfo">
-    <v-navigation-drawer app v-model="drawer" location="right" :width="350">
+    <v-navigation-drawer permanent app v-model="drawer" location="right" :width="350" style="background-color: #252632;">
       <v-card class="mx-auto" max-width="344" elevation="0">
-        <v-img :src="props.videoInfo.cover" height="200px" cover></v-img>
+        <v-img :src="currentVideo.cover" height="200px" cover></v-img>
         <v-card-title>
-          {{ props.videoInfo.title }}
+          {{ currentVideo.title }}
         </v-card-title>
 
         <v-card-subtitle>
           <v-row>
             <v-col>
-              {{ props.videoInfo.historyCount }} 播放
+              {{ currentVideo.historyCount }} 播放
             </v-col>
             <v-col>
-              {{ props.videoInfo.historyCount }} 点赞
+              {{ currentVideo.historyCount }} 点赞
             </v-col>
             <v-col>
-              {{ props.videoInfo.historyCount }} 收藏
+              {{ currentVideo.historyCount }} 收藏
             </v-col>
           </v-row>
         </v-card-subtitle>
@@ -37,16 +37,19 @@
             <v-divider></v-divider>
 
             <v-card-text>
-              {{ props.videoInfo.description || "作者很懒，没有给一点描述" }}
+              {{ currentVideo.description || "作者很懒，没有给一点描述" }}
             </v-card-text>
           </div>
         </v-expand-transition>
       </v-card>
+      <div class="pa-4 ">
+        <VideoCard class="mb-4" :video-info="videoItem" v-for="(videoItem, index) in similarList" :key="index" @click="currentIndex = index"/>
+      </div>
     </v-navigation-drawer>
     <v-main>
       <v-card :height="videoHeight" :width="videoWidth" rounded="0">
-        <video ref="video" class="video-js vjs-default-skin" controls :poster="props.videoInfo.cover">
-          <source :src="props.videoInfo.url" />
+        <video ref="video" class="video-js vjs-default-skin" controls :poster="currentVideo.cover">
+          <source :src="currentVideo.url" type="video/mp4" />
         </video>
         <div style="position: absolute;left: 15px;top: 15px;z-index: 99999;">
           <v-btn size="40" color="bg" icon @click="closeVideo">
@@ -61,20 +64,28 @@
           </v-btn>
           <v-btn size="40" color="bg" icon>
             <v-icon :size="20">mdi-heart</v-icon>
-          </v-btn><v-btn size="40" color="bg" icon>
+          </v-btn>
+          <FavoriteCom :video-id="currentVideo.id">
+            <template #default="{props}">
+              <v-btn v-bind="props" size="40" color="bg" icon>
             <v-icon :size="20">mdi-star</v-icon>
           </v-btn>
+        </template>
+          </FavoriteCom>
           <v-btn size="40" color="bg" icon>
             <v-icon :size="20">mdi-near-me</v-icon>
           </v-btn>
         </v-card>
       </v-card>
+      
     </v-main>
   </v-app>
 </template>
 <script setup>
-import { computed, getCurrentInstance, onMounted, ref } from 'vue';
-
+import { computed, getCurrentInstance, onMounted, ref, watch } from 'vue';
+import { apiGetVideoBySimilar } from '../../apis/video';
+import FavoriteCom from '../../components/favorite/index.vue';
+import VideoCard from '../../components/video/card.vue';
 const props = defineProps({
   videoInfo: {
     type: Object,
@@ -82,28 +93,70 @@ const props = defineProps({
   },
   closeVideo: {
     type: Function,
-    default: ()=>{}
+    default: () => { }
   }
 })
-const showDescription = ref(true)
+const showDescription = ref(false)
 const drawer = ref(false)
 const instance = getCurrentInstance().proxy
 const video = ref()
 const windowHeight = ref(document.body.clientHeight)
 const windowWidth = ref(document.body.clientWidth)
+const videoPlayer = ref()
+const similarList = ref([
+  props.videoInfo
+])
+const currentIndex = ref(0)
+const currentVideo = computed(()=> {
+  return currentIndex.value>=0?  similarList.value[currentIndex.value]:props.videoInfo
+})
 onMounted(() => {
   window.onresize = () => { }
   window.onresize = () => {
     windowHeight.value = document.body.clientHeight
     windowWidth.value = document.body.clientWidth
   }
-  instance.$video(video.value, {
+  videoPlayer.value = instance.$video(video.value, {
+    notSupportedMessage: "暂不支持该视频类型",
     fill: true, userActions: {
       hotkeys: (event) => {
-
+        if (event.which == 38) {
+          if (currentIndex.value < 1) {
+            return;
+          }
+          currentIndex.value--
+        } else if (event.which == 40) {
+          if (currentIndex.value >= similarList.value.length) {
+            return;
+          }
+          currentIndex.value++;
+        }
       }
     }
   })
+  videoPlayer.value.play()
+  apiGetVideoBySimilar(props.videoInfo.labelNames).then(({ data }) => {
+    similarList.value = similarList.value.concat(data.data)
+  })
+})
+const playVideo = (n) =>{
+  if (n) {
+    videoPlayer.value.pause()
+    videoPlayer.value.reset()
+    setTimeout(() => {
+      videoPlayer.value.src([
+        {
+          src: n.url,
+          type: "video/mp4"
+        }
+      ])
+      videoPlayer.value.load()
+      videoPlayer.value.play()
+    },)
+  }
+}
+watch(currentVideo, playVideo, {
+  deep: true
 })
 const videoHeight = computed(() => {
   return windowHeight.value

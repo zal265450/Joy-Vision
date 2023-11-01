@@ -5,7 +5,7 @@
         <VDivider />
         <v-row dense class="ma-2">
             <v-col :cols="3" v-for="(item, index) in classifyData" :key="index">
-                <v-chip :size="'large'" closable>
+                <v-chip :size="'large'" closable @click:close="closeEvent(item.id)">
                     <template #prepend>
                         <VAvatar :image="item.image" :icon="item.icon || 'mdi-file-document-alert-outline'" start></VAvatar>
                     </template>
@@ -21,5 +21,9 @@ const props = defineProps({
         type: Array,
         default: []
     },
+    closeEvent: {
+        type: Function,
+        default: ()=>{}
+    }
 })
 </script>

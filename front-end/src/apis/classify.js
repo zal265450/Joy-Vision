@@ -7,3 +7,20 @@ import request from './request'
 export const apiClassifyGetAll = ()=>{
     return request.get("/index/types")
 }
+
+/**
+ * 获取用户订阅的分类
+ * @returns 成功
+ */
+export const apiGetClassifyByUser = ()=>{
+    return request.get(`/customer/subscribe`)
+}
+
+/**
+ * 用户订阅分类/取消订阅分类
+ * @param {int} id 分类id
+ * @returns 成功
+ */
+export const apiClassifySubscribe = (id)=>{
+    return request.post(`/customer/subscribe?types=${id}`)
+}
