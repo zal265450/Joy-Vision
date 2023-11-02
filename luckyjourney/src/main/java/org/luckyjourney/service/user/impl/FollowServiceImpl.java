@@ -46,4 +46,22 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
         final List<Long> followIds = list.stream().skip((basePage.getPage() - 1) * basePage.getLimit()).limit(basePage.getLimit()).map(Follow::getUserId).collect(Collectors.toList());
         return followIds;
     }
+
+    @Override
+    public Boolean follows(Long followsId, Long userId) {
+
+        // 直接保存(唯一索引),保存失败则删除
+        final Follow follow = new Follow();
+        follow.setFollowId(followsId);
+        follow.setUserId(userId);
+        try {
+            save(follow);
+        }catch (Exception e){
+            // 删除
+            remove(new LambdaQueryWrapper<Follow>().eq(Follow::getFollowId,followsId).eq(Follow::getUserId,userId));
+            return false;
+        }
+
+        return true;
+    }
 }

@@ -31,5 +31,10 @@ public interface FileService {
      */
     void deleteFile(String url);
 
+    /**
+     * 获取文件信息
+     * @param url
+     * @return
+     */
     FileInfo getFileInfo(String url);
 }

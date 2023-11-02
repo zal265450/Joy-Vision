@@ -8,8 +8,7 @@ import org.luckyjourney.entity.vo.BasePage;
 import org.luckyjourney.entity.vo.HotVideo;
 import org.luckyjourney.schedul.HotRank;
 
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 /**
  * <p>
@@ -82,7 +81,7 @@ public interface VideoService extends IService<Video> {
     boolean shareVideo(VideoShare videoShare);
 
     /**
-     * 添加历史记录
+     * 添加浏览记录
      * @param videoId
      */
     void historyVideo(Long videoId,Long userId) throws Exception;
@@ -99,7 +98,7 @@ public interface VideoService extends IService<Video> {
      * 获取当前用户浏览记录,带分页
      * @return
      */
-    Collection<Video> getHistory(BasePage basePage);
+    LinkedHashMap<String, List<Video>> getHistory(BasePage basePage);
 
     /**
      * 根据收藏夹获取视频

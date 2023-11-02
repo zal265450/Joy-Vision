@@ -68,7 +68,23 @@ public interface UserService extends IService<User> {
      */
     void subscribe(Set<Long> typeIds);
 
+    /**
+     * 获取订阅分类
+     * @param userId
+     * @return
+     */
     Collection<Type> listSubscribeType(Long userId);
 
+    /**
+     * 关注/取关
+     * @param followsUserId
+     * @return
+     */
+    boolean follows(Long followsUserId);
 
+    /**
+     * 修改用户模型
+     * @param userModel
+     */
+    void updateUserModel(UserModel userModel);
 }

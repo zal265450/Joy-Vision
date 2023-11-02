@@ -77,7 +77,7 @@ public class VideoController {
     }
 
     /**
-     * 添加历史记录
+     * 添加浏览记录
      * @return
      */
     @PostMapping("/history/{id}")

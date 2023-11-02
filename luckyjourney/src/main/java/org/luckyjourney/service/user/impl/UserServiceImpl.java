@@ -3,6 +3,7 @@ package org.luckyjourney.service.user.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import org.luckyjourney.constant.RedisConstant;
 import org.luckyjourney.entity.user.Favorites;
+import org.luckyjourney.entity.user.Follow;
 import org.luckyjourney.entity.user.User;
 import org.luckyjourney.entity.user.UserSubscribe;
 import org.luckyjourney.entity.video.Type;
@@ -117,12 +118,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     public List<User> getFollows(Long userId, BasePage basePage) {
 
         final List<Long> followIds = followService.getFollow(userId, basePage);
+        if (ObjectUtils.isEmpty(followIds)) return Collections.EMPTY_LIST;
         return getUsers(followIds);
     }
 
     @Override
     public List<User> getFans(Long userId, BasePage basePage) {
         final List<Long> fansIds = followService.getFans(userId, basePage);
+        if (ObjectUtils.isEmpty(fansIds)) return Collections.EMPTY_LIST;
         return getUsers(fansIds);
     }
 
@@ -171,6 +174,19 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         final List<Type> types = typeService.list(new LambdaQueryWrapper<Type>()
                 .in(Type::getId, typeIds).select(Type::getId, Type::getName, Type::getIcon));
         return types;
+    }
+
+    @Override
+    public boolean follows(Long followsUserId) {
+
+        final Long userId = UserHolder.get();
+
+        return followService.follows(followsUserId,userId);
+    }
+
+    @Override
+    public void updateUserModel(UserModel userModel) {
+        interestPushService.updateUserModel(userModel);
     }
 
 

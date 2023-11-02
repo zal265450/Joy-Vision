@@ -44,4 +44,12 @@ public interface FollowService extends IService<Follow> {
      * @return
      */
     List<Long> getFans(Long userId,BasePage basePage);
+
+    /**
+     * 关注/取关
+     * @param followsId 对方id
+     * @param userId 自己id
+     * @return
+     */
+    Boolean follows(Long followsId,Long userId);
 }

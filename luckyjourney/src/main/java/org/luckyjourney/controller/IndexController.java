@@ -134,10 +134,17 @@ public class IndexController {
         return R.ok().data(videoService.listHotVideo());
     }
 
-    // 根据用户id获取视频
+    /**
+     * 根据用户id获取视频
+     * @param userId
+     * @param basePage
+     * @return
+     */
     @GetMapping("/video/user")
     public R listVideoByUserId(@RequestParam(required = false) Long userId,BasePage basePage){
         userId = userId == null ? UserHolder.get() : userId;
         return R.ok().data(videoService.listByUserId(userId,basePage));
     }
+
+
 }
