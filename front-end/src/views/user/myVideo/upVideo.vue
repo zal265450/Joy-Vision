@@ -14,7 +14,7 @@
                                 <VCardSubtitle>拖到此处可上传</VCardSubtitle>
                             </VListItem>
                             <VListItem>
-                                <VBtn @click="videoFileRef.click()">上传视频</VBtn>
+                                <VBtn color="primary" @click="videoFileRef.click()">上传视频</VBtn>
                             </VListItem>
                             <VListItem>
                                 <v-chip class="ma-2 font-weight-bold" color="green" label>
@@ -31,7 +31,7 @@
                     </VCard>
                 </VCol>
                 <VCol cols="6">
-                    <v-list density="compact" lines="three" class="mt-2">
+                    <v-list :density="'compact'" lines="three" class="mt-2">
                         <VListItemTitle>
                             <VIcon>mdi-menu-down</VIcon>用户须知
                         </VListItemTitle>

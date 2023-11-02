@@ -7,6 +7,13 @@ const routes = [
     component: Home,
   },
   {
+    path: "/video/:classify",
+    component: Home,
+    meta: {
+      isClassify: true
+    }
+  },
+  {
     path: "/classify",
     component: () => import("../views/classify/index.vue"),
   },
@@ -27,6 +34,14 @@ const routes = [
         path: "favorites",
         component: () => import("../views/user/favorites/index.vue"),
       },
+      {
+        path: "like",
+        component: ()=> import("../views/user/like/index.vue")
+      },
+      {
+        path: "history",
+        component: ()=> import("../views/user/history/index.vue")
+      }
     ],
   },
 ];

@@ -34,6 +34,10 @@ const props = defineProps({
     videoId: {
         type: Number,
         default: null
+    },
+    callback: {
+        type: Function,
+        default: ()=>{}
     }
 })
 apiGetFavorites().then(({data})=>{
@@ -51,6 +55,7 @@ const save = ()=>{
                 return;
             }
             dialog.value = false
+            props.callback(data.message)
         })
     }
 }

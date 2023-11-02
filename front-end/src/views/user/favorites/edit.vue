@@ -12,9 +12,9 @@
                 </v-card-text>
 
                 <v-card-actions>
-                    <v-btn text="取消" @click="isActive.value = false"></v-btn>
+                    <v-btn color="red" text="删除" @click="isActive.value = false" v-if="props.editData"></v-btn>
                     <v-spacer></v-spacer>
-                    <v-btn text="保存" @click="saveFavorite()"></v-btn>
+                    <v-btn color="blue" text="保存" @click="saveFavorite()"></v-btn>
                 </v-card-actions>
             </v-card>
         </template>

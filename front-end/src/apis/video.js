@@ -78,3 +78,37 @@ export const apiGetVideoBySimilar = (labels)=>{
         }
     })
 }
+
+/**
+ * 点赞视频
+ * @param {int} videoId 视频id
+ * @returns 
+ */
+export const apiStarVideo = (videoId)=>{
+    return request.post(`/video/star/${videoId}`)
+}
+
+/**
+ * 获取浏览记录
+ * @returns 
+ */
+export const apiGetHistoryVideo = ()=>{
+    return request.post(`/video/history`)
+}
+
+/**
+ * 搜索视频
+ * @param {string} searchName 搜索参数,可能是标题,用户,YV
+ * @param {int} page 当前页
+ * @param {int} limit 条数
+ * @returns 
+ */
+export const apiSearchVideo = (searchName, page=1, limit=10) =>{
+    return request.get(`/index/search`, {
+        params: {
+            searchName,
+            page,
+            limit
+        }
+    })
+}

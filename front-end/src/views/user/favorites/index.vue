@@ -1,5 +1,5 @@
 <template>
-    <v-app full-height>
+    <VLayout>
         <v-navigation-drawer permanent :width="200">
             <v-list mandatory :lines="false" nav v-model:selected="currentFavoriteIndex">
                 <v-list-subheader class="text-subtitle-1">我的收藏夹</v-list-subheader>
@@ -14,7 +14,7 @@
                 <v-list-item variant="tonal" :active="currentFavoriteIndex == i" v-for="(item, i) in favoriteItems" :key="i"
                     :value="i" color="primary">
                     <template #append>
-                        <v-btn :variant="'plain'" icon density @click="showMenu(i)">
+                        <v-btn :variant="'plain'" icon :density="'compact'" @click="showMenu(i)">
                             <v-icon>mdi-pen</v-icon>
                         </v-btn>
                     </template>
@@ -31,40 +31,21 @@
             </v-list>
         </v-navigation-drawer>
         <v-main class="ml-1">
-            <v-card color="background" elevation="0">
-                <v-row dense>
-                    <v-divider class="ma-2" />
-                    <v-col class="ma-2" v-for="(video, index) in videoList" :key="index" :cols="4">
-                        <VideoCard @click="playVideo(video)" :video-info="video" />
-                    </v-col>
-                    <v-col cols="12" v-if="videoList.length==0">
-                        <VCard height="300px" class="ma-4" :variant="'tonal'"
-                        style="text-align: center;line-height: 300px;">
-                        该收藏夹未找到视频
-                    </VCard>
-
-                    </v-col>
-                </v-row>
-            </v-card>
-            <v-dialog v-model="videoDialog" height="100%" fullscreen transition="dialog-bottom-transition">
-                <v-card v-if="currentVideo">
-                    <Video :video-info="currentVideo" :close-video="() => playVideo(null)" />
-                </v-card>
-            </v-dialog>
+            <VideoList :video-list="videoList"/>
         </v-main>
-    </v-app>
+    </VLayout>
 </template>
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue';
 import { apiGetFavorites } from '../../../apis/user/favorites';
 import { apiGetVideoByFavoriteId } from '../../../apis/video';
-import VideoCard from '../../../components/video/card.vue';
+import VideoList from '../../../components/video/list.vue';
 import FavoriteEdit from './edit.vue';
 const favoriteItems = ref([])
 const videoList = ref([])
 const currentVideo = ref(null)
 const videoDialog = ref(false)
-const currentFavoriteIndex = ref(0)
+const currentFavoriteIndex = ref([0])
 const currentFavorite = computed(() => currentFavoriteIndex.value > -1 ? favoriteItems.value[currentFavoriteIndex.value] : null)
 const getUserFavorites = () => {
     apiGetFavorites().then(({ data }) => {
@@ -81,6 +62,7 @@ const getUserFavorites = () => {
     })
 }
 const playVideo = (video) => {
+    console.log("???")
     videoDialog.value = false
     currentVideo.value = video
     videoDialog.value = video ? true : false

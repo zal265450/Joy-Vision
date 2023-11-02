@@ -1,6 +1,6 @@
 import axios from 'axios';
 const instance = axios.create({
-  // baseURL: "http://101.35.228.84:8882/luckyjourney",
+  // baseURL: "http://luckjourney.liuscraft.top/api/luckyjourney",
   baseURL: "/api",
   timeout: 3000,
   headers: {},
