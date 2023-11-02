@@ -1,5 +1,6 @@
 package org.luckyjourney.service.poll;
 
+import org.luckyjourney.entity.task.VideoTask;
 import org.luckyjourney.entity.video.Video;
 
 /**
@@ -7,8 +8,7 @@ import org.luckyjourney.entity.video.Video;
  * @Author: Xhy
  * @CreateTime: 2023-10-29 01:49
  */
-public interface VideoAuditThreadPoll extends ThreadPoll<Video>{
-
+public interface VideoAuditThreadPoll extends ThreadPoll<VideoTask>{
 
 
 }

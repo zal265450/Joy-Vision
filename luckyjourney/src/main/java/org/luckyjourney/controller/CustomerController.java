@@ -107,7 +107,8 @@ public class CustomerController {
         final Long userId = UserHolder.get();
         final Long id = favorites.getId();
         favorites.setUserId(userId);
-        final int count = favoritesService.count(new LambdaQueryWrapper<Favorites>().eq(Favorites::getName, favorites.getName()).eq(Favorites::getUserId, userId));
+        final int count = favoritesService.count(new LambdaQueryWrapper<Favorites>()
+                .eq(Favorites::getName, favorites.getName()).eq(Favorites::getUserId, userId).ne(Favorites::getId,favorites.getId()));
         if (count == 1){
             return R.error().message("已存在相同名称的收藏夹");
         }
@@ -148,4 +149,16 @@ public class CustomerController {
     public R listSubscribeType(){
         return R.ok().data(userService.listSubscribeType(UserHolder.get()));
     }
+
+    /**
+     * 关注/取关
+     * @param followsUserId
+     * @return
+     */
+    @PostMapping("/follows")
+    public R follows(@RequestParam Long followsUserId){
+
+        return R.ok().message(userService.follows(followsUserId) ? "已关注" : "已取关");
+    }
+
 }
