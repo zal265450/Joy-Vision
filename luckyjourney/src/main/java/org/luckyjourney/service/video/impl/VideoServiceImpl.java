@@ -40,6 +40,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -186,7 +187,8 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
 
     @Override
     public Collection<Video> pushVideos() {
-
+        // todo
+        UserHolder.set(1);
         Long userId = UserHolder.get();
         User user = null;
         if (userId!=null){
@@ -301,7 +303,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
     }
 
     @Override
-    public LinkedHashMap<Date, Video> getHistory(BasePage basePage) {
+    public LinkedHashMap<String, List<Video>> getHistory(BasePage basePage) {
 
         final Long userId = UserHolder.get();
         String key = RedisConstant.USER_HISTORY_VIDEO + userId;
@@ -309,12 +311,20 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
         if (ObjectUtils.isEmpty(typedTuples)){
             return new LinkedHashMap<>();
         }
-
-        final LinkedHashMap<Date, Video> result = new LinkedHashMap<>();
+        List<Video> temp = new ArrayList<>();
+        final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        final LinkedHashMap<String,List<Video>> result = new LinkedHashMap<>();
         for (ZSetOperations.TypedTuple<Object> typedTuple : typedTuples) {
-            result.put(new Date(typedTuple.getScore().longValue()),(Video)typedTuple.getValue());
+            final Date date = new Date(typedTuple.getScore().longValue());
+            final String format = simpleDateFormat.format(date);
+            if (!result.containsKey(format)) {
+                result.put(format,new ArrayList<>());
+            }
+            final Video video = (Video) typedTuple.getValue();
+            result.get(format).add(video);
+            temp.add(video);
         }
-        setUserVoAndUrl(result.values());
+        setUserVoAndUrl(temp);
 
         return result;
     }
@@ -422,15 +432,18 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
 
 
     public void setUserVoAndUrl(Collection<Video> videos){
-        final Set<Long> userIds = videos.stream().map(Video::getUserId).collect(Collectors.toSet());
-        final Map<Long, String> userMap = userService.list(userIds).stream().collect(Collectors.toMap(User::getId, User::getNickName));
-        for (Video video : videos) {
-            final UserVO userVO = new UserVO();
-            userVO.setId(video.getUserId());
-            userVO.setNickName(userMap.get(video.getUserId()));
-            video.setUser(userVO);
-            video.setUrl(QiNiuConfig.CNAME+"/"+video.getUrl());
+        if (!ObjectUtils.isEmpty(videos)){
+            final Set<Long> userIds = videos.stream().map(Video::getUserId).collect(Collectors.toSet());
+            final Map<Long, String> userMap = userService.list(userIds).stream().collect(Collectors.toMap(User::getId, User::getNickName));
+            for (Video video : videos) {
+                final UserVO userVO = new UserVO();
+                userVO.setId(video.getUserId());
+                userVO.setNickName(userMap.get(video.getUserId()));
+                video.setUser(userVO);
+                video.setUrl(QiNiuConfig.CNAME+"/"+video.getUrl());
+            }
         }
+
     }
 
 

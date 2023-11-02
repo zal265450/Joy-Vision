@@ -3,9 +3,7 @@ package org.luckyjourney.controller;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import org.luckyjourney.entity.user.Favorites;
 import org.luckyjourney.entity.user.User;
-import org.luckyjourney.entity.vo.BasePage;
-import org.luckyjourney.entity.vo.FollowVO;
-import org.luckyjourney.entity.vo.ModelVO;
+import org.luckyjourney.entity.vo.*;
 import org.luckyjourney.holder.UserHolder;
 import org.luckyjourney.service.user.FavoritesService;
 import org.luckyjourney.service.user.UserService;
@@ -14,10 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -129,7 +124,7 @@ public class CustomerController {
 
 
     /**
-     * 用户订阅分类
+     * 订阅分类
      */
     @PostMapping("/subscribe")
     public R subscribe(@RequestParam(required = false) String types){
@@ -161,4 +156,20 @@ public class CustomerController {
         return R.ok().message(userService.follows(followsUserId) ? "已关注" : "已取关");
     }
 
+    /**
+     * 用户停留时长修改模型
+     * @param model
+     * @return
+     */
+    @PostMapping("/updateUserModel")
+    public R updateUserModel(@RequestBody Model model){
+        final Double score = model.getScore();
+        if (score == -0.5 || score == 1.0){
+            final UserModel userModel = new UserModel();
+            userModel.setUserId(UserHolder.get());
+            userModel.setModels(Collections.singletonList(model));
+            userService.updateUserModel(userModel);
+        }
+        return R.ok();
+    }
 }

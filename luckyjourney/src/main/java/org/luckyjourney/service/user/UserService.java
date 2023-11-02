@@ -81,4 +81,10 @@ public interface UserService extends IService<User> {
      * @return
      */
     boolean follows(Long followsUserId);
+
+    /**
+     * 修改用户模型
+     * @param userModel
+     */
+    void updateUserModel(UserModel userModel);
 }

@@ -98,7 +98,7 @@ public interface VideoService extends IService<Video> {
      * 获取当前用户浏览记录,带分页
      * @return
      */
-    LinkedHashMap<Date, Video> getHistory(BasePage basePage);
+    LinkedHashMap<String, List<Video>> getHistory(BasePage basePage);
 
     /**
      * 根据收藏夹获取视频

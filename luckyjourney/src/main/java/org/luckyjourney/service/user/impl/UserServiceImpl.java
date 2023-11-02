@@ -184,6 +184,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         return followService.follows(followsUserId,userId);
     }
 
+    @Override
+    public void updateUserModel(UserModel userModel) {
+        interestPushService.updateUserModel(userModel);
+    }
+
 
     public List<User> getUsers(List<Long> ids){
         final Map<Long, String> userMap = listByIds(ids).stream().collect(Collectors.toMap(User::getId, User::getNickName));
