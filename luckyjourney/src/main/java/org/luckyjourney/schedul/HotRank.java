@@ -56,7 +56,7 @@ public class HotRank {
         long id = 0;
         List<Video> videos = videoService.list(new LambdaQueryWrapper<Video>()
                 .select(Video::getId,Video::getShareCount,Video::getHistoryCount,Video::getStartCount,Video::getFavoritesCount,
-                        Video::getGmtCreated,Video::getTitle).ge(Video::getId, id).eq(Video::getOpen,1).last("limit " + limit));
+                        Video::getGmtCreated,Video::getTitle).ge(Video::getId, id).eq(Video::getOpen,0).last("limit " + limit));
 
         while (!ObjectUtils.isEmpty(videos)){
             for (Video video : videos) {
@@ -125,9 +125,11 @@ public class HotRank {
             }
             id = videos.get(videos.size()-1).getId();
             limit = limit + 1000;
-            videos = videoService.list(new LambdaQueryWrapper<Video>().ge(Video::getId, id).last("limit " + limit));
+            videos = videoService.selectNDaysAgeVideo(id,3,limit);
             // RedisConstant.HOT_VIDEO + 今日日期 作为key  达到元素过期效果
-            redisTemplate.opsForSet().add(RedisConstant.HOT_VIDEO + today,videos);
+            String key = RedisConstant.HOT_VIDEO + today;
+            redisTemplate.opsForSet().add(key,hotVideos);
+            redisTemplate.expire(key,3,TimeUnit.DAYS);
         }
 
 

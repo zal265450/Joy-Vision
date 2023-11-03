@@ -1,6 +1,7 @@
 package org.luckyjourney.service.video;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.luckyjourney.entity.video.Video;
 import com.baomidou.mybatisplus.extension.service.IService;
 import org.luckyjourney.entity.video.VideoShare;
@@ -115,17 +116,17 @@ public interface VideoService extends IService<Video> {
 
     /**
      * 根据标签推送相似视频
-     * @param labels
+     * @param video
      * @return
      */
-    Collection<Video> listSimilarVideo(List<String> labels);
+    Collection<Video> listSimilarVideo(Video video);
 
     /**
-     * 根据userId获取对应视频
+     * 根据userId获取对应视频,只包含公开的
      * @param userId
      * @return
      */
-    IPage<Video> listByUserId(Long userId, BasePage basePage);
+    IPage<Video> listByUserIdOpenVideo(Long userId, BasePage basePage);
 
     /**
      * 获取当前审核队列
@@ -161,4 +162,12 @@ public interface VideoService extends IService<Video> {
      * @param userId
      */
     void initFollowFeed(Long userId);
+
+    /**
+     * 查询用户所管理的视频
+     * @param basePage
+     * @param userId
+     * @return
+     */
+    IPage<Video> listByUserIdVideo(BasePage basePage, Long userId);
 }

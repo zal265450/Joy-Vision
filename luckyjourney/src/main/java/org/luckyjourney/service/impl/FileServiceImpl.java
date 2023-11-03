@@ -33,7 +33,7 @@ public class FileServiceImpl implements FileService {
     }
 
     @Override
-    public void uploadFile(File file) {
+    public String uploadFile(File file) {
         Configuration cfg = new Configuration(Region.region2());
         UploadManager uploadManager = new UploadManager(cfg);
         try {
@@ -41,8 +41,7 @@ public class FileServiceImpl implements FileService {
             Response response = uploadManager.put(file,null,qiNiuConfig.uploadToken());
             //解析上传成功的结果
             DefaultPutRet putRet = new Gson().fromJson(response.bodyString(), DefaultPutRet.class);
-            System.out.println(putRet.key);
-            System.out.println(putRet.hash);
+           return putRet.key;
         } catch (QiniuException ex) {
             ex.printStackTrace();
             if (ex.response != null) {
@@ -55,6 +54,7 @@ public class FileServiceImpl implements FileService {
                 }
             }
         }
+        return null;
     }
 
     @Override

@@ -43,11 +43,6 @@ public class LoginController {
     @Autowired
     private CaptchaService captchaService;
 
-    @Autowired
-    private EmailService emailService;
-
-    @Autowired
-    private RedisCacheUtil redisCacheUtil;
 
     @PostMapping("/login")
     public R login(@RequestBody @Validated User user){

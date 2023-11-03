@@ -23,7 +23,7 @@ public interface FileService {
      * 上传文件
      * @param file
      */
-    void uploadFile(File file);
+    String uploadFile(File file);
 
     /**
      * 删除文件

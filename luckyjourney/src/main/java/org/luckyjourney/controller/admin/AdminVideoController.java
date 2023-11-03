@@ -3,15 +3,21 @@ package org.luckyjourney.controller.admin;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import org.luckyjourney.authority.Authority;
+import org.luckyjourney.constant.AuditStatus;
+import org.luckyjourney.entity.video.Type;
 import org.luckyjourney.entity.video.Video;
 import org.luckyjourney.entity.user.User;
 import org.luckyjourney.entity.vo.BasePage;
 import org.luckyjourney.service.user.UserService;
+import org.luckyjourney.service.video.TypeService;
 import org.luckyjourney.service.video.VideoService;
 import org.luckyjourney.util.R;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.ObjectUtils;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -31,6 +37,9 @@ public class AdminVideoController {
     private UserService userService;
 
 
+    @Autowired
+    private TypeService typeService;
+
     @GetMapping("/{id}")
     @Authority("admin:video:get")
     public R get(@PathVariable Long id){
@@ -42,13 +51,30 @@ public class AdminVideoController {
     @Authority("admin:video:page")
     public R list(BasePage basePage){
         final IPage<Video> page = videoService.page(basePage.page(), null);
-        final Map<Long, String> userMap = userService.list(new LambdaQueryWrapper<User>().select(User::getId, User::getNickName))
-                .stream().collect(Collectors.toMap(User::getId, User::getNickName));
-        for (Video video : page.getRecords()) {
-            // todo 填充昵称
-//            video.setUser(userMap.get(video.getUserId()));
+
+        final List<Video> records = page.getRecords();
+        if (ObjectUtils.isEmpty(records)) return R.ok();
+
+        final ArrayList<Long> userIds = new ArrayList<>();
+        final ArrayList<Long> typeIds = new ArrayList<>();
+        for (Video video : records) {
+            userIds.add(video.getUserId());
+            typeIds.add(video.getTypeId());
         }
-        return R.ok().data(page.getRecords()).count(page.getRecords().size());
+
+        final Map<Long, String> userMap = userService.list(new LambdaQueryWrapper<User>().select(User::getId, User::getNickName)
+        .in(User::getId,userIds))
+                .stream().collect(Collectors.toMap(User::getId, User::getNickName));
+
+        final Map<Long, String> typeMap = typeService.listByIds(typeIds).stream().collect(Collectors.toMap(Type::getId, Type::getName));
+
+        for (Video video : records) {
+            video.setAuditStateName(AuditStatus.getName(video.getAuditStatus()));
+            video.setUserName(userMap.get(video.getUserId()));
+            video.setOpenName(video.getOpen() ? "公开" : "私密");
+            video.setTypeName(typeMap.get(video.getTypeId()));
+        }
+        return R.ok().data(records).count(records.size());
     }
 
     @DeleteMapping("/{id}")

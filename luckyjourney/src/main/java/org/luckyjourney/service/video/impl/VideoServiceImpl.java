@@ -3,6 +3,7 @@ package org.luckyjourney.service.video.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -192,14 +193,13 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
                 videoShareService.remove(new LambdaQueryWrapper<VideoShare>().eq(VideoShare::getVideoId,id).eq(VideoShare::getUserId,userId));
                 videoStarService.remove(new LambdaQueryWrapper<VideoStar>().eq(VideoStar::getVideoId,id).eq(VideoStar::getUserId,userId));
                 interestPushService.deleteSystemStockIn(video);
+                interestPushService.deleteSystemTypeStockIn(video);
             }).start();
         }
     }
 
     @Override
     public Collection<Video> pushVideos() {
-        // todo
-        UserHolder.set(1);
         Long userId = UserHolder.get();
         User user = null;
         if (userId!=null){
@@ -371,15 +371,19 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
 
 
     @Override
-    public Collection<Video> listSimilarVideo(List<String> labels) {
+    public Collection<Video> listSimilarVideo(Video video) {
 
-        if (ObjectUtils.isEmpty(labels)) return Collections.EMPTY_LIST;
+        if (ObjectUtils.isEmpty(video) || ObjectUtils.isEmpty(video.getLabelNames())) return Collections.EMPTY_LIST;
+        final List<String> labels = video.buildLabel();
         final ArrayList<String> labelNames = new ArrayList<>();
         labelNames.addAll(labels);
         labelNames.addAll(labels);
-        final Collection<Long> videoIds = interestPushService.listVideoIdByLabels(labelNames);
+        final Set<Long> videoIds = (Set<Long>) interestPushService.listVideoIdByLabels(labelNames);
 
         Collection<Video> videos = new ArrayList<>();
+
+        // 去重
+        videoIds.remove(video.getId());
 
         if (!ObjectUtils.isEmpty(videoIds)){
             videos = listByIds(videoIds);
@@ -389,7 +393,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
     }
 
     @Override
-    public IPage<Video> listByUserId(Long userId, BasePage basePage) {
+    public IPage<Video> listByUserIdOpenVideo(Long userId, BasePage basePage) {
 
         final IPage<Video> page = page(basePage.page(), new LambdaQueryWrapper<Video>().eq(Video::getUserId, userId).orderByDesc(Video::getGmtCreated));
         final List<Video> videos = page.getRecords();
@@ -414,6 +418,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
         int today = calendar.get(Calendar.DATE);
 
         final HashMap<String, Integer> map = new HashMap<>();
+        // 优先推送今日的
         map.put(RedisConstant.HOT_VIDEO+today,5);
         map.put(RedisConstant.HOT_VIDEO+(today-1),3);
         map.put(RedisConstant.HOT_VIDEO+(today-2),2);
@@ -426,18 +431,19 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
             });
             return null;
         });
-        final HashSet<Long> vIds = new HashSet<>();
+        final List<Video> result = new ArrayList<>();
         // 会返回结果有null，做下校验
         for (Object videoId : videoIds) {
             if (!ObjectUtils.isEmpty(videoId)){
-                vIds.addAll((Collection<? extends Long>) videoId);
+                for (Object o : ((List) videoId)) {
+                    result.addAll((List)o);
+                }
             }
 
         }
         // 和浏览记录做交集? 不需要做交集，热门视频和兴趣推送不一样
-        final Collection<Video> videos = listByIds(new HashSet<>(vIds));
-        setUserVoAndUrl(videos);
-        return videos;
+        setUserVoAndUrl(result);
+        return result;
     }
 
     @Override
@@ -447,8 +453,6 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
          Set<Long> set = redisTemplate.opsForZSet()
                  .reverseRangeByScore(RedisConstant.IN_FOLLOW + userId,
                          0, lastTime == null ? new Date().getTime() : lastTime,lastTime == null ? 0 :1, 5);
-
-
         if (ObjectUtils.isEmpty(set)){
             return Collections.EMPTY_LIST;
         }
@@ -463,6 +467,14 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
     @Override
     public void initFollowFeed(Long userId) {
         feedService.initFollowFeed(userId);
+    }
+
+    @Override
+    public IPage<Video> listByUserIdVideo(BasePage basePage, Long userId) {
+
+        final IPage page = page(basePage.page(), new LambdaQueryWrapper<Video>().eq(Video::getUserId, userId).orderByDesc(Video::getGmtCreated));
+
+        return page;
     }
 
     public void setUserVoAndUrl(Collection<Video> videos){

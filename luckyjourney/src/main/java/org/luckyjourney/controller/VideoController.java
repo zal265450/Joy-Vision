@@ -12,8 +12,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 
 /**
  * <p>
@@ -54,9 +52,6 @@ public class VideoController {
         return R.ok().message("发布成功,请等待审核");
     }
 
-
-
-
     /**
      * 删除视频
      * @param id
@@ -67,6 +62,17 @@ public class VideoController {
         videoService.deleteVideo(id);
         return R.ok().message("删除成功");
     }
+
+    /**
+     * 查看用户所管理的视频
+     * @param basePage
+     * @return
+     */
+    @GetMapping
+    public R listVideo(BasePage basePage){
+        return R.ok().data(videoService.listByUserIdVideo(basePage,UserHolder.get()));
+    }
+
 
     /**
      * 点赞视频
@@ -141,7 +147,6 @@ public class VideoController {
         return R.ok().data(videoService.followFeed(userId,lastTime));
     }
 
-
     /**
      * 初始化关注流
      * @return
@@ -152,5 +157,6 @@ public class VideoController {
         videoService.initFollowFeed(userId);
         return R.ok();
     }
+
 }
 

@@ -93,6 +93,15 @@ public class Video extends BaseEntity {
     @TableField(exist = false)
     private Boolean favorites;
 
+    @TableField(exist = false)
+    private String userName;
+
+    @TableField(exist = false)
+    private String auditStateName;
+
+    @TableField(exist = false)
+    private String openName;
+
     public List<String> buildLabel(){
         if (ObjectUtils.isEmpty(this.labelNames)) return Collections.EMPTY_LIST;
         return Arrays.asList(this.labelNames.split(","));

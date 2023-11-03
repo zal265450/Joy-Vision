@@ -47,7 +47,7 @@ public class InterestPushServiceImpl implements InterestPushService {
     final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
-    @Async
+//    @Async todo
     public void pushSystemStockIn(Video video) {
         // 往系统库中添加
         final List<String> labels = video.buildLabel();
@@ -61,6 +61,7 @@ public class InterestPushServiceImpl implements InterestPushService {
     }
 
     @Override
+//    @Async todo
     public void pushSystemTypeStockIn(Video video) {
         final Long typeId = video.getTypeId();
         redisCacheUtil.sSet(RedisConstant.SYSTEM_TYPE_STOCK + typeId,video.getId());
@@ -70,7 +71,7 @@ public class InterestPushServiceImpl implements InterestPushService {
     public Collection<Long> listVideoIdByTypeId(Long typeId) {
         // 随机推送10个
         final byte[] key = (RedisConstant.SYSTEM_TYPE_STOCK + typeId).getBytes();
-        final List<Long> list = redisTemplate.executePipelined((RedisCallback<Object>) connection -> {
+        final List<Integer> list = redisTemplate.executePipelined((RedisCallback<Object>) connection -> {
             for (int i = 0; i < 10; i++) {
                 connection.sRandMember(key);
             }
@@ -78,9 +79,9 @@ public class InterestPushServiceImpl implements InterestPushService {
         });
         // 可能会有null
         final HashSet<Long> result = new HashSet<>();
-        for (Long aLong : list) {
+        for (Integer aLong : list) {
             if (aLong!=null){
-                result.add(aLong);
+                result.add(aLong.longValue());
             }
         }
         return result;
@@ -244,10 +245,10 @@ public class InterestPushServiceImpl implements InterestPushService {
         for (String labelName : labelNames) {
             labelKeys.add(RedisConstant.SYSTEM_STOCK + labelName);
         }
-        List<Long> videoIds = new ArrayList<>();
+        Set<Long> videoIds = new HashSet<>();
         final List<Object> list = redisCacheUtil.sRandom(labelKeys);
         if (!ObjectUtils.isEmpty(list)){
-            videoIds = list.stream().filter(id ->!ObjectUtils.isEmpty(id)).map(id -> Long.valueOf(id.toString())).collect(Collectors.toList());
+            videoIds = list.stream().filter(id ->!ObjectUtils.isEmpty(id)).map(id -> Long.valueOf(id.toString())).collect(Collectors.toSet());
         }
         return videoIds;
     }

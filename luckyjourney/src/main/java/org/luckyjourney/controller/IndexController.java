@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Arrays;
-import java.util.Collection;
 
 /**
  * @description:
@@ -117,12 +116,12 @@ public class IndexController {
 
     /**
      * 根据视频标签推送相似视频
-     * @param labels
+     * @param video
      * @return
      */
     @GetMapping("/video/similar")
-    public R pushVideoSimilar(@RequestParam String labels){
-        return R.ok().data(videoService.listSimilarVideo(Arrays.asList(labels.split(","))));
+    public R pushVideoSimilar(Video video){
+        return R.ok().data(videoService.listSimilarVideo(video));
     }
 
     /**
@@ -143,7 +142,7 @@ public class IndexController {
     @GetMapping("/video/user")
     public R listVideoByUserId(@RequestParam(required = false) Long userId,BasePage basePage){
         userId = userId == null ? UserHolder.get() : userId;
-        return R.ok().data(videoService.listByUserId(userId,basePage));
+        return R.ok().data(videoService.listByUserIdOpenVideo(userId,basePage));
     }
 
 
