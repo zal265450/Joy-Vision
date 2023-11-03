@@ -2,9 +2,10 @@ package org.luckyjourney.entity.response;
 
 import lombok.Data;
 import lombok.ToString;
+import org.luckyjourney.entity.task.VideoTask;
 
 /**
- * @description: 审核返回结果
+ * @description: 封装视频审核返回结果
  * @Author: Xhy
  * @CreateTime: 2023-10-29 14:40
  */
@@ -12,11 +13,17 @@ import lombok.ToString;
 @ToString
 public class AuditResponse {
 
-    Integer auditStatus;
+    private Integer auditStatus;
     // true:违规 false:正常
-    Boolean flag;
+    private Boolean flag;
     // 信息
-    String msg;
+    private String msg;
 
-    Long offset;
+    private Long offset;
+
+    public AuditResponse(Integer auditStatus,String msg){
+        this.auditStatus = auditStatus;
+        this.msg = msg;
+    }
+    public AuditResponse(){}
 }

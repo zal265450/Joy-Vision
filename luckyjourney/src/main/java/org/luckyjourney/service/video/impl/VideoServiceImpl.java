@@ -3,38 +3,36 @@ package org.luckyjourney.service.video.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.luckyjourney.config.QiNiuConfig;
 import org.luckyjourney.constant.AuditStatus;
 import org.luckyjourney.constant.RedisConstant;
 import org.luckyjourney.entity.task.VideoTask;
+import org.luckyjourney.entity.user.User;
 import org.luckyjourney.entity.video.Type;
 import org.luckyjourney.entity.video.Video;
 import org.luckyjourney.entity.video.VideoShare;
 import org.luckyjourney.entity.video.VideoStar;
-import org.luckyjourney.entity.response.AuditResponse;
-import org.luckyjourney.entity.user.User;
 import org.luckyjourney.entity.vo.BasePage;
 import org.luckyjourney.entity.vo.HotVideo;
 import org.luckyjourney.entity.vo.UserModel;
 import org.luckyjourney.entity.vo.UserVO;
 import org.luckyjourney.holder.UserHolder;
 import org.luckyjourney.mapper.video.VideoMapper;
-import org.luckyjourney.service.AuditService;
 import org.luckyjourney.service.FileService;
 import org.luckyjourney.service.InterestPushService;
-import org.luckyjourney.service.poll.VideoAuditThreadPoll;
+import org.luckyjourney.service.audit.AuditService;
+import org.luckyjourney.service.audit.VideoPublishAuditServiceImpl;
 import org.luckyjourney.service.user.FavoritesService;
 import org.luckyjourney.service.user.UserService;
-import org.luckyjourney.service.video.*;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import org.luckyjourney.util.FileUtil;
+import org.luckyjourney.service.video.TypeService;
+import org.luckyjourney.service.video.VideoService;
+import org.luckyjourney.service.video.VideoShareService;
+import org.luckyjourney.service.video.VideoStarService;
 import org.luckyjourney.util.RedisCacheUtil;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataAccessException;
-import org.springframework.data.redis.connection.RedisConnection;
-import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -42,9 +40,7 @@ import org.springframework.util.ObjectUtils;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 /**
@@ -56,7 +52,7 @@ import java.util.stream.Collectors;
  * @since 2023-10-24
  */
 @Service
-public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements VideoService, VideoAuditThreadPoll {
+public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements VideoService {
 
     @Autowired
     private TypeService typeService;
@@ -77,39 +73,43 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
     private RedisCacheUtil redisCacheUtil;
 
     @Autowired
-    private AuditService auditService;
-
-    @Autowired
-    private FileService fileService;
-
-    @Autowired
     private FavoritesService favoritesService;
 
     @Autowired
     private VideoMapper videoMapper;
 
-    ThreadPoolExecutor executor;
+    @Autowired
+    private VideoPublishAuditServiceImpl videoPublishAuditService;
 
     final ObjectMapper objectMapper = new ObjectMapper();
 
 
-    private Integer maxThreadCount = 8;
 
     @Override
     public Video getVideoById(Long videoId)   {
         final Video video = this.getOne(new LambdaQueryWrapper<Video>().eq(Video::getId, videoId));
         if (video == null) throw new IllegalArgumentException("指定视频不存在");
         if (video.getOpen()) return new Video();
-        video.setUser(userService.getInfo(video.getUserId()));
+
+        // 异步
         video.setUrl(QiNiuConfig.CNAME+"/"+video.getUrl());
+        // 当前视频用户自己是否有收藏/点赞过信息
+        final CompletableFuture<Object> future = new CompletableFuture<>();
+        // 这里需要优化 todo
+        video.setUser(userService.getInfo(video.getUserId()));
+        final Long userId = UserHolder.get();
+        video.setStart(videoStarService.starState(videoId, userId));
+        video.setFavorites(favoritesService.favoritesState(videoId,userId));
         return video;
     }
+
+
 
     @Override
     public void publishVideo(Video video) {
 
         final Long userId = UserHolder.get();
-        Video old = null;
+        Video old = new Video();
         // 不允许修改视频
         final Long videoId = video.getId();
         if (videoId !=null){
@@ -154,11 +154,12 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
          * 2.修改：需要将标题和简介进行审核
          */
         final VideoTask videoTask = new VideoTask();
+        videoTask.setOldVideo(old);
         videoTask.setVideo(video);
         videoTask.setIsAdd(isAdd);
         videoTask.setOldState(isAdd ? video.getOpen() : old.getOpen());
         videoTask.setNewState(video.getOpen());
-        audit(videoTask);
+        videoPublishAuditService.audit(videoTask,false);
     }
 
     @Override
@@ -388,8 +389,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
 
     @Override
     public String getAuditQueueState() {
-        final int activeCount = executor.getActiveCount();
-        return activeCount < maxThreadCount ? "快速" : "慢速";
+        return videoPublishAuditService.getAuditQueueState() ? "快速" : "慢速";
     }
 
     @Override
@@ -447,13 +447,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
     }
 
 
-    /**
-     * 审核
-     * @param videoTask 视频
-     */
-    public void audit(VideoTask videoTask){
-        submit(videoTask);
-    }
+
 
     /**
      * 点赞数
@@ -497,57 +491,6 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
 
 
 
-    @Override
-    public void submit(VideoTask videoTask) {
-        executor.submit(()->{
-            final Video video = videoTask.getVideo();
-            String url = QiNiuConfig.CNAME+"/"+video.getUrl();
-            // 审核视频
-            final AuditResponse videoAuditResponse = auditService.audit(url, video.getAuditQueueStatus(),QiNiuConfig.VIDEO_URL);
-            //审核封面
-            final AuditResponse coverAuditResponse = auditService.audit(video.getCover(), video.getAuditQueueStatus(),QiNiuConfig.IMAGE_URL);
-            final Integer videoAuditStatus = videoAuditResponse.getAuditStatus();
-            final Integer coverAuditStatus = coverAuditResponse.getAuditStatus();
-            boolean f1 = videoAuditStatus == AuditStatus.SUCCESS;
-            boolean f2 = coverAuditStatus == AuditStatus.SUCCESS;
-            if (f1 && f2) {
-                video.setMsg("通过");
-                video.setAuditStatus(AuditStatus.SUCCESS);
-                interestPushService.pushSystemStockIn(video);
-                // 填充视频时长
-            }else {
-                video.setAuditStatus(AuditStatus.PASS);
-                video.setMsg(f1 ? coverAuditResponse.getMsg() : videoAuditResponse.getMsg());
-            }
-            final String duration = FileUtil.getVideoDuration(url);
-            video.setDuration(duration);
-            // 填充视频类型
-            video.setVideoType(fileService.getFileInfo(video.getUrl()).mimeType);
-            updateById(video);
 
-            // 新增的情况下并且是公开
-            if (videoTask.getIsAdd()  && videoTask.getOldState() == videoTask.getNewState()){
-                interestPushService.pushSystemTypeStockIn(video);
-                interestPushService.pushSystemStockIn(video);
-            }else if (!videoTask.getIsAdd() && videoTask.getOldState() != videoTask.getNewState()){
-                // 修改的情况下新老状态不一致,说明需要更新
-                if (!videoTask.getNewState()){
-                    interestPushService.pushSystemTypeStockIn(video);
-                    interestPushService.pushSystemStockIn(video);
-                }else {
-                    interestPushService.deleteSystemStockIn(video);
-                    interestPushService.deleteSystemTypeStockIn(video);
-                }
-            }
-
-        });
-    }
-
-
-    // 用于初始化线程
-    @Override
-    public void afterPropertiesSet() throws Exception {
-        executor  = new ThreadPoolExecutor(5, maxThreadCount, 60, TimeUnit.SECONDS, new ArrayBlockingQueue(1000));
-    }
 
 }

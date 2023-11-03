@@ -108,4 +108,10 @@ public class FavoritesServiceImpl extends ServiceImpl<FavoritesMapper, Favorites
         }
         return true;
     }
+
+    @Override
+    public Boolean favoritesState(Long videoId, Long userId) {
+        if (userId == null) return false;
+        return favoritesVideoService.count(new LambdaQueryWrapper<FavoritesVideo>().eq(FavoritesVideo::getVideoId,videoId).eq(FavoritesVideo::getUserId,userId)) == 1;
+    }
 }
