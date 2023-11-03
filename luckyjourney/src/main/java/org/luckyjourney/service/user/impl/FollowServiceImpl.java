@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.luckyjourney.service.user.FollowService;
 import org.springframework.stereotype.Service;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -34,14 +35,20 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
     }
 
     @Override
-    public List<Long> getFollow(Long userId, BasePage basePage) {
+    public Collection<Long> getFollow(Long userId, BasePage basePage) {
         final List<Follow> list = list(new LambdaQueryWrapper<Follow>().eq(Follow::getUserId, userId).orderByDesc(Follow::getGmtCreated));
         final List<Long> followIds = list.stream().skip((basePage.getPage() - 1) * basePage.getLimit()).limit(basePage.getLimit()).map(Follow::getFollowId).collect(Collectors.toList());
         return followIds;
     }
 
     @Override
-    public List<Long> getFans(Long userId,BasePage basePage) {
+    public Collection<Long> getFollow(Long userId) {
+        final List<Long> ids = list(new LambdaQueryWrapper<Follow>().eq(Follow::getUserId, userId).select(Follow::getFollowId)).stream().map(Follow::getFollowId).collect(Collectors.toList());
+        return ids;
+    }
+
+    @Override
+    public Collection<Long> getFans(Long userId, BasePage basePage) {
         final List<Follow> list = list(new LambdaQueryWrapper<Follow>().eq(Follow::getFollowId, userId).orderByDesc(Follow::getGmtCreated));
         final List<Long> followIds = list.stream().skip((basePage.getPage() - 1) * basePage.getLimit()).limit(basePage.getLimit()).map(Follow::getUserId).collect(Collectors.toList());
         return followIds;
@@ -49,6 +56,10 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
 
     @Override
     public Boolean follows(Long followsId, Long userId) {
+
+        if (followsId.equals(userId)){
+            throw new IllegalArgumentException("你不能关注自己");
+        }
 
         // 直接保存(唯一索引),保存失败则删除
         final Follow follow = new Follow();

@@ -11,6 +11,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 /**
  * <p>
  * 前端控制器
@@ -124,8 +128,29 @@ public class VideoController {
         return R.ok().message(videoService.getAuditQueueState());
     }
 
-    // 推送关注的人视频 todo
+
+    /**
+     * 推送关注的人视频 拉模式
+     * @param lastTime 滚动分页
+     * @return
+     */
+    @GetMapping("/follow/feed")
+    public R followFeed(@RequestParam(required = false) Long lastTime) throws ParseException {
+        final Long userId = UserHolder.get();
+
+        return R.ok().data(videoService.followFeed(userId,lastTime));
+    }
 
 
+    /**
+     * 初始化关注流
+     * @return
+     */
+    @PostMapping("/init/follow/feed")
+    public R initFollowFeed(){
+        final Long userId = UserHolder.get();
+        videoService.initFollowFeed(userId);
+        return R.ok();
+    }
 }
 

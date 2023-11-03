@@ -7,6 +7,7 @@ import org.luckyjourney.entity.response.VideoAuditResponse;
 import org.luckyjourney.entity.task.VideoTask;
 import org.luckyjourney.entity.video.Video;
 import org.luckyjourney.mapper.video.VideoMapper;
+import org.luckyjourney.service.FeedService;
 import org.luckyjourney.service.FileService;
 import org.luckyjourney.service.InterestPushService;
 import org.luckyjourney.service.audit.AbstractAuditService;
@@ -25,6 +26,9 @@ import java.util.function.Supplier;
 @Service
 public class VideoPublishAuditServiceImpl extends AbstractAuditService<VideoTask> {
 
+
+    @Autowired
+    private FeedService feedService;
 
     @Autowired
     private VideoMapper videoMapper;
@@ -75,6 +79,8 @@ public class VideoPublishAuditServiceImpl extends AbstractAuditService<VideoTask
             AuditResponse coverAuditResponse = new AuditResponse(AuditStatus.SUCCESS,"正常");
             AuditResponse titleAuditResponse = new AuditResponse(AuditStatus.SUCCESS,"正常");
             AuditResponse descAuditResponse = new AuditResponse(AuditStatus.SUCCESS,"正常");
+
+            //
             if (needAuditVideo){
                   videoAuditResponse = auditVideo(url);
                   coverAuditResponse = auditImage(video.getCover());
@@ -84,10 +90,16 @@ public class VideoPublishAuditServiceImpl extends AbstractAuditService<VideoTask
                 video.setDuration(duration);
                 // 填充视频类型
                 video.setVideoType(fileService.getFileInfo(url).mimeType);
+
+                // 推入发件箱
+                feedService.pusOutBoxFeed(video.getUserId(),video.getId(),video.getGmtCreated().getTime());
             }else if (videoTask.getNewState()){
                 interestPushService.deleteSystemStockIn(video);
                 interestPushService.deleteSystemTypeStockIn(video);
+                // 删除发件箱
+                feedService.deleteOutBoxFeed(video.getUserId(),video.getId());
             }
+
             // 新老视频标题简介一致
             final Video oldVideo = videoTask.getOldVideo();
             if (!video.getTitle().equals(oldVideo.getTitle())) {

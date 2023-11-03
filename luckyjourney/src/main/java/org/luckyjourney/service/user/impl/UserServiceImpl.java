@@ -1,6 +1,7 @@
 package org.luckyjourney.service.user.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import org.luckyjourney.constant.RedisConstant;
 import org.luckyjourney.entity.user.Favorites;
 import org.luckyjourney.entity.user.Follow;
@@ -117,14 +118,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     public List<User> getFollows(Long userId, BasePage basePage) {
 
-        final List<Long> followIds = followService.getFollow(userId, basePage);
+        final Collection<Long> followIds = followService.getFollow(userId, basePage);
         if (ObjectUtils.isEmpty(followIds)) return Collections.EMPTY_LIST;
         return getUsers(followIds);
     }
 
     @Override
     public List<User> getFans(Long userId, BasePage basePage) {
-        final List<Long> fansIds = followService.getFans(userId, basePage);
+        final Collection<Long> fansIds = followService.getFans(userId, basePage);
         if (ObjectUtils.isEmpty(fansIds)) return Collections.EMPTY_LIST;
         return getUsers(fansIds);
     }
@@ -189,8 +190,28 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         interestPushService.updateUserModel(userModel);
     }
 
+    @Override
+    public Boolean findPassword(FindPWVO findPWVO) {
 
-    public List<User> getUsers(List<Long> ids){
+        // 从redis中取出
+        final Object o = redisCacheUtil.get(RedisConstant.EMAIL_CODE + findPWVO.getCode());
+        if (o==null){
+            return false;
+        }
+        // 校验
+        if (Integer.parseInt(o.toString()) != findPWVO.getCode()){
+            return false;
+        }
+        // 修改
+        final User user = new User();
+        user.setEmail(findPWVO.getEmail());
+        user.setPassword(findPWVO.getNewPassword());
+        update(user,new UpdateWrapper<User>().lambda().set(User::getPassword,findPWVO.getNewPassword()).eq(User::getEmail,findPWVO.getEmail()));
+        return true;
+    }
+
+
+    public List<User> getUsers(Collection<Long> ids){
         final Map<Long, String> userMap = listByIds(ids).stream().collect(Collectors.toMap(User::getId, User::getNickName));
         List<User> result = new ArrayList<>();
         for (Long followId : ids) {

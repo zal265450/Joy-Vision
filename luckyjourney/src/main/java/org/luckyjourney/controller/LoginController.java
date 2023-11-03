@@ -2,13 +2,17 @@ package org.luckyjourney.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import org.apache.tomcat.util.http.fileupload.IOUtils;
+import org.luckyjourney.constant.RedisConstant;
 import org.luckyjourney.entity.Captcha;
 import org.luckyjourney.entity.user.User;
+import org.luckyjourney.entity.vo.FindPWVO;
 import org.luckyjourney.entity.vo.RegisterVO;
 import org.luckyjourney.service.CaptchaService;
+import org.luckyjourney.service.EmailService;
 import org.luckyjourney.service.user.UserService;
 import org.luckyjourney.util.JwtUtils;
 import org.luckyjourney.util.R;
+import org.luckyjourney.util.RedisCacheUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.ObjectUtils;
 import org.springframework.validation.annotation.Validated;
@@ -38,6 +42,12 @@ public class LoginController {
 
     @Autowired
     private CaptchaService captchaService;
+
+    @Autowired
+    private EmailService emailService;
+
+    @Autowired
+    private RedisCacheUtil redisCacheUtil;
 
     @PostMapping("/login")
     public R login(@RequestBody @Validated User user){
@@ -83,5 +93,22 @@ public class LoginController {
     public R register(@RequestBody @Validated RegisterVO registerVO) throws Exception {
         userService.register(registerVO);
         return R.ok().message("注册成功");
+    }
+
+    /**
+     * 找回密码
+     * 邮箱
+     *
+     * @return
+     */
+    @PostMapping("/findPassword")
+    public R findPassword(@RequestBody @Validated FindPWVO findPWVO){
+        final Boolean b = userService.findPassword(findPWVO);
+        return R.ok().message(b ? "修改成功" : "修改失败,验证码不正确");
+    }
+
+
+    public int randomSixNumber(){
+        return (int)((Math.random()*9+1)*100000);
     }
 }

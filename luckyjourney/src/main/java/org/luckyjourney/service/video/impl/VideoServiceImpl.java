@@ -21,23 +21,31 @@ import org.luckyjourney.entity.vo.UserModel;
 import org.luckyjourney.entity.vo.UserVO;
 import org.luckyjourney.holder.UserHolder;
 import org.luckyjourney.mapper.video.VideoMapper;
-import org.luckyjourney.service.FileService;
+import org.luckyjourney.service.FeedService;
 import org.luckyjourney.service.InterestPushService;
-import org.luckyjourney.service.audit.AuditService;
 import org.luckyjourney.service.audit.VideoPublishAuditServiceImpl;
 import org.luckyjourney.service.user.FavoritesService;
+import org.luckyjourney.service.user.FollowService;
 import org.luckyjourney.service.user.UserService;
 import org.luckyjourney.service.video.TypeService;
 import org.luckyjourney.service.video.VideoService;
 import org.luckyjourney.service.video.VideoShareService;
 import org.luckyjourney.service.video.VideoStarService;
+import org.luckyjourney.util.DateUtil;
 import org.luckyjourney.util.RedisCacheUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
+import org.springframework.data.redis.connection.RedisConnection;
+import org.springframework.data.redis.connection.RedisZSetCommands;
+import org.springframework.data.redis.core.DefaultTypedTuple;
+import org.springframework.data.redis.core.RedisCallback;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -80,6 +88,15 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
 
     @Autowired
     private VideoPublishAuditServiceImpl videoPublishAuditService;
+
+    @Autowired
+    private RedisTemplate redisTemplate;
+
+    @Autowired
+    private FollowService followService;
+
+    @Autowired
+    private FeedService feedService;
 
     final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -145,14 +162,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
         }
 
         this.saveOrUpdate(video);
-        /**
-         * 新增：审核通过并且是公开才需要放入系统库
-         * 修改：审核通过并且是是公开，如果是修改则从系统库中删除
-         * 得再审核完成后中进行判断
-         *
-         * 1.新增：需要将视频封面，视频源，标题，简介进行审核
-         * 2.修改：需要将标题和简介进行审核
-         */
+
         final VideoTask videoTask = new VideoTask();
         videoTask.setOldVideo(old);
         videoTask.setVideo(video);
@@ -430,6 +440,30 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
         return videos;
     }
 
+    @Override
+    public Collection<Video> followFeed(Long userId,Long lastTime) {
+
+        // 是否存在
+         Set<Long> set = redisTemplate.opsForZSet()
+                 .reverseRangeByScore(RedisConstant.IN_FOLLOW + userId,
+                         0, lastTime == null ? new Date().getTime() : lastTime,lastTime == null ? 0 :1, 5);
+
+
+        if (ObjectUtils.isEmpty(set)){
+            return Collections.EMPTY_LIST;
+        }
+
+        // 这里不会按照时间排序，需要手动排序
+        final Collection<Video> videos = list(new LambdaQueryWrapper<Video>().in(Video::getId,set).orderByDesc(Video::getGmtCreated));
+
+        setUserVoAndUrl(videos);
+        return videos;
+    }
+
+    @Override
+    public void initFollowFeed(Long userId) {
+        feedService.initFollowFeed(userId);
+    }
 
     public void setUserVoAndUrl(Collection<Video> videos){
         if (!ObjectUtils.isEmpty(videos)){

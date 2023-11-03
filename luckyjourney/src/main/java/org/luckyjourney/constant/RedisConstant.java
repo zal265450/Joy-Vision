@@ -33,4 +33,8 @@ public interface RedisConstant {
 
     // 系统分类库，用于查询分类下的视频随机获取
     String SYSTEM_TYPE_STOCK = "system:type:stock:";
+
+    String OUT_FOLLOW = "out:follow:feed:";
+
+    String IN_FOLLOW = "in:follow:feed:";
 }

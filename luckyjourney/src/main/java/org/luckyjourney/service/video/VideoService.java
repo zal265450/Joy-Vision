@@ -148,4 +148,17 @@ public interface VideoService extends IService<Video> {
      */
     Collection<Video> listHotVideo();
 
+    /**
+     * 关注流
+     * @param userId 用户id
+     * @param lastTime 滚动分页参数，首次为null，后续为上次的末尾视频时间
+     * @return
+     */
+    Collection<Video> followFeed(Long userId,Long lastTime);
+
+    /**
+     * 拉模式
+     * @param userId
+     */
+    void initFollowFeed(Long userId);
 }

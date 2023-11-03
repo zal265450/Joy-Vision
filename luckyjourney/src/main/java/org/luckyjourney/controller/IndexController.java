@@ -97,7 +97,7 @@ public class IndexController {
     }
 
     /**
-     * 根据id获取视频
+     * 根据id获取视频详情
      * @param id
      * @return
      */
