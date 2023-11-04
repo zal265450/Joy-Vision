@@ -1,11 +1,13 @@
 package org.luckyjourney.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.luckyjourney.entity.json.SettingScoreJson;
 
 /**
  * <p>
@@ -26,5 +28,10 @@ public class Setting implements Serializable {
     private Integer id;
 
     private String auditPolicy;
+
+    private Double hotLimit;
+
+    @TableField(exist = false)
+    private SettingScoreJson settingScoreJson;
 
 }

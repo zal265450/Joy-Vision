@@ -12,10 +12,14 @@ import org.luckyjourney.service.FileService;
 import org.luckyjourney.service.InterestPushService;
 import org.luckyjourney.service.audit.AbstractAuditService;
 import org.luckyjourney.util.FileUtil;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.validation.constraints.NotBlank;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 /**
@@ -24,9 +28,7 @@ import java.util.function.Supplier;
  * @CreateTime: 2023-10-29 14:40
  */
 @Service
-public class VideoPublishAuditServiceImpl extends AbstractAuditService<VideoTask> {
-
-
+public class VideoPublishAuditServiceImpl implements AuditService<VideoTask,VideoTask> , InitializingBean {
     @Autowired
     private FeedService feedService;
 
@@ -38,6 +40,19 @@ public class VideoPublishAuditServiceImpl extends AbstractAuditService<VideoTask
 
     @Autowired
     private FileService fileService;
+
+    @Autowired
+    private TextAuditService textAuditService;
+
+    @Autowired
+    private ImageAuditService imageAuditService;
+
+    @Autowired
+    private VideoAuditService videoAuditService;
+
+    private int maximumPoolSize = 8;
+
+    protected ThreadPoolExecutor executor;
 
     /**
      *
@@ -82,8 +97,8 @@ public class VideoPublishAuditServiceImpl extends AbstractAuditService<VideoTask
 
             //
             if (needAuditVideo){
-                  videoAuditResponse = auditVideo(url);
-                  coverAuditResponse = auditImage(video.getCover());
+                  videoAuditResponse = videoAuditService.audit(url);
+                  coverAuditResponse = imageAuditService.audit(video.getCover());
                 interestPushService.pushSystemTypeStockIn(video);
                 interestPushService.pushSystemStockIn(video);
                 final String duration = FileUtil.getVideoDuration(url);
@@ -103,10 +118,10 @@ public class VideoPublishAuditServiceImpl extends AbstractAuditService<VideoTask
             // 新老视频标题简介一致
             final Video oldVideo = videoTask.getOldVideo();
             if (!video.getTitle().equals(oldVideo.getTitle())) {
-                titleAuditResponse = auditText(video.getTitle());
+                titleAuditResponse = textAuditService.audit(video.getTitle());
             }
             if (!video.getDescription().equals(oldVideo.getDescription())){
-                descAuditResponse = auditText(video.getDescription());
+                descAuditResponse = textAuditService.audit(video.getDescription());
             }
 
             final Integer videoAuditStatus = videoAuditResponse.getAuditStatus();
@@ -144,5 +159,13 @@ public class VideoPublishAuditServiceImpl extends AbstractAuditService<VideoTask
         });
 
         return null;
+    }
+    public boolean getAuditQueueState(){
+        return executor.getTaskCount() < maximumPoolSize;
+    }
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        executor  = new ThreadPoolExecutor(5, maximumPoolSize, 60, TimeUnit.SECONDS, new ArrayBlockingQueue(1000));
     }
 }

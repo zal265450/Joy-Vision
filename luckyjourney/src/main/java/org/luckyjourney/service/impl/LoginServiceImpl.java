@@ -42,7 +42,7 @@ public class LoginServiceImpl implements LoginService {
     private RedisCacheUtil redisCacheUtil;
 
     @Override
-    public Boolean login(User user) {
+    public User login(User user) {
         final String password = user.getPassword();
         LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
         user = userService.getOne(wrapper.eq(User::getEmail, user.getEmail()));
@@ -54,7 +54,7 @@ public class LoginServiceImpl implements LoginService {
             throw new IllegalArgumentException("密码不一致");
         }
 
-        return true;
+        return user;
     }
 
     @Override
@@ -63,7 +63,8 @@ public class LoginServiceImpl implements LoginService {
             throw new IllegalArgumentException("参数为空");
         }
         final Object o = redisCacheUtil.get(RedisConstant.EMAIL_CODE + email);
-        if (!o.equals(code)){
+
+        if (code.equals(o)){
             throw new IllegalArgumentException("验证码不正确");
         }
         return true;

@@ -114,4 +114,12 @@ public class FavoritesServiceImpl extends ServiceImpl<FavoritesMapper, Favorites
         if (userId == null) return false;
         return favoritesVideoService.count(new LambdaQueryWrapper<FavoritesVideo>().eq(FavoritesVideo::getVideoId,videoId).eq(FavoritesVideo::getUserId,userId)) == 1;
     }
+
+    @Override
+    public void exist(Long userId, Long fId) {
+        final int count = count(new LambdaQueryWrapper<Favorites>().eq(Favorites::getUserId, userId).eq(Favorites::getId, fId));
+        if (count == 0){
+            throw new IllegalArgumentException("收藏夹选择错误");
+        }
+    }
 }

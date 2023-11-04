@@ -29,6 +29,7 @@ public class User extends BaseEntity {
 
     private static final long serialVersionUID = 1L;
 
+
     private String nickName;
 
     @Email
@@ -45,6 +46,8 @@ public class User extends BaseEntity {
     // 用户默认收藏夹id
     private Long defaultFavoritesId;
 
+    // 头像
+    private String avatar;
 
     @TableField(exist = false)
     private Set<String> roleName;

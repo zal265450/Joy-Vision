@@ -2,7 +2,9 @@ package org.luckyjourney.service.user.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
+import org.luckyjourney.constant.AuditStatus;
 import org.luckyjourney.constant.RedisConstant;
+import org.luckyjourney.entity.response.AuditResponse;
 import org.luckyjourney.entity.user.Favorites;
 import org.luckyjourney.entity.user.Follow;
 import org.luckyjourney.entity.user.User;
@@ -13,6 +15,8 @@ import org.luckyjourney.holder.UserHolder;
 import org.luckyjourney.mapper.user.UserMapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.luckyjourney.service.InterestPushService;
+import org.luckyjourney.service.audit.ImageAuditService;
+import org.luckyjourney.service.audit.TextAuditService;
 import org.luckyjourney.service.user.FavoritesService;
 import org.luckyjourney.service.user.FollowService;
 import org.luckyjourney.service.user.UserService;
@@ -57,6 +61,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Autowired
     private FavoritesService favoritesService;
 
+    @Autowired
+    private ImageAuditService imageAuditService;
+
+    @Autowired
+    private TextAuditService textAuditService;
+
     @Override
     public boolean register(RegisterVO registerVO) throws Exception {
 
@@ -66,10 +76,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw new Exception("邮箱已被注册");
         }
         final String code = registerVO.getCode();
-        final Object o = redisCacheUtil.get(RedisConstant.EMAIL_CODE + code);
+        final Object o = redisCacheUtil.get(RedisConstant.EMAIL_CODE + registerVO.getEmail());
         if (o == null){
             throw new IllegalArgumentException("验证码为空");
         }
+        if (!code.equals(o)){
+            return false;
+        }
+
         final User user = new User();
         user.setNickName(UUID.randomUUID().toString().substring(0,10));
         user.setEmail(registerVO.getEmail());
@@ -208,6 +222,45 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         user.setPassword(findPWVO.getNewPassword());
         update(user,new UpdateWrapper<User>().lambda().set(User::getPassword,findPWVO.getNewPassword()).eq(User::getEmail,findPWVO.getEmail()));
         return true;
+    }
+
+    @Override
+    public void updateUser(UpdateUserVO user) {
+
+        final Long userId = UserHolder.get();
+
+        final User oldUser = getById(userId);
+        // 需要审核
+        if (!oldUser.getNickName().equals(user.getNickName())){
+            oldUser.setNickName(user.getNickName());
+            final AuditResponse audit = textAuditService.audit(user.getNickName());
+            if (audit.getAuditStatus() != AuditStatus.SUCCESS) {
+                throw new IllegalArgumentException(audit.getMsg());
+            }
+        }
+        if (!oldUser.getDescription().equals(user.getDescription())){
+            oldUser.setDescription(user.getDescription());
+            final AuditResponse audit = textAuditService.audit(user.getNickName());
+            if (audit.getAuditStatus() != AuditStatus.SUCCESS) {
+                throw new IllegalArgumentException(audit.getMsg());
+            }
+        }
+        /*if (!oldUser.getAvatar().equals(user.getAvatar())){
+            oldUser.setAvatar(user.getAvatar());
+            final AuditResponse audit = imageAuditService.audit(user.getAvatar());
+            if (audit.getAuditStatus() != AuditStatus.SUCCESS) {
+                throw new IllegalArgumentException(audit.getMsg());
+            }
+        }*/
+
+        // 校验收藏夹
+        favoritesService.exist(userId,user.getDefaultFavoritesId());
+
+        oldUser.setSex(user.getSex());
+
+        oldUser.setDefaultFavoritesId(user.getDefaultFavoritesId());
+
+        updateById(oldUser);
     }
 
 

@@ -34,7 +34,6 @@ public class FeedServiceImpl implements FeedService {
     private FollowService followService;
 
     @Override
-    @Async
     public void pusOutBoxFeed(Long userId, Long videoId, Long time) {
         redisCacheUtil.zadd(RedisConstant.OUT_FOLLOW + userId, time, videoId, -1);
     }

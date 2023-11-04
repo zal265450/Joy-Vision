@@ -21,8 +21,10 @@ public class ExceptionController {
     @ExceptionHandler(Exception.class)
     public R ex(Exception e){
         e.printStackTrace();
-        return R.error().message(e.toString());
+        return R.error().message(e.getMessage());
     }
+
+
 
     // 数据校验异常处理
     @ExceptionHandler(MethodArgumentNotValidException.class)

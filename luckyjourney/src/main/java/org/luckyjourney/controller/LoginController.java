@@ -49,12 +49,13 @@ public class LoginController {
      */
     @PostMapping
     public R login(@RequestBody @Validated User user){
-        loginService.login(user);
+        user = loginService.login(user);
         // 登录成功，生成token
         String token = JwtUtils.getJwtToken(user.getId(), user.getNickName());
         final HashMap<Object, Object> map = new HashMap<>();
         map.put("token",token);
         map.put("name",user.getNickName());
+        map.put("user",user);
         return R.ok().data(map);
     }
 
@@ -99,7 +100,9 @@ public class LoginController {
 
     @PostMapping("/register")
     public R register(@RequestBody @Validated RegisterVO registerVO) throws Exception {
-        loginService.register(registerVO);
+        if (loginService.register(registerVO)) {
+            return R.error().message("注册失败,验证码错误");
+        }
         return R.ok().message("注册成功");
     }
 

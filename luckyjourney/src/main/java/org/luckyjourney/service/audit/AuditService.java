@@ -7,12 +7,12 @@ import java.util.function.Supplier;
  * @Author: Xhy
  * @CreateTime: 2023-10-29 14:39
  */
-public interface AuditService<T> {
+public interface AuditService<T,R> {
 
     /**
      *  审核，接受一个任务且执行
      * @param task
      * @return
      */
-    T audit(T task);
+    R audit(T task);
 }

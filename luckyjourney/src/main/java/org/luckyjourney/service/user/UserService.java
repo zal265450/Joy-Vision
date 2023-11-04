@@ -94,4 +94,10 @@ public interface UserService extends IService<User> {
      * @return
      */
     Boolean findPassword(FindPWVO findPWVO);
+
+    /**
+     * 修改用户资料
+     * @param user
+     */
+    void updateUser(UpdateUserVO user);
 }

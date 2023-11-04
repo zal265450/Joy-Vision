@@ -15,10 +15,8 @@ import org.luckyjourney.service.FileService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
-import java.io.InputStream;
 
 
 @Service
@@ -29,7 +27,7 @@ public class FileServiceImpl implements FileService {
 
     @Override
     public String getToken() {
-        return qiNiuConfig.uploadToken();
+        return qiNiuConfig.videoUploadToken();
     }
 
     @Override
@@ -38,7 +36,7 @@ public class FileServiceImpl implements FileService {
         UploadManager uploadManager = new UploadManager(cfg);
         try {
 
-            Response response = uploadManager.put(file,null,qiNiuConfig.uploadToken());
+            Response response = uploadManager.put(file,null,qiNiuConfig.videoUploadToken());
             //解析上传成功的结果
             DefaultPutRet putRet = new Gson().fromJson(response.bodyString(), DefaultPutRet.class);
            return putRet.key;

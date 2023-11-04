@@ -1,17 +1,15 @@
 package org.luckyjourney.entity.vo;
 
 import lombok.Data;
-import org.luckyjourney.entity.user.User;
 
 /**
- * @description:
+ * @description: 修改用户信息
  * @Author: Xhy
- * @CreateTime: 2023-10-25 15:40
+ * @CreateTime: 2023-11-04 15:41
  */
 @Data
-public class UserVO{
+public class UpdateUserVO {
 
-    private Long id;
 
     private String nickName;
 
@@ -21,7 +19,6 @@ public class UserVO{
 
     private String description;
 
-    private Long follow;
+    private Long defaultFavoritesId;
 
-    private Long fans;
 }

@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 
 import javax.validation.constraints.Email;
+import javax.validation.constraints.NotBlank;
 import java.awt.image.BufferedImage;
 import java.util.Date;
 
@@ -56,6 +57,7 @@ public class CaptchaServiceImpl extends ServiceImpl<CaptchaMapper, Captcha> impl
     @Override
     public boolean validate(Captcha captcha) throws Exception {
         String email = captcha.getEmail();
+        final String code1 = captcha.getCode();
         captcha = this.getOne(new LambdaQueryWrapper<Captcha>().eq(Captcha::getUuid, captcha.getUuid()));
         if (captcha == null) throw new Exception("uuId为空");
 
@@ -64,6 +66,11 @@ public class CaptchaServiceImpl extends ServiceImpl<CaptchaMapper, Captcha> impl
         if (!captcha.getCode().equalsIgnoreCase(captcha.getCode()) && captcha.getExpireTime().getTime() >= System.currentTimeMillis()){
             throw new IllegalArgumentException("uuid过期");
         }
+        if (!code1.equals(captcha.getCode())){
+            return false;
+        }
+
+
         String code = getSixCode();
         redisCacheUtil.set(RedisConstant.EMAIL_CODE+email,code,RedisConstant.EMAIL_CODE_TIME);
         emailService.send(email,"注册验证码:"+code+",验证码5分钟之内有效");

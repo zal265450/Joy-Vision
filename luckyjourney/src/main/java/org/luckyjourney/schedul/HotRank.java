@@ -5,8 +5,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
 import org.luckyjourney.constant.RedisConstant;
+import org.luckyjourney.entity.Setting;
 import org.luckyjourney.entity.video.Video;
 import org.luckyjourney.entity.vo.HotVideo;
+import org.luckyjourney.service.SettingService;
 import org.luckyjourney.service.video.VideoService;
 import org.luckyjourney.util.RedisCacheUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +24,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
 
 import java.util.*;
+import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -38,6 +41,9 @@ public class HotRank {
     @Autowired
     private RedisTemplate redisTemplate;
 
+    @Autowired
+    private SettingService settingService;
+
     Jackson2JsonRedisSerializer jackson2JsonRedisSerializer = new Jackson2JsonRedisSerializer(Object.class);
     ObjectMapper om = new ObjectMapper();
     {
@@ -50,13 +56,13 @@ public class HotRank {
     @Scheduled(cron = "0 0 */1 * * ?")
     public void hotRank(){
         // 控制数量
-        final PriorityQueue<HotVideo> hotRank = new PriorityQueue<>(50,(o1, o2) -> -(int)(o1.getHot() - o2.getHot()));
+        final TopK topK = new TopK(50, new PriorityQueue<HotVideo>(50, (o1, o2) -> -(int) (o1.getHot() - o2.getHot())));
         long limit = 1000;
         // 每次拿1000个
         long id = 0;
         List<Video> videos = videoService.list(new LambdaQueryWrapper<Video>()
                 .select(Video::getId,Video::getShareCount,Video::getHistoryCount,Video::getStartCount,Video::getFavoritesCount,
-                        Video::getGmtCreated,Video::getTitle).ge(Video::getId, id).eq(Video::getOpen,0).last("limit " + limit));
+                        Video::getGmtCreated,Video::getTitle).gt(Video::getId, id).eq(Video::getOpen,0).last("limit " + limit));
 
         while (!ObjectUtils.isEmpty(videos)){
             for (Video video : videos) {
@@ -70,16 +76,15 @@ public class HotRank {
                 final double v = weightRandom();
                 final double hot = hot(shareCount + historyCount + startCount + favoritesCount + v, TimeUnit.MILLISECONDS.toDays(t));
                 final HotVideo hotVideo = new HotVideo(hot, video.getId(), video.getTitle());
-                hotRank.add(hotVideo);
+                topK.add(hotVideo);
             }
             id = videos.get(videos.size()-1).getId();
-            limit = limit + 1000;
-            videos = videoService.list(new LambdaQueryWrapper<Video>().ge(Video::getId, id).last("limit " + limit));;
+            videos = videoService.list(new LambdaQueryWrapper<Video>().gt(Video::getId, id).last("limit " + limit));;
         }
         final byte[] key = RedisConstant.HOT_RANK.getBytes();
-
+        final List<HotVideo> hotVideos = topK.get();
         redisTemplate.executePipelined((RedisCallback<Object>) connection -> {
-            for (HotVideo hotVideo : hotRank) {
+            for (HotVideo hotVideo : hotVideos) {
                 final Double hot = hotVideo.getHot();
                 hotVideo.setHot(null);
                 try {
@@ -102,7 +107,7 @@ public class HotRank {
         int limit = 1000;
         long id = 1;
         List<Video> videos = videoService.selectNDaysAgeVideo(id,3,limit);
-
+        final Double hotLimit = settingService.list(new LambdaQueryWrapper<Setting>()).get(0).getHotLimit();
         Calendar calendar = Calendar.getInstance();
         int today = calendar.get(Calendar.DATE);
 
@@ -118,13 +123,12 @@ public class HotRank {
                 final double hot = hot(shareCount + historyCount + startCount + favoritesCount, TimeUnit.MILLISECONDS.toDays(t));
 
                 // 大于1W热度说明是热门视频
-                if (hot > 10000){
+                if (hot > hotLimit){
                     hotVideos.add(video.getId());
                 }
 
             }
             id = videos.get(videos.size()-1).getId();
-            limit = limit + 1000;
             videos = videoService.selectNDaysAgeVideo(id,3,limit);
             // RedisConstant.HOT_VIDEO + 今日日期 作为key  达到元素过期效果
             String key = RedisConstant.HOT_VIDEO + today;

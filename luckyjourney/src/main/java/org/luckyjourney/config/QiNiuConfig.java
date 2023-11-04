@@ -52,10 +52,16 @@ public class QiNiuConfig {
     }
 
 
-    public String uploadToken() {
+    public String videoUploadToken() {
         final Auth auth = buildAuth();
-        return auth.uploadToken(bucketName, null, 3600, new
+        return auth.uploadToken(bucketName, null, 300, new
                 StringMap().put("mimeLimit", "video/*"));
+    }
+
+    public String imageUploadToken() {
+        final Auth auth = buildAuth();
+        return auth.uploadToken(bucketName, null, 300, new
+                StringMap().put("mimeLimit", "image/*"));
     }
 
     public String getToken(String url, String method, String body, String contentType) {

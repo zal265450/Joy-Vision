@@ -47,6 +47,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -349,15 +352,20 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
         return videos;
     }
 
+
+
+
     @Override
     public List<HotVideo> hotRank() {
-        final Set<ZSetOperations.TypedTuple<Object>> zSet = redisCacheUtil.getZSet(RedisConstant.HOT_RANK);
+
+        final Set<ZSetOperations.TypedTuple<Object>> zSet = redisTemplate.opsForZSet().reverseRangeWithScores(RedisConstant.HOT_RANK,0,-1);
         final ArrayList<HotVideo> hotVideos = new ArrayList<>();
         for (ZSetOperations.TypedTuple<Object> objectTypedTuple : zSet) {
             final HotVideo hotVideo;
             try {
                 hotVideo = objectMapper.readValue(objectTypedTuple.getValue().toString(), HotVideo.class);
-                hotVideo.setHot(objectTypedTuple.getScore());
+                hotVideo.setHot((double)objectTypedTuple.getScore().intValue());
+                hotVideo.hotFormat();
                 hotVideos.add(hotVideo);
             } catch (JsonProcessingException e) {
                 e.printStackTrace();

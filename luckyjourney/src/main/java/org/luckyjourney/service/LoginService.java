@@ -16,7 +16,7 @@ import java.io.IOException;
 public interface LoginService {
 
 
-    Boolean login(User user);
+    User login(User user);
 
     Boolean checkCode(String email,Integer code);
 
