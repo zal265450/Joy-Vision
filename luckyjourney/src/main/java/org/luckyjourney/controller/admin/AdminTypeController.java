@@ -35,7 +35,7 @@ public class AdminTypeController {
     @Authority("admin:type:page")
     public R page(BasePage basePage){
         final IPage page = typeService.page(basePage.page(), null);
-        return R.ok().data(page.getRecords()).count(page.getRecords().size());
+        return R.ok().data(page.getRecords()).count(page.getTotal());
     }
 
     @PostMapping

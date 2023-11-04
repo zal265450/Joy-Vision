@@ -33,7 +33,7 @@ public class IndexController {
     private TypeService typeService;
 
     /**
-     * 推送视频
+     * 兴趣推送视频
      * @return
      */
     @GetMapping("/pushVideos")

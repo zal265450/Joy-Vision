@@ -86,7 +86,7 @@
             }
 
                 $.ajax({
-                url: ipURL+'/login',
+                url: ipURL+'/luckyjourney/login',
                 method: 'post',
                 data:JSON.stringify(json), 
                 contentType:'application/json',
@@ -96,7 +96,6 @@
                         localStorage.setItem("name",res.data.name)
                         layer.msg("登录成功...正在跳转")
                         window.location = '../index.html';
-
                     } else{
                         layer.msg(res.message);
                     }

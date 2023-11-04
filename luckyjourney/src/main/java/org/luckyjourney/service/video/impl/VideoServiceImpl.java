@@ -225,9 +225,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
 
         Collection<Long> videoIds = interestPushService.listVideoIdByTypeId(typeId);
         if (ObjectUtils.isEmpty(videoIds)){
-            // 随便给点视频 测试用
-            videoIds = list(new LambdaQueryWrapper<Video>().orderByDesc(Video::getGmtCreated)).stream().map(Video::getId).collect(Collectors.toList());
-            videoIds = new HashSet<>(videoIds).stream().limit(10).collect(Collectors.toList());
+            return Collections.EMPTY_LIST;
         }
         final Collection<Video> videos = listByIds(videoIds);
 

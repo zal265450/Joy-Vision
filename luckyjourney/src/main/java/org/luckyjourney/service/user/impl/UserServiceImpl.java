@@ -194,7 +194,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     public Boolean findPassword(FindPWVO findPWVO) {
 
         // 从redis中取出
-        final Object o = redisCacheUtil.get(RedisConstant.EMAIL_CODE + findPWVO.getCode());
+        final Object o = redisCacheUtil.get(RedisConstant.EMAIL_CODE + findPWVO.getEmail());
         if (o==null){
             return false;
         }

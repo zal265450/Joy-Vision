@@ -62,12 +62,12 @@ public class CaptchaServiceImpl extends ServiceImpl<CaptchaMapper, Captcha> impl
         this.removeById(captcha.getUuid());
 
         if (!captcha.getCode().equalsIgnoreCase(captcha.getCode()) && captcha.getExpireTime().getTime() >= System.currentTimeMillis()){
-            return true;
+            throw new IllegalArgumentException("uuid过期");
         }
         String code = getSixCode();
-        redisCacheUtil.set(RedisConstant.EMAIL_CODE+code,code,RedisConstant.EMAIL_CODE_TIME);
+        redisCacheUtil.set(RedisConstant.EMAIL_CODE+email,code,RedisConstant.EMAIL_CODE_TIME);
         emailService.send(email,"注册验证码:"+code+",验证码5分钟之内有效");
-        return false;
+        return true;
     }
 
 

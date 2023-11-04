@@ -20,4 +20,6 @@ public class RegisterVO {
     private String password;
     @NotBlank(message = "验证码不可为空")
     private String code;
+    @NotBlank(message = "uuid不可为空")
+    private String uuid;
 }
