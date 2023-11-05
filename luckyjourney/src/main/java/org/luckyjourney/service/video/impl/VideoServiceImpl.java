@@ -437,6 +437,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
             });
             return null;
         });
+
         final ArrayList<Long> videoIds = new ArrayList<>();
         // 会返回结果有null，做下校验
         for (Object videoId : hotVideoIds) {
