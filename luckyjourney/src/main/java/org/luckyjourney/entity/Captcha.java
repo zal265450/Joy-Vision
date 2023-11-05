@@ -10,6 +10,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import javax.validation.constraints.Email;
+import javax.validation.constraints.NotBlank;
 
 /**
  * <p>
@@ -28,11 +29,13 @@ public class Captcha implements Serializable {
     /**
      * uuid
      */
+    @NotBlank(message = "uuid为空")
     private String uuid;
 
     /**
      * 验证码
      */
+    @NotBlank(message = "code为空")
     private String code;
 
     /**

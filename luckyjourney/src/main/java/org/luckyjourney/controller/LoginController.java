@@ -2,13 +2,18 @@ package org.luckyjourney.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import org.apache.tomcat.util.http.fileupload.IOUtils;
+import org.luckyjourney.constant.RedisConstant;
 import org.luckyjourney.entity.Captcha;
 import org.luckyjourney.entity.user.User;
+import org.luckyjourney.entity.vo.FindPWVO;
 import org.luckyjourney.entity.vo.RegisterVO;
 import org.luckyjourney.service.CaptchaService;
+import org.luckyjourney.service.EmailService;
+import org.luckyjourney.service.LoginService;
 import org.luckyjourney.service.user.UserService;
 import org.luckyjourney.util.JwtUtils;
 import org.luckyjourney.util.R;
+import org.luckyjourney.util.RedisCacheUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.ObjectUtils;
 import org.springframework.validation.annotation.Validated;
@@ -31,57 +36,86 @@ import java.util.HashMap;
  */
 
 @RestController
+@RequestMapping("/luckyjourney/login")
 public class LoginController {
 
     @Autowired
-    private UserService userService;
+    private LoginService loginService;
 
-    @Autowired
-    private CaptchaService captchaService;
-
-    @PostMapping("/login")
+    /**
+     * 登录
+     * @param user
+     * @return
+     */
+    @PostMapping
     public R login(@RequestBody @Validated User user){
-        final String password = user.getPassword();
-        LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
-        user = userService.getOne(wrapper.eq(User::getEmail, user.getEmail()));
-        if (ObjectUtils.isEmpty(user)) return R.error().message("没有该账号");
-
-        if (!password.equals(user.getPassword())) return R.error().message("密码不一致");
-
+        user = loginService.login(user);
         // 登录成功，生成token
         String token = JwtUtils.getJwtToken(user.getId(), user.getNickName());
         final HashMap<Object, Object> map = new HashMap<>();
         map.put("token",token);
         map.put("name",user.getNickName());
+        map.put("user",user);
         return R.ok().data(map);
     }
 
-
+    /**
+     * 获取图形验证码
+     * @param response
+     * @param uuId
+     * @throws IOException
+     */
     @GetMapping("/captcha.jpg/{uuId}")
-    public R captcha(HttpServletResponse response, @PathVariable String uuId) throws IOException {
-        if (ObjectUtils.isEmpty(uuId)) return R.error().message("uuid不能为空");
-        response.setHeader("Cache-Control", "no-store, no-cache");
-        response.setContentType("image/jpeg");
-        BufferedImage image = captchaService.getCaptcha(uuId);
-        ServletOutputStream out = response.getOutputStream();
-        ImageIO.write(image, "jpg", out);
-        IOUtils.closeQuietly(out);
-        return R.ok();
+    public void captcha(HttpServletResponse response, @PathVariable String uuId) throws IOException {
+        loginService.captcha(uuId,response);
     }
 
 
+    /**
+     * 获取验证码
+     * @param captcha
+     * @return
+     * @throws Exception
+     */
     @PostMapping("/getCode")
     public R getCode(@RequestBody @Validated Captcha captcha) throws Exception {
-        if (captchaService.validate(captcha)){
+        if (!loginService.getCode(captcha)) {
             return R.error().message("验证码错误");
         }
         return R.ok().message("发送成功,请耐心等待");
     }
 
 
+    /**
+     * 检测邮箱验证码
+     * @param email
+     * @param code
+     * @return
+     */
+    @PostMapping("/check")
+    public R check(String email,Integer code){
+        loginService.checkCode(email,code);
+        return R.ok().message("验证成功");
+    }
+
     @PostMapping("/register")
     public R register(@RequestBody @Validated RegisterVO registerVO) throws Exception {
-        userService.register(registerVO);
+        if (!loginService.register(registerVO)) {
+            return R.error().message("注册失败,验证码错误");
+        }
         return R.ok().message("注册成功");
     }
+
+    /**
+     * 找回密码
+     * 邮箱
+     *
+     * @return
+     */
+    @PostMapping("/findPassword")
+    public R findPassword(@RequestBody @Validated FindPWVO findPWVO){
+        final Boolean b = loginService.findPassword(findPWVO);
+        return R.ok().message(b ? "修改成功" : "修改失败,验证码不正确");
+    }
+
 }

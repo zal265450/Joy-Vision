@@ -1,7 +1,10 @@
 package org.luckyjourney.service.user.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
+import org.luckyjourney.constant.AuditStatus;
 import org.luckyjourney.constant.RedisConstant;
+import org.luckyjourney.entity.response.AuditResponse;
 import org.luckyjourney.entity.user.Favorites;
 import org.luckyjourney.entity.user.Follow;
 import org.luckyjourney.entity.user.User;
@@ -12,6 +15,8 @@ import org.luckyjourney.holder.UserHolder;
 import org.luckyjourney.mapper.user.UserMapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.luckyjourney.service.InterestPushService;
+import org.luckyjourney.service.audit.ImageAuditService;
+import org.luckyjourney.service.audit.TextAuditService;
 import org.luckyjourney.service.user.FavoritesService;
 import org.luckyjourney.service.user.FollowService;
 import org.luckyjourney.service.user.UserService;
@@ -25,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -56,6 +62,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Autowired
     private FavoritesService favoritesService;
 
+
+    @Autowired
+    private TextAuditService textAuditService;
+
     @Override
     public boolean register(RegisterVO registerVO) throws Exception {
 
@@ -65,10 +75,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw new Exception("邮箱已被注册");
         }
         final String code = registerVO.getCode();
-        final Object o = redisCacheUtil.get(RedisConstant.EMAIL_CODE + code);
+        final Object o = redisCacheUtil.get(RedisConstant.EMAIL_CODE + registerVO.getEmail());
         if (o == null){
             throw new IllegalArgumentException("验证码为空");
         }
+        if (!code.equals(o)){
+            return false;
+        }
+
         final User user = new User();
         user.setNickName(UUID.randomUUID().toString().substring(0,10));
         user.setEmail(registerVO.getEmail());
@@ -117,14 +131,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     public List<User> getFollows(Long userId, BasePage basePage) {
 
-        final List<Long> followIds = followService.getFollow(userId, basePage);
+        final Collection<Long> followIds = followService.getFollow(userId, basePage);
         if (ObjectUtils.isEmpty(followIds)) return Collections.EMPTY_LIST;
         return getUsers(followIds);
     }
 
     @Override
     public List<User> getFans(Long userId, BasePage basePage) {
-        final List<Long> fansIds = followService.getFans(userId, basePage);
+        final Collection<Long> fansIds = followService.getFans(userId, basePage);
         if (ObjectUtils.isEmpty(fansIds)) return Collections.EMPTY_LIST;
         return getUsers(fansIds);
     }
@@ -189,14 +203,76 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         interestPushService.updateUserModel(userModel);
     }
 
+    @Override
+    public Boolean findPassword(FindPWVO findPWVO) {
 
-    public List<User> getUsers(List<Long> ids){
-        final Map<Long, String> userMap = listByIds(ids).stream().collect(Collectors.toMap(User::getId, User::getNickName));
+        // 从redis中取出
+        final Object o = redisCacheUtil.get(RedisConstant.EMAIL_CODE + findPWVO.getEmail());
+        if (o==null){
+            return false;
+        }
+        // 校验
+        if (Integer.parseInt(o.toString()) != findPWVO.getCode()){
+            return false;
+        }
+        // 修改
+        final User user = new User();
+        user.setEmail(findPWVO.getEmail());
+        user.setPassword(findPWVO.getNewPassword());
+        update(user,new UpdateWrapper<User>().lambda().set(User::getPassword,findPWVO.getNewPassword()).eq(User::getEmail,findPWVO.getEmail()));
+        return true;
+    }
+
+    @Override
+    public void updateUser(UpdateUserVO user) {
+
+        final Long userId = UserHolder.get();
+
+        final User oldUser = getById(userId);
+        // 需要审核
+        if (!oldUser.getNickName().equals(user.getNickName())){
+            oldUser.setNickName(user.getNickName());
+            final AuditResponse audit = textAuditService.audit(user.getNickName());
+            if (audit.getAuditStatus() != AuditStatus.SUCCESS) {
+                throw new IllegalArgumentException(audit.getMsg());
+            }
+        }
+        if (!oldUser.getDescription().equals(user.getDescription())){
+            oldUser.setDescription(user.getDescription());
+            final AuditResponse audit = textAuditService.audit(user.getNickName());
+            if (audit.getAuditStatus() != AuditStatus.SUCCESS) {
+                throw new IllegalArgumentException(audit.getMsg());
+            }
+        }
+        /*if (!oldUser.getAvatar().equals(user.getAvatar())){
+            oldUser.setAvatar(user.getAvatar());
+            final AuditResponse audit = imageAuditService.audit(user.getAvatar());
+            if (audit.getAuditStatus() != AuditStatus.SUCCESS) {
+                throw new IllegalArgumentException(audit.getMsg());
+            }
+        }*/
+
+        // 校验收藏夹
+        favoritesService.exist(userId,user.getDefaultFavoritesId());
+
+        oldUser.setSex(user.getSex());
+
+        oldUser.setDefaultFavoritesId(user.getDefaultFavoritesId());
+
+        updateById(oldUser);
+    }
+
+
+    public List<User> getUsers(Collection<Long> ids){
+        final Map<Long, User> userMap = listByIds(ids).stream().collect(Collectors.toMap(User::getId, Function.identity()));
         List<User> result = new ArrayList<>();
         for (Long followId : ids) {
             final User user = new User();
             user.setId(followId);
-            user.setNickName(userMap.get(followId));
+            final User u = userMap.get(followId);
+            user.setNickName(u.getNickName());
+            user.setSex(u.getSex());
+            user.setDescription(u.getDescription());
             result.add(user);
         }
         return result;

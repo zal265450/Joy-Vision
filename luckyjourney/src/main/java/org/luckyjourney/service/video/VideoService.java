@@ -1,6 +1,7 @@
 package org.luckyjourney.service.video;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.luckyjourney.entity.video.Video;
 import com.baomidou.mybatisplus.extension.service.IService;
 import org.luckyjourney.entity.video.VideoShare;
@@ -23,9 +24,10 @@ public interface VideoService extends IService<Video> {
     /**
      * 获取视频信息
      * @param id
+     * @param userId 当前用户id 当前视频和用户之间有什么关系
      * @return
      */
-    Video getVideoById(Long id)  ;
+    Video getVideoById(Long id,Long userId)  ;
 
     /**
      * 发布/修改视频
@@ -44,7 +46,7 @@ public interface VideoService extends IService<Video> {
      * 主页推送视频
      * @return
      */
-    Collection<Video> pushVideos();
+    Collection<Video> pushVideos(Long userId);
 
     /**
      * 根据视频分类获取视频,乱序
@@ -115,17 +117,17 @@ public interface VideoService extends IService<Video> {
 
     /**
      * 根据标签推送相似视频
-     * @param labels
+     * @param video
      * @return
      */
-    Collection<Video> listSimilarVideo(List<String> labels);
+    Collection<Video> listSimilarVideo(Video video);
 
     /**
-     * 根据userId获取对应视频
+     * 根据userId获取对应视频,只包含公开的
      * @param userId
      * @return
      */
-    IPage<Video> listByUserId(Long userId, BasePage basePage);
+    IPage<Video> listByUserIdOpenVideo(Long userId, BasePage basePage);
 
     /**
      * 获取当前审核队列
@@ -148,4 +150,27 @@ public interface VideoService extends IService<Video> {
      */
     Collection<Video> listHotVideo();
 
+    /**
+     * 关注流
+     * @param userId 用户id
+     * @param lastTime 滚动分页参数，首次为null，后续为上次的末尾视频时间
+     * @return
+     */
+    Collection<Video> followFeed(Long userId,Long lastTime);
+
+    /**
+     * 拉模式
+     * @param userId
+     */
+    void initFollowFeed(Long userId);
+
+    /**
+     * 查询用户所管理的视频
+     * @param basePage
+     * @param userId
+     * @return
+     */
+    IPage<Video> listByUserIdVideo(BasePage basePage, Long userId);
+
+    Collection<Long> listVideoIdByUserId(Long userId);
 }

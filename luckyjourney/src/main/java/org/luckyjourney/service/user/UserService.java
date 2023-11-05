@@ -87,4 +87,17 @@ public interface UserService extends IService<User> {
      * @param userModel
      */
     void updateUserModel(UserModel userModel);
+
+    /**
+     * 找回密码
+     * @param findPWVO
+     * @return
+     */
+    Boolean findPassword(FindPWVO findPWVO);
+
+    /**
+     * 修改用户资料
+     * @param user
+     */
+    void updateUser(UpdateUserVO user);
 }

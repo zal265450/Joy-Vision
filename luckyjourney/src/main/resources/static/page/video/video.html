@@ -15,24 +15,7 @@
 <div class="layuimini-container">
     <div class="layuimini-main">
 
-        <fieldset class="table-search-fieldset">
-            <legend>搜索信息</legend>
-            <div style="margin: 10px 10px 10px 10px">
-                <form class="layui-form layui-form-pane" action="">
-                    <div class="layui-form-item">
-                        <div class="layui-inline">
-                            <label class="layui-form-label">邮箱</label>
-                            <div class="layui-input-inline">
-                                <input type="text" name="email" autocomplete="off" class="layui-input" id="emailSearch">
-                            </div>
-                        </div>
-                        <div class="layui-inline">
-                            <button type="button" class="layui-btn layui-btn-primary"  lay-submit lay-filter="data-search-btn"><i class="layui-icon"></i> 搜 索</button>
-                        </div>
-                    </div>
-                </form>
-            </div>
-        </fieldset>
+        
 
         <table class="layui-hide" id="currentTableId" lay-filter="currentTableFilter"></table>
 
@@ -85,10 +68,10 @@
             cols: [[
                 {type: "checkbox", width: 50},
                 { field: 'id', title: 'ID' ,sort: true,hide:true},
-                { field: 'YV', title: 'YV'},
                 { field: 'title', title: '名称' },
-                { field: 'status', title: '审核状态' },
-                { field: 'open', title: '视频状态' },
+                { field: 'auditStateName', title: '审核状态' },
+                { field: 'openName', title: '视频状态' },
+                { field: 'typeName', title: '分类' },
                 { field: 'userName', title: '上传者' },
                 {title: '操作', minWidth: 150, toolbar: '#currentTableBar', align: "center"}
             ]],

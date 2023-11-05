@@ -6,10 +6,12 @@ import lombok.EqualsAndHashCode;
 import org.luckyjourney.entity.BaseEntity;
 import org.luckyjourney.entity.user.User;
 import org.luckyjourney.entity.vo.UserVO;
+import org.springframework.util.ObjectUtils;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -84,7 +86,24 @@ public class Video extends BaseEntity {
     @TableField(exist = false)
     private String typeName;
 
+
+    @TableField(exist = false)
+    private Boolean start;
+
+    @TableField(exist = false)
+    private Boolean favorites;
+
+    @TableField(exist = false)
+    private String userName;
+
+    @TableField(exist = false)
+    private String auditStateName;
+
+    @TableField(exist = false)
+    private String openName;
+
     public List<String> buildLabel(){
+        if (ObjectUtils.isEmpty(this.labelNames)) return Collections.EMPTY_LIST;
         return Arrays.asList(this.labelNames.split(","));
     }
 }

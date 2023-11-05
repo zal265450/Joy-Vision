@@ -17,7 +17,7 @@ import java.util.Map;
  */
 public interface PermissionService extends IService<Permission> {
 
-    Map<String, Object> toTree(HttpServletRequest request);
+    Map<String, Object> initMenu(Long userId);
 
 
     List<Permission> treeSelect();

@@ -1,5 +1,6 @@
 package org.luckyjourney.service.video;
 
+import org.luckyjourney.entity.video.Video;
 import org.luckyjourney.entity.video.VideoStar;
 import com.baomidou.mybatisplus.extension.service.IService;
 
@@ -28,4 +29,12 @@ public interface VideoStarService extends IService<VideoStar> {
      * @return
      */
     List<Long> getStarUserIds(Long videoId);
+
+    /**
+     * 点赞状态
+     * @param videoId
+     * @param userId
+     * @return
+     */
+    Boolean starState(Long videoId, Long userId);
 }

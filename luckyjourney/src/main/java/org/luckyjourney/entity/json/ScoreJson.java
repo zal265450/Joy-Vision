@@ -6,14 +6,13 @@ import lombok.Data;
 
 @Data
 public class ScoreJson{
+    Double minPulp;
+    Double maxPulp;
     Double minTerror;
     Double maxTerror;
     Double minPolitician;
     Double maxPolitician;
-    Double minPulp;
-    Double maxPulp;
 
-    // 当前审核规则
     Integer auditStatus;
 
 }

@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Arrays;
-import java.util.Collection;
 
 /**
  * @description:
@@ -34,12 +33,13 @@ public class IndexController {
     private TypeService typeService;
 
     /**
-     * 推送视频
+     * 兴趣推送视频
      * @return
      */
     @GetMapping("/pushVideos")
-    public R pushVideos(){
-        return R.ok().data(videoService.pushVideos());
+    public R pushVideos(HttpServletRequest request){
+        final Long userId = JwtUtils.getUserId(request);
+        return R.ok().data(videoService.pushVideos(userId));
     }
 
     /**
@@ -97,13 +97,14 @@ public class IndexController {
     }
 
     /**
-     * 根据id获取视频
+     * 根据id获取视频详情
      * @param id
      * @return
      */
     @GetMapping("/video/{id}")
-    public R getVideoById(@PathVariable Long id){
-        return R.ok().data(videoService.getVideoById(id));
+    public R getVideoById(@PathVariable Long id,HttpServletRequest request){
+        final Long userId = JwtUtils.getUserId(request);
+        return R.ok().data(videoService.getVideoById(id,userId));
     }
 
     /**
@@ -117,12 +118,12 @@ public class IndexController {
 
     /**
      * 根据视频标签推送相似视频
-     * @param labels
+     * @param video
      * @return
      */
     @GetMapping("/video/similar")
-    public R pushVideoSimilar(@RequestParam String labels){
-        return R.ok().data(videoService.listSimilarVideo(Arrays.asList(labels.split(","))));
+    public R pushVideoSimilar(Video video){
+        return R.ok().data(videoService.listSimilarVideo(video));
     }
 
     /**
@@ -141,9 +142,11 @@ public class IndexController {
      * @return
      */
     @GetMapping("/video/user")
-    public R listVideoByUserId(@RequestParam(required = false) Long userId,BasePage basePage){
-        userId = userId == null ? UserHolder.get() : userId;
-        return R.ok().data(videoService.listByUserId(userId,basePage));
+    public R listVideoByUserId(@RequestParam(required = false) Long userId,
+                               BasePage basePage,HttpServletRequest request){
+
+        userId = userId == null ? JwtUtils.getUserId(request) : userId;
+        return R.ok().data(videoService.listByUserIdOpenVideo(userId,basePage));
     }
 
 

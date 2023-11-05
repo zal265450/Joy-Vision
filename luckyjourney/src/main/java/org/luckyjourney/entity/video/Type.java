@@ -12,6 +12,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.luckyjourney.entity.BaseEntity;
 
+import javax.validation.constraints.NotBlank;
+
 /**
  * <p>
  * 
@@ -26,6 +28,7 @@ public class Type extends BaseEntity {
 
     private static final long serialVersionUID = 1L;
 
+    @NotBlank(message = "分类名称不可为空")
     private String name;
 
     private String description;

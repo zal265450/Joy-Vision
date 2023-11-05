@@ -39,29 +39,20 @@ public class AdminInterceptor implements HandlerInterceptor {
             return true;
         }
 
-//        final String token = JwtUtils.getJwtToken(1L, "xhy");
-
-   /*     if (!JwtUtils.checkToken(request)) {
-            response(R.error().message("token为空"),response);
+        if (!JwtUtils.checkToken(request)) {
+            response(R.error().message("请登录后再操作"),response);
             return false;
-        }*/
+        }
 
-
-
-      /*  final Long userId = JwtUtils.getUserId(request);
+        final Long userId = JwtUtils.getUserId(request);
         final User user = userService.getById(userId);
         if (ObjectUtils.isEmpty(user)){
             response(R.error().message("用户不存在"),response);
             return false;
-        }*/
-        UserHolder.set(1);
-
+        }
+        UserHolder.set(userId);
         return true;
     }
-
-
-
-
 
     private boolean response(R r, HttpServletResponse response) throws IOException {
         response.setHeader("Access-Control-Allow-Origin", "*");

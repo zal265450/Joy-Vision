@@ -75,6 +75,7 @@ public class JwtUtils {
 
     public static Long getUserId(HttpServletRequest request) {
         String jwtToken = request.getHeader("token");
+        if (ObjectUtils.isEmpty(jwtToken)) return null;
         Jws<Claims> claimsJws = Jwts.parser().setSigningKey(APP_SECRET).parseClaimsJws(jwtToken);
         Claims claims = claimsJws.getBody();
         return Long.valueOf(claims.get("id").toString());

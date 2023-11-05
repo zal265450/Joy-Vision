@@ -4,6 +4,7 @@ package org.luckyjourney.controller.admin;
 
 import org.luckyjourney.authority.Authority;
 import org.luckyjourney.entity.user.Permission;
+import org.luckyjourney.holder.UserHolder;
 import org.luckyjourney.service.user.PermissionService;
 import org.luckyjourney.util.R;
 import org.springframework.web.bind.annotation.*;
@@ -98,8 +99,8 @@ public class PermissionController {
      * @return
      */
     @GetMapping("/initMenu")
-    public Map<String, Object> initMenu(HttpServletRequest request){
-        Map<String, Object> data = permissionService.toTree(request);
+    public Map<String, Object> initMenu(){
+        Map<String, Object> data = permissionService.initMenu(UserHolder.get());
         return data;
     }
 }

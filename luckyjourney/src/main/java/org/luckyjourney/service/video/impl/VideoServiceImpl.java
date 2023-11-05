@@ -3,48 +3,56 @@ package org.luckyjourney.service.video.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.luckyjourney.config.QiNiuConfig;
 import org.luckyjourney.constant.AuditStatus;
 import org.luckyjourney.constant.RedisConstant;
 import org.luckyjourney.entity.task.VideoTask;
+import org.luckyjourney.entity.user.User;
 import org.luckyjourney.entity.video.Type;
 import org.luckyjourney.entity.video.Video;
 import org.luckyjourney.entity.video.VideoShare;
 import org.luckyjourney.entity.video.VideoStar;
-import org.luckyjourney.entity.response.AuditResponse;
-import org.luckyjourney.entity.user.User;
 import org.luckyjourney.entity.vo.BasePage;
 import org.luckyjourney.entity.vo.HotVideo;
 import org.luckyjourney.entity.vo.UserModel;
 import org.luckyjourney.entity.vo.UserVO;
 import org.luckyjourney.holder.UserHolder;
 import org.luckyjourney.mapper.video.VideoMapper;
-import org.luckyjourney.service.AuditService;
-import org.luckyjourney.service.FileService;
+import org.luckyjourney.service.FeedService;
 import org.luckyjourney.service.InterestPushService;
-import org.luckyjourney.service.poll.VideoAuditThreadPoll;
+import org.luckyjourney.service.audit.VideoPublishAuditServiceImpl;
 import org.luckyjourney.service.user.FavoritesService;
+import org.luckyjourney.service.user.FollowService;
 import org.luckyjourney.service.user.UserService;
-import org.luckyjourney.service.video.*;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import org.luckyjourney.util.FileUtil;
+import org.luckyjourney.service.video.TypeService;
+import org.luckyjourney.service.video.VideoService;
+import org.luckyjourney.service.video.VideoShareService;
+import org.luckyjourney.service.video.VideoStarService;
+import org.luckyjourney.util.DateUtil;
 import org.luckyjourney.util.RedisCacheUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.connection.RedisConnection;
+import org.springframework.data.redis.connection.RedisZSetCommands;
+import org.springframework.data.redis.core.DefaultTypedTuple;
 import org.springframework.data.redis.core.RedisCallback;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 /**
@@ -56,7 +64,7 @@ import java.util.stream.Collectors;
  * @since 2023-10-24
  */
 @Service
-public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements VideoService, VideoAuditThreadPoll {
+public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements VideoService {
 
     @Autowired
     private TypeService typeService;
@@ -77,39 +85,51 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
     private RedisCacheUtil redisCacheUtil;
 
     @Autowired
-    private AuditService auditService;
-
-    @Autowired
-    private FileService fileService;
-
-    @Autowired
     private FavoritesService favoritesService;
 
     @Autowired
     private VideoMapper videoMapper;
 
-    ThreadPoolExecutor executor;
+    @Autowired
+    private VideoPublishAuditServiceImpl videoPublishAuditService;
+
+    @Autowired
+    private RedisTemplate redisTemplate;
+
+    @Autowired
+    private FollowService followService;
+
+    @Autowired
+    private FeedService feedService;
 
     final ObjectMapper objectMapper = new ObjectMapper();
 
 
-    private Integer maxThreadCount = 8;
 
     @Override
-    public Video getVideoById(Long videoId)   {
+    public Video getVideoById(Long videoId,Long userId)   {
         final Video video = this.getOne(new LambdaQueryWrapper<Video>().eq(Video::getId, videoId));
         if (video == null) throw new IllegalArgumentException("指定视频不存在");
         if (video.getOpen()) return new Video();
-        video.setUser(userService.getInfo(video.getUserId()));
+
+        // 异步
         video.setUrl(QiNiuConfig.CNAME+"/"+video.getUrl());
+        // 当前视频用户自己是否有收藏/点赞过信息
+        final CompletableFuture<Object> future = new CompletableFuture<>();
+        // 这里需要优化 todo
+        video.setUser(userService.getInfo(video.getUserId()));
+        video.setStart(videoStarService.starState(videoId, userId));
+        video.setFavorites(favoritesService.favoritesState(videoId,userId));
         return video;
     }
+
+
 
     @Override
     public void publishVideo(Video video) {
 
         final Long userId = UserHolder.get();
-        Video old = null;
+        Video old = new Video();
         // 不允许修改视频
         final Long videoId = video.getId();
         if (videoId !=null){
@@ -145,20 +165,14 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
         }
 
         this.saveOrUpdate(video);
-        /**
-         * 新增：审核通过并且是公开才需要放入系统库
-         * 修改：审核通过并且是是公开，如果是修改则从系统库中删除
-         * 得再审核完成后中进行判断
-         *
-         * 1.新增：需要将视频封面，视频源，标题，简介进行审核
-         * 2.修改：需要将标题和简介进行审核
-         */
+
         final VideoTask videoTask = new VideoTask();
+        videoTask.setOldVideo(old);
         videoTask.setVideo(video);
         videoTask.setIsAdd(isAdd);
         videoTask.setOldState(isAdd ? video.getOpen() : old.getOpen());
         videoTask.setNewState(video.getOpen());
-        audit(videoTask);
+        videoPublishAuditService.audit(videoTask,false);
     }
 
     @Override
@@ -181,15 +195,13 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
                 videoShareService.remove(new LambdaQueryWrapper<VideoShare>().eq(VideoShare::getVideoId,id).eq(VideoShare::getUserId,userId));
                 videoStarService.remove(new LambdaQueryWrapper<VideoStar>().eq(VideoStar::getVideoId,id).eq(VideoStar::getUserId,userId));
                 interestPushService.deleteSystemStockIn(video);
+                interestPushService.deleteSystemTypeStockIn(video);
             }).start();
         }
     }
 
     @Override
-    public Collection<Video> pushVideos() {
-        // todo
-        UserHolder.set(1);
-        Long userId = UserHolder.get();
+    public Collection<Video> pushVideos(Long userId) {
         User user = null;
         if (userId!=null){
             user = userService.getById(userId);
@@ -214,9 +226,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
 
         Collection<Long> videoIds = interestPushService.listVideoIdByTypeId(typeId);
         if (ObjectUtils.isEmpty(videoIds)){
-            // 随便给点视频 测试用
-            videoIds = list(new LambdaQueryWrapper<Video>().orderByDesc(Video::getGmtCreated)).stream().map(Video::getId).collect(Collectors.toList());
-            videoIds = new HashSet<>(videoIds).stream().limit(10).collect(Collectors.toList());
+            return Collections.EMPTY_LIST;
         }
         final Collection<Video> videos = listByIds(videoIds);
 
@@ -340,15 +350,20 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
         return videos;
     }
 
+
+
+
     @Override
     public List<HotVideo> hotRank() {
-        final Set<ZSetOperations.TypedTuple<Object>> zSet = redisCacheUtil.getZSet(RedisConstant.HOT_RANK);
+
+        final Set<ZSetOperations.TypedTuple<Object>> zSet = redisTemplate.opsForZSet().reverseRangeWithScores(RedisConstant.HOT_RANK,0,-1);
         final ArrayList<HotVideo> hotVideos = new ArrayList<>();
         for (ZSetOperations.TypedTuple<Object> objectTypedTuple : zSet) {
             final HotVideo hotVideo;
             try {
                 hotVideo = objectMapper.readValue(objectTypedTuple.getValue().toString(), HotVideo.class);
-                hotVideo.setHot(objectTypedTuple.getScore());
+                hotVideo.setHot((double)objectTypedTuple.getScore().intValue());
+                hotVideo.hotFormat();
                 hotVideos.add(hotVideo);
             } catch (JsonProcessingException e) {
                 e.printStackTrace();
@@ -360,15 +375,19 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
 
 
     @Override
-    public Collection<Video> listSimilarVideo(List<String> labels) {
+    public Collection<Video> listSimilarVideo(Video video) {
 
-        if (ObjectUtils.isEmpty(labels)) return Collections.EMPTY_LIST;
+        if (ObjectUtils.isEmpty(video) || ObjectUtils.isEmpty(video.getLabelNames())) return Collections.EMPTY_LIST;
+        final List<String> labels = video.buildLabel();
         final ArrayList<String> labelNames = new ArrayList<>();
         labelNames.addAll(labels);
         labelNames.addAll(labels);
-        final Collection<Long> videoIds = interestPushService.listVideoIdByLabels(labelNames);
+        final Set<Long> videoIds = (Set<Long>) interestPushService.listVideoIdByLabels(labelNames);
 
         Collection<Video> videos = new ArrayList<>();
+
+        // 去重
+        videoIds.remove(video.getId());
 
         if (!ObjectUtils.isEmpty(videoIds)){
             videos = listByIds(videoIds);
@@ -378,8 +397,10 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
     }
 
     @Override
-    public IPage<Video> listByUserId(Long userId, BasePage basePage) {
-
+    public IPage<Video> listByUserIdOpenVideo(Long userId, BasePage basePage) {
+        if (userId==null){
+            return new Page<>();
+        }
         final IPage<Video> page = page(basePage.page(), new LambdaQueryWrapper<Video>().eq(Video::getUserId, userId).orderByDesc(Video::getGmtCreated));
         final List<Video> videos = page.getRecords();
         setUserVoAndUrl(videos);
@@ -388,8 +409,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
 
     @Override
     public String getAuditQueueState() {
-        final int activeCount = executor.getActiveCount();
-        return activeCount < maxThreadCount ? "快速" : "慢速";
+        return videoPublishAuditService.getAuditQueueState() ? "快速" : "慢速";
     }
 
     @Override
@@ -404,32 +424,73 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
         int today = calendar.get(Calendar.DATE);
 
         final HashMap<String, Integer> map = new HashMap<>();
-        map.put(RedisConstant.HOT_VIDEO+today,5);
+        // 优先推送今日的
+        map.put(RedisConstant.HOT_VIDEO+today,10);
         map.put(RedisConstant.HOT_VIDEO+(today-1),3);
         map.put(RedisConstant.HOT_VIDEO+(today-2),2);
 
         // 游客不用记录
         // 获取今天日期
-        final List<Long> videoIds = redisCacheUtil.pipeline(connection -> {
+        final List<Long> hotVideoIds = redisCacheUtil.pipeline(connection -> {
             map.forEach((k, v) -> {
                 connection.sRandMember(k.getBytes(), v);
             });
             return null;
         });
-        final HashSet<Long> vIds = new HashSet<>();
-        // 会返回结果有null，做下校验
-        for (Object videoId : videoIds) {
-            if (!ObjectUtils.isEmpty(videoId)){
-                vIds.addAll((Collection<? extends Long>) videoId);
-            }
 
+        final ArrayList<Long> videoIds = new ArrayList<>();
+        // 会返回结果有null，做下校验
+        for (Object videoId : hotVideoIds) {
+            if (!ObjectUtils.isEmpty(videoId)){
+                videoIds.addAll((List)videoId);
+            }
         }
+        final Collection<Video> videos = listByIds(videoIds);
         // 和浏览记录做交集? 不需要做交集，热门视频和兴趣推送不一样
-        final Collection<Video> videos = listByIds(new HashSet<>(vIds));
         setUserVoAndUrl(videos);
         return videos;
     }
 
+    @Override
+    public Collection<Video> followFeed(Long userId,Long lastTime) {
+
+        // 是否存在
+         Set<Long> set = redisTemplate.opsForZSet()
+                 .reverseRangeByScore(RedisConstant.IN_FOLLOW + userId,
+                         0, lastTime == null ? new Date().getTime() : lastTime,lastTime == null ? 0 :1, 5);
+        if (ObjectUtils.isEmpty(set)){
+            return Collections.EMPTY_LIST;
+        }
+
+        // 这里不会按照时间排序，需要手动排序
+        final Collection<Video> videos = list(new LambdaQueryWrapper<Video>().in(Video::getId,set).orderByDesc(Video::getGmtCreated));
+
+        setUserVoAndUrl(videos);
+        return videos;
+    }
+
+    @Override
+    public void initFollowFeed(Long userId) {
+        // 获取所有关注的人
+        final Collection<Long> followIds = followService.getFollow(userId);
+        feedService.initFollowFeed(userId,followIds);
+    }
+
+    @Override
+    public IPage<Video> listByUserIdVideo(BasePage basePage, Long userId) {
+
+        final IPage page = page(basePage.page(), new LambdaQueryWrapper<Video>().eq(Video::getUserId, userId).orderByDesc(Video::getGmtCreated));
+
+        return page;
+    }
+
+    @Override
+    public Collection<Long> listVideoIdByUserId(Long userId) {
+
+        final List<Long> ids = list(new LambdaQueryWrapper<Video>().eq(Video::getUserId, userId).select(Video::getId))
+                .stream().map(Video::getId).collect(Collectors.toList());
+        return ids;
+    }
 
     public void setUserVoAndUrl(Collection<Video> videos){
         if (!ObjectUtils.isEmpty(videos)){
@@ -447,13 +508,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
     }
 
 
-    /**
-     * 审核
-     * @param videoTask 视频
-     */
-    public void audit(VideoTask videoTask){
-        submit(videoTask);
-    }
+
 
     /**
      * 点赞数
@@ -497,57 +552,6 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
 
 
 
-    @Override
-    public void submit(VideoTask videoTask) {
-        executor.submit(()->{
-            final Video video = videoTask.getVideo();
-            String url = QiNiuConfig.CNAME+"/"+video.getUrl();
-            // 审核视频
-            final AuditResponse videoAuditResponse = auditService.audit(url, video.getAuditQueueStatus(),QiNiuConfig.VIDEO_URL);
-            //审核封面
-            final AuditResponse coverAuditResponse = auditService.audit(video.getCover(), video.getAuditQueueStatus(),QiNiuConfig.IMAGE_URL);
-            final Integer videoAuditStatus = videoAuditResponse.getAuditStatus();
-            final Integer coverAuditStatus = coverAuditResponse.getAuditStatus();
-            boolean f1 = videoAuditStatus == AuditStatus.SUCCESS;
-            boolean f2 = coverAuditStatus == AuditStatus.SUCCESS;
-            if (f1 && f2) {
-                video.setMsg("通过");
-                video.setAuditStatus(AuditStatus.SUCCESS);
-                interestPushService.pushSystemStockIn(video);
-                // 填充视频时长
-            }else {
-                video.setAuditStatus(AuditStatus.PASS);
-                video.setMsg(f1 ? coverAuditResponse.getMsg() : videoAuditResponse.getMsg());
-            }
-            final String duration = FileUtil.getVideoDuration(url);
-            video.setDuration(duration);
-            // 填充视频类型
-            video.setVideoType(fileService.getFileInfo(video.getUrl()).mimeType);
-            updateById(video);
 
-            // 新增的情况下并且是公开
-            if (videoTask.getIsAdd()  && videoTask.getOldState() == videoTask.getNewState()){
-                interestPushService.pushSystemTypeStockIn(video);
-                interestPushService.pushSystemStockIn(video);
-            }else if (!videoTask.getIsAdd() && videoTask.getOldState() != videoTask.getNewState()){
-                // 修改的情况下新老状态不一致,说明需要更新
-                if (!videoTask.getNewState()){
-                    interestPushService.pushSystemTypeStockIn(video);
-                    interestPushService.pushSystemStockIn(video);
-                }else {
-                    interestPushService.deleteSystemStockIn(video);
-                    interestPushService.deleteSystemTypeStockIn(video);
-                }
-            }
-
-        });
-    }
-
-
-    // 用于初始化线程
-    @Override
-    public void afterPropertiesSet() throws Exception {
-        executor  = new ThreadPoolExecutor(5, maxThreadCount, 60, TimeUnit.SECONDS, new ArrayBlockingQueue(1000));
-    }
 
 }

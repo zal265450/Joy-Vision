@@ -14,7 +14,6 @@ public class AuditMsgMap {
 
 
     static {
-        msgMap.put("normal","正常");
         msgMap.put("sexy","性感图片");
         msgMap.put("pulp","色情图片");
         msgMap.put("bloodiness","血腥");
@@ -29,7 +28,6 @@ public class AuditMsgMap {
         msgMap.put("anime_bloodiness","动漫血腥类");
         msgMap.put("anime_knives","二次元刀");
         msgMap.put("anime_guns","二次元枪");
-        msgMap.put("politics","动漫血腥类");
         msgMap.put("politics","涉政");
         msgMap.put("violence","暴恐");
 
@@ -40,7 +38,16 @@ public class AuditMsgMap {
         msgMap.put("affairs_official_ent","落马官员（企事业）");
         msgMap.put("terrorist","恐怖分子");
         msgMap.put("affairs_celebrity","劣迹艺人");
-        msgMap.put("politics","涉政人物");
+
+        msgMap.put("spam","含垃圾信息");
+        msgMap.put("ad","涉政人物");
+        msgMap.put("abuse","辱骂");
+        msgMap.put("porn","色情");
+        msgMap.put("flood","灌水");
+        msgMap.put("contraband","违禁");
+        msgMap.put("meaningless","无意义");
+
+
     }
 
     public static String getInfo(String key){

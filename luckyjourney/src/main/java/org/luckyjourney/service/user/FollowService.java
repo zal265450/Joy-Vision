@@ -6,6 +6,7 @@ import org.luckyjourney.entity.user.Follow;
 import org.luckyjourney.entity.vo.BasePage;
 import org.luckyjourney.entity.vo.FollowVO;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -36,14 +37,21 @@ public interface FollowService extends IService<Follow> {
      * @param userId
      * @return
      */
-    List<Long> getFollow(Long userId, BasePage basePage);
+    Collection<Long> getFollow(Long userId, BasePage basePage);
+
+    /**
+     * 获取所有关注人员
+     * @param userId
+     * @return
+     */
+    Collection<Long> getFollow(Long userId);
 
     /**
      * 获取粉丝人员且安排关注时间排序
      * @param userId
      * @return
      */
-    List<Long> getFans(Long userId,BasePage basePage);
+    Collection<Long> getFans(Long userId,BasePage basePage);
 
     /**
      * 关注/取关

@@ -11,6 +11,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.text.ParseException;
+
 /**
  * <p>
  * 前端控制器
@@ -50,9 +52,6 @@ public class VideoController {
         return R.ok().message("发布成功,请等待审核");
     }
 
-
-
-
     /**
      * 删除视频
      * @param id
@@ -63,6 +62,17 @@ public class VideoController {
         videoService.deleteVideo(id);
         return R.ok().message("删除成功");
     }
+
+    /**
+     * 查看用户所管理的视频
+     * @param basePage
+     * @return
+     */
+    @GetMapping
+    public R listVideo(BasePage basePage){
+        return R.ok().data(videoService.listByUserIdVideo(basePage,UserHolder.get()));
+    }
+
 
     /**
      * 点赞视频
@@ -124,8 +134,29 @@ public class VideoController {
         return R.ok().message(videoService.getAuditQueueState());
     }
 
-    // 推送关注的人视频 todo
 
+    /**
+     * 推送关注的人视频 拉模式
+     * @param lastTime 滚动分页
+     * @return
+     */
+    @GetMapping("/follow/feed")
+    public R followFeed(@RequestParam(required = false) Long lastTime) throws ParseException {
+        final Long userId = UserHolder.get();
+
+        return R.ok().data(videoService.followFeed(userId,lastTime));
+    }
+
+    /**
+     * 初始化关注流
+     * @return
+     */
+    @PostMapping("/init/follow/feed")
+    public R initFollowFeed(){
+        final Long userId = UserHolder.get();
+        videoService.initFollowFeed(userId);
+        return R.ok();
+    }
 
 }
 

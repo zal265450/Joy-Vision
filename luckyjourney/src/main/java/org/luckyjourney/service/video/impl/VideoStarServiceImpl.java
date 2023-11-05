@@ -1,6 +1,7 @@
 package org.luckyjourney.service.video.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import org.luckyjourney.entity.video.Video;
 import org.luckyjourney.entity.video.VideoStar;
 import org.luckyjourney.mapper.video.VideoStarMapper;
 import org.luckyjourney.service.video.VideoStarService;
@@ -40,5 +41,13 @@ public class VideoStarServiceImpl extends ServiceImpl<VideoStarMapper, VideoStar
     @Override
     public List<Long> getStarUserIds(Long videoId) {
         return this.list(new LambdaQueryWrapper<VideoStar>().eq(VideoStar::getVideoId,videoId)).stream().map(VideoStar::getUserId).collect(Collectors.toList());
+    }
+
+    @Override
+    public Boolean starState(Long videoId, Long userId) {
+
+        if (userId == null) return  false;
+
+        return this.count(new LambdaQueryWrapper<VideoStar>().eq(VideoStar::getVideoId,videoId).eq(VideoStar::getUserId,userId)) == 1;
     }
 }

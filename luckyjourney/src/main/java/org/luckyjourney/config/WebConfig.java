@@ -24,7 +24,8 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addInterceptor(new AdminInterceptor(userService))
                 .addPathPatterns("/admin/**","/authorize/**")
                 .addPathPatterns("/luckyjourney/**")
-                .excludePathPatterns("/login","/captcha.jpg/**","/getCode","/register","/luckyjourney/index/**");
+                .excludePathPatterns("/luckyjourney/login/**","/luckyjourney/index/**");
+
     }
 
     @Override

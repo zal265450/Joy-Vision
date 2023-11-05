@@ -45,24 +45,31 @@ public class QiNiuConfig {
     public static final String IMAGE_URL = "http://ai.qiniuapi.com/v3/image/censor";
 
 
-    public Auth buildAuth(){
+    public Auth buildAuth() {
         String accessKey = this.getAccessKey();
         String secretKey = this.getSecretKey();
         return Auth.create(accessKey, secretKey);
     }
 
 
-    public String uploadToken(){
+    public String videoUploadToken() {
         final Auth auth = buildAuth();
-        return auth.uploadToken(bucketName,null,3600,new
-                StringMap().put("mimeLimit","video/*"));
+        return auth.uploadToken(bucketName, null, 300, new
+                StringMap().put("mimeLimit", "video/*"));
     }
 
-    public String getToken(String url,String method,String body,String contentType){
+    public String imageUploadToken() {
+        final Auth auth = buildAuth();
+        return auth.uploadToken(bucketName, null, 300, new
+                StringMap().put("mimeLimit", "image/*"));
+    }
+
+    public String getToken(String url, String method, String body, String contentType) {
 
         final Auth auth = buildAuth();
-        String qiniuToken = "Qiniu "+ auth.signQiniuAuthorization(url, method, body == null ? null : body.getBytes(), contentType);
+        String qiniuToken = "Qiniu " + auth.signQiniuAuthorization(url, method, body == null ? null : body.getBytes(), contentType);
         return qiniuToken;
     }
+
 
 }

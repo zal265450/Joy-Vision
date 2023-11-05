@@ -1,9 +1,13 @@
 package org.luckyjourney.exception;
 
 import org.luckyjourney.util.R;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.StringJoiner;
 
 /**
  * @description:
@@ -17,6 +21,23 @@ public class ExceptionController {
     @ExceptionHandler(Exception.class)
     public R ex(Exception e){
         e.printStackTrace();
-        return R.error().message(e.toString());
+        return R.error().message(e.getMessage());
+    }
+
+
+
+    // 数据校验异常处理
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public R exception(MethodArgumentNotValidException e) {
+        // e.getBindingResult()：获取BindingResult
+        BindingResult bindingResult = e.getBindingResult();
+        // 收集数据校验失败后的信息
+        StringJoiner joiner = new StringJoiner(",");
+
+        bindingResult.getFieldErrors().stream().forEach((fieldError) -> {
+            joiner.add(fieldError.getDefaultMessage());
+
+        });
+        return R.error().message(joiner.toString());
     }
 }

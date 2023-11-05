@@ -61,6 +61,7 @@ public class InterestPushServiceImpl implements InterestPushService {
     }
 
     @Override
+    @Async
     public void pushSystemTypeStockIn(Video video) {
         final Long typeId = video.getTypeId();
         redisCacheUtil.sSet(RedisConstant.SYSTEM_TYPE_STOCK + typeId,video.getId());
@@ -70,7 +71,7 @@ public class InterestPushServiceImpl implements InterestPushService {
     public Collection<Long> listVideoIdByTypeId(Long typeId) {
         // 随机推送10个
         final byte[] key = (RedisConstant.SYSTEM_TYPE_STOCK + typeId).getBytes();
-        final List<Long> list = redisTemplate.executePipelined((RedisCallback<Object>) connection -> {
+        final List<Integer> list = redisTemplate.executePipelined((RedisCallback<Object>) connection -> {
             for (int i = 0; i < 10; i++) {
                 connection.sRandMember(key);
             }
@@ -78,9 +79,9 @@ public class InterestPushServiceImpl implements InterestPushService {
         });
         // 可能会有null
         final HashSet<Long> result = new HashSet<>();
-        for (Long aLong : list) {
+        for (Integer aLong : list) {
             if (aLong!=null){
-                result.add(aLong);
+                result.add(aLong.longValue());
             }
         }
         return result;
@@ -244,10 +245,10 @@ public class InterestPushServiceImpl implements InterestPushService {
         for (String labelName : labelNames) {
             labelKeys.add(RedisConstant.SYSTEM_STOCK + labelName);
         }
-        List<Long> videoIds = new ArrayList<>();
+        Set<Long> videoIds = new HashSet<>();
         final List<Object> list = redisCacheUtil.sRandom(labelKeys);
         if (!ObjectUtils.isEmpty(list)){
-            videoIds = list.stream().filter(id ->!ObjectUtils.isEmpty(id)).map(id -> Long.valueOf(id.toString())).collect(Collectors.toList());
+            videoIds = list.stream().filter(id ->!ObjectUtils.isEmpty(id)).map(id -> Long.valueOf(id.toString())).collect(Collectors.toSet());
         }
         return videoIds;
     }
@@ -292,7 +293,7 @@ public class InterestPushServiceImpl implements InterestPushService {
 
     // 初始化概率数组 -> 保存的元素是标签
     public String[] initProbabilityArray(Map<Object, Object> modelMap) {
-        // 组成数组
+        // key: 标签  value：概率
         Map<String, Integer> probabilityMap = new HashMap<>();
         int size = modelMap.size();
         final AtomicInteger n = new AtomicInteger(0);
@@ -302,8 +303,12 @@ public class InterestPushServiceImpl implements InterestPushService {
             probabilityMap.put(k.toString(), probability);
         });
         final String[] probabilityArray = new String[n.get()];
+
         final AtomicInteger index = new AtomicInteger(0);
         // 初始化数组
+        // 美女: 50
+        // 美食：30
+        // 体育: 20
         probabilityMap.forEach((type, p) -> {
             int i = index.get();
             int limit = i + p;
@@ -314,4 +319,8 @@ public class InterestPushServiceImpl implements InterestPushService {
         });
         return probabilityArray;
     }
+
+
+
+
 }

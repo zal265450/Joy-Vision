@@ -1,6 +1,7 @@
 package org.luckyjourney.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import org.luckyjourney.config.QiNiuConfig;
 import org.luckyjourney.entity.user.Favorites;
 import org.luckyjourney.entity.user.User;
 import org.luckyjourney.entity.vo.*;
@@ -26,6 +27,9 @@ public class CustomerController {
 
 
     @Autowired
+    QiNiuConfig qiNiuConfig;
+
+    @Autowired
     private UserService userService;
 
     @Autowired
@@ -43,9 +47,10 @@ public class CustomerController {
         return R.ok().data(userService.getInfo(userId));
     }
 
-
-
-
+    @GetMapping("/getInfo")
+    public R getDefaultInfo(){
+        return R.ok().data(userService.getInfo(UserHolder.get()));
+    }
 
     /**
      * 获取关注人员
@@ -171,5 +176,23 @@ public class CustomerController {
             userService.updateUserModel(userModel);
         }
         return R.ok();
+    }
+
+    /**
+     * 获取用户上传头像的token
+     * @return
+     */
+    @GetMapping("/avatar/token")
+    public R avatarToken(){
+        return R.ok().data(qiNiuConfig.imageUploadToken());
+    }
+
+    // 修改用户信息
+    @PutMapping
+    public R updateUser(@RequestBody @Validated UpdateUserVO user){
+
+        userService.updateUser(user);
+
+        return R.ok().message("修改成功");
     }
 }
