@@ -23,7 +23,7 @@ Jdk1.8+SpringBoot + MyBatis + MySql + Redis + 七牛云存储 + 七牛云审核
 
 # 功能模块
 
-暂时无法在飞书文档外展示此内容
+![输入图片说明](image/%E5%8A%9F%E8%83%BD%E6%A8%A1%E5%9D%97.png)
 
 ## 用户
 
@@ -87,7 +87,7 @@ Map key: user:model:userId    value : key labelId  value:概率
 
 4.**前端是feed展示**，第一次请求时将获取所有，，后续每次请求则**根据阈值则提前推送**
 
-暂时无法在飞书文档外展示此内容
+![输入图片说明](image/%E6%8E%A8%E9%80%81%E9%80%BB%E8%BE%91.png)
 
 #### 热门推送
 
@@ -193,8 +193,8 @@ TextAuditService: 内容审核
 
 VideoAuditService: 视频审核
 
-![img](https://qg9rv6a511.feishu.cn/space/api/box/stream/download/asynccode/?code=YWNiY2IyZmY3MzkzMDRlMmUzZTU0YTdmOWYyYzUwNjZfZXpTMGdIQUpYM0JZUFdhY3pBNEpHMnFDaXZ4cUNjc3JfVG9rZW46TkJiYmJKczhvb3JSenJ4cExEYWNYZ0Jxbk1lXzE2OTkxNjAzNDQ6MTY5OTE2Mzk0NF9WNA)
+![输入图片说明](image/%E5%AE%A1%E6%A0%B8%E4%B8%AD%E5%8F%B0%E8%AE%BE%E8%AE%A1.png)
 
 VideoPublishAuditServiceImpl: 发布视频审核逻辑
 
-![img](https://qg9rv6a511.feishu.cn/space/api/box/stream/download/asynccode/?code=MGRiMjljY2I4ZjI3OWUxOTMzYzM3MjhlZmUzYWUyYTRfd3JCM2piN1dEd21MM2gwZ3U3ZjBDUjZrUzd0UDhqRDlfVG9rZW46QWhoZGJBRUN0b2Y5bWh4bXBlbmNNc0VWbmNjXzE2OTkxNjAzNDQ6MTY5OTE2Mzk0NF9WNA)
+![输入图片说明](image/%E9%A1%B9%E7%9B%AE%E5%AE%A1%E6%A0%B8%E8%90%BD%E5%9C%B0%E5%AE%9E%E7%8E%B0.png)
