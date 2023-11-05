@@ -3,28 +3,21 @@ package org.luckyjourney.schedul;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.SneakyThrows;
 import org.luckyjourney.constant.RedisConstant;
 import org.luckyjourney.entity.Setting;
 import org.luckyjourney.entity.video.Video;
 import org.luckyjourney.entity.vo.HotVideo;
 import org.luckyjourney.service.SettingService;
 import org.luckyjourney.service.video.VideoService;
-import org.luckyjourney.util.RedisCacheUtil;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataAccessException;
-import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.script.DefaultRedisScript;
-import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
 
 import java.util.*;
-import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -132,7 +125,7 @@ public class HotRank {
             videos = videoService.selectNDaysAgeVideo(id,3,limit);
             // RedisConstant.HOT_VIDEO + 今日日期 作为key  达到元素过期效果
             String key = RedisConstant.HOT_VIDEO + today;
-            redisTemplate.opsForSet().add(key,hotVideos);
+            redisTemplate.opsForSet().add(key,hotVideos.toArray(new Object[hotVideos.size()]));
             redisTemplate.expire(key,3,TimeUnit.DAYS);
         }
 

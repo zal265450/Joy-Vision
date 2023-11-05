@@ -30,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -61,8 +62,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Autowired
     private FavoritesService favoritesService;
 
-    @Autowired
-    private ImageAuditService imageAuditService;
 
     @Autowired
     private TextAuditService textAuditService;
@@ -265,12 +264,15 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
 
     public List<User> getUsers(Collection<Long> ids){
-        final Map<Long, String> userMap = listByIds(ids).stream().collect(Collectors.toMap(User::getId, User::getNickName));
+        final Map<Long, User> userMap = listByIds(ids).stream().collect(Collectors.toMap(User::getId, Function.identity()));
         List<User> result = new ArrayList<>();
         for (Long followId : ids) {
             final User user = new User();
             user.setId(followId);
-            user.setNickName(userMap.get(followId));
+            final User u = userMap.get(followId);
+            user.setNickName(u.getNickName());
+            user.setSex(u.getSex());
+            user.setDescription(u.getDescription());
             result.add(user);
         }
         return result;

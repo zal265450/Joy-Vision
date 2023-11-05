@@ -1,5 +1,9 @@
 package org.luckyjourney.service;
 
+import io.jsonwebtoken.lang.Collections;
+
+import java.util.Collection;
+
 /**
  * @description:
  * @Author: Xhy
@@ -23,21 +27,26 @@ public interface FeedService {
 
     /**
      * 删除发件箱
-     * @param userId
-     * @param videoId
+     * 当前用户删除视频时 调用
+     * ->删除当前用户的发件箱中视频以及粉丝下的收件箱
+     * @param userId 当前用户
+     * @param fans 粉丝id
+     * @param videoId 视频id 需要删除的
      */
-    void deleteOutBoxFeed(Long userId,Long videoId);
+    void deleteOutBoxFeed(Long userId,Collection<Long> fans,Long videoId);
 
     /**
      * 删除收件箱
+     * 当前用户取关用户时调用
+     * 删除自己收件箱中的videoIds
      * @param userId
-     * @param videoId
+     * @param videoIds 关注人发的视频id
      */
-    void deleteInBoxFeed(Long userId,Long videoId);
+    void deleteInBoxFeed(Long userId,Collection<Long> videoIds);
 
     /**
      * 初始化关注流-拉模式 with TTL
      * @param userId
      */
-    void initFollowFeed(Long userId);
+    void initFollowFeed(Long userId,Collection<Long> followIds);
 }

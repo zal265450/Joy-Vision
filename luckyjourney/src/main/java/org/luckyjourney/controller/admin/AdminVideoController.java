@@ -43,7 +43,7 @@ public class AdminVideoController {
     @GetMapping("/{id}")
     @Authority("admin:video:get")
     public R get(@PathVariable Long id){
-        return R.ok().data(videoService.getVideoById(id));
+        return R.ok().data(videoService.getVideoById(id,null));
     }
 
 

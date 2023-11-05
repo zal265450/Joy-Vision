@@ -25,6 +25,7 @@ public class WebConfig implements WebMvcConfigurer {
                 .addPathPatterns("/admin/**","/authorize/**")
                 .addPathPatterns("/luckyjourney/**")
                 .excludePathPatterns("/luckyjourney/login/**","/luckyjourney/index/**");
+
     }
 
     @Override

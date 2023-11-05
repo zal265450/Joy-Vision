@@ -11,12 +11,14 @@ import org.luckyjourney.service.FeedService;
 import org.luckyjourney.service.FileService;
 import org.luckyjourney.service.InterestPushService;
 import org.luckyjourney.service.audit.AbstractAuditService;
+import org.luckyjourney.service.user.FollowService;
 import org.luckyjourney.util.FileUtil;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.validation.constraints.NotBlank;
+import java.util.Collection;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -49,6 +51,9 @@ public class VideoPublishAuditServiceImpl implements AuditService<VideoTask,Vide
 
     @Autowired
     private VideoAuditService videoAuditService;
+
+    @Autowired
+    private FollowService followService;
 
     private int maximumPoolSize = 8;
 
@@ -112,7 +117,8 @@ public class VideoPublishAuditServiceImpl implements AuditService<VideoTask,Vide
                 interestPushService.deleteSystemStockIn(video);
                 interestPushService.deleteSystemTypeStockIn(video);
                 // 删除发件箱
-                feedService.deleteOutBoxFeed(video.getUserId(),video.getId());
+                final Collection<Long> fans = followService.getFans(video.getUserId(), null);
+                feedService.deleteOutBoxFeed(video.getUserId(),fans,video.getId());
             }
 
             // 新老视频标题简介一致

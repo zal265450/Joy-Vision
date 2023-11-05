@@ -10,8 +10,6 @@ import org.luckyjourney.entity.vo.RegisterVO;
 import org.luckyjourney.service.CaptchaService;
 import org.luckyjourney.service.LoginService;
 import org.luckyjourney.service.user.UserService;
-import org.luckyjourney.util.JwtUtils;
-import org.luckyjourney.util.R;
 import org.luckyjourney.util.RedisCacheUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -22,7 +20,6 @@ import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.util.HashMap;
 
 /**
  * @description:
@@ -64,8 +61,9 @@ public class LoginServiceImpl implements LoginService {
         }
         final Object o = redisCacheUtil.get(RedisConstant.EMAIL_CODE + email);
 
-        if (code.equals(o)){
+        if (!code.toString().equals(o)){
             throw new IllegalArgumentException("验证码不正确");
+
         }
         return true;
     }

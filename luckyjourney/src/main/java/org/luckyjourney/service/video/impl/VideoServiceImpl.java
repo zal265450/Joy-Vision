@@ -107,7 +107,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
 
 
     @Override
-    public Video getVideoById(Long videoId)   {
+    public Video getVideoById(Long videoId,Long userId)   {
         final Video video = this.getOne(new LambdaQueryWrapper<Video>().eq(Video::getId, videoId));
         if (video == null) throw new IllegalArgumentException("指定视频不存在");
         if (video.getOpen()) return new Video();
@@ -118,7 +118,6 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
         final CompletableFuture<Object> future = new CompletableFuture<>();
         // 这里需要优化 todo
         video.setUser(userService.getInfo(video.getUserId()));
-        final Long userId = UserHolder.get();
         video.setStart(videoStarService.starState(videoId, userId));
         video.setFavorites(favoritesService.favoritesState(videoId,userId));
         return video;
@@ -202,8 +201,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
     }
 
     @Override
-    public Collection<Video> pushVideos() {
-        Long userId = UserHolder.get();
+    public Collection<Video> pushVideos(Long userId) {
         User user = null;
         if (userId!=null){
             user = userService.getById(userId);
@@ -400,7 +398,9 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
 
     @Override
     public IPage<Video> listByUserIdOpenVideo(Long userId, BasePage basePage) {
-
+        if (userId==null){
+            return new Page<>();
+        }
         final IPage<Video> page = page(basePage.page(), new LambdaQueryWrapper<Video>().eq(Video::getUserId, userId).orderByDesc(Video::getGmtCreated));
         final List<Video> videos = page.getRecords();
         setUserVoAndUrl(videos);
@@ -425,31 +425,29 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
 
         final HashMap<String, Integer> map = new HashMap<>();
         // 优先推送今日的
-        map.put(RedisConstant.HOT_VIDEO+today,5);
+        map.put(RedisConstant.HOT_VIDEO+today,10);
         map.put(RedisConstant.HOT_VIDEO+(today-1),3);
         map.put(RedisConstant.HOT_VIDEO+(today-2),2);
 
         // 游客不用记录
         // 获取今天日期
-        final List<Long> videoIds = redisCacheUtil.pipeline(connection -> {
+        final List<Long> hotVideoIds = redisCacheUtil.pipeline(connection -> {
             map.forEach((k, v) -> {
                 connection.sRandMember(k.getBytes(), v);
             });
             return null;
         });
-        final List<Video> result = new ArrayList<>();
+        final ArrayList<Long> videoIds = new ArrayList<>();
         // 会返回结果有null，做下校验
-        for (Object videoId : videoIds) {
+        for (Object videoId : hotVideoIds) {
             if (!ObjectUtils.isEmpty(videoId)){
-                for (Object o : ((List) videoId)) {
-                    result.addAll((List)o);
-                }
+                videoIds.addAll((List)videoId);
             }
-
         }
+        final Collection<Video> videos = listByIds(videoIds);
         // 和浏览记录做交集? 不需要做交集，热门视频和兴趣推送不一样
-        setUserVoAndUrl(result);
-        return result;
+        setUserVoAndUrl(videos);
+        return videos;
     }
 
     @Override
@@ -472,7 +470,9 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
 
     @Override
     public void initFollowFeed(Long userId) {
-        feedService.initFollowFeed(userId);
+        // 获取所有关注的人
+        final Collection<Long> followIds = followService.getFollow(userId);
+        feedService.initFollowFeed(userId,followIds);
     }
 
     @Override
@@ -481,6 +481,14 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
         final IPage page = page(basePage.page(), new LambdaQueryWrapper<Video>().eq(Video::getUserId, userId).orderByDesc(Video::getGmtCreated));
 
         return page;
+    }
+
+    @Override
+    public Collection<Long> listVideoIdByUserId(Long userId) {
+
+        final List<Long> ids = list(new LambdaQueryWrapper<Video>().eq(Video::getUserId, userId).select(Video::getId))
+                .stream().map(Video::getId).collect(Collectors.toList());
+        return ids;
     }
 
     public void setUserVoAndUrl(Collection<Video> videos){

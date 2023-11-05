@@ -100,7 +100,7 @@ public class LoginController {
 
     @PostMapping("/register")
     public R register(@RequestBody @Validated RegisterVO registerVO) throws Exception {
-        if (loginService.register(registerVO)) {
+        if (!loginService.register(registerVO)) {
             return R.error().message("注册失败,验证码错误");
         }
         return R.ok().message("注册成功");

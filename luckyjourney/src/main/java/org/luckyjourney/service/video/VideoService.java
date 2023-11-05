@@ -24,9 +24,10 @@ public interface VideoService extends IService<Video> {
     /**
      * 获取视频信息
      * @param id
+     * @param userId 当前用户id 当前视频和用户之间有什么关系
      * @return
      */
-    Video getVideoById(Long id)  ;
+    Video getVideoById(Long id,Long userId)  ;
 
     /**
      * 发布/修改视频
@@ -45,7 +46,7 @@ public interface VideoService extends IService<Video> {
      * 主页推送视频
      * @return
      */
-    Collection<Video> pushVideos();
+    Collection<Video> pushVideos(Long userId);
 
     /**
      * 根据视频分类获取视频,乱序
@@ -170,4 +171,6 @@ public interface VideoService extends IService<Video> {
      * @return
      */
     IPage<Video> listByUserIdVideo(BasePage basePage, Long userId);
+
+    Collection<Long> listVideoIdByUserId(Long userId);
 }

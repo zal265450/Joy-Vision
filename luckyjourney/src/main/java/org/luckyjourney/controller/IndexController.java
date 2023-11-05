@@ -37,8 +37,9 @@ public class IndexController {
      * @return
      */
     @GetMapping("/pushVideos")
-    public R pushVideos(){
-        return R.ok().data(videoService.pushVideos());
+    public R pushVideos(HttpServletRequest request){
+        final Long userId = JwtUtils.getUserId(request);
+        return R.ok().data(videoService.pushVideos(userId));
     }
 
     /**
@@ -101,8 +102,9 @@ public class IndexController {
      * @return
      */
     @GetMapping("/video/{id}")
-    public R getVideoById(@PathVariable Long id){
-        return R.ok().data(videoService.getVideoById(id));
+    public R getVideoById(@PathVariable Long id,HttpServletRequest request){
+        final Long userId = JwtUtils.getUserId(request);
+        return R.ok().data(videoService.getVideoById(id,userId));
     }
 
     /**
@@ -140,8 +142,10 @@ public class IndexController {
      * @return
      */
     @GetMapping("/video/user")
-    public R listVideoByUserId(@RequestParam(required = false) Long userId,BasePage basePage){
-        userId = userId == null ? UserHolder.get() : userId;
+    public R listVideoByUserId(@RequestParam(required = false) Long userId,
+                               BasePage basePage,HttpServletRequest request){
+
+        userId = userId == null ? JwtUtils.getUserId(request) : userId;
         return R.ok().data(videoService.listByUserIdOpenVideo(userId,basePage));
     }
 
