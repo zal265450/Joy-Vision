@@ -1,13 +1,19 @@
 import axios from 'axios';
+import { useUserStore } from '../stores';
 const instance = axios.create({
-  // baseURL: "http://luckjourney.liuscraft.top/api/luckyjourney",
-  baseURL: "/api",
-  timeout: 3000,
-  headers: {},
+  baseURL: "http://luckjourney.liuscraft.top/api/luckyjourney",
+  // baseURL: "/api",
+  timeout: 1000000,
+  headers: {
+    'Content-Type': 'application/json'
+  }
 });
 
 // 添加请求拦截器
 instance.interceptors.request.use(config => {
+  const userStore = useUserStore()
+  if(userStore.$state.token)
+    config.headers.token = userStore.$state.token
   return config;
 }, error => {
   return Promise.reject(error)
@@ -21,7 +27,7 @@ instance.interceptors.response.use((response) => {
 }, (error) => {
   // 超出 2xx 范围的状态码都会触发该函数。
   // 对响应错误做点什么
-  return ;
+  return;
 });
 
 export default instance;

@@ -1,40 +1,28 @@
 <template>
     <v-card elevation="0">
-        <v-list lines="three">
+        <v-list lines="three" class="mr-2 ml-2">
             <template v-for="(item) in videoList">
-                <v-list-item class="pa-0">
+                <v-list-item class="pa-0" max-height="110px" style="overflow: hidden;">
                     <template v-slot:prepend>
-                        <v-img width="200" height="100" class="mr-4" :src="item.cover" cover></v-img>
+                        <v-img width="200" height="100" class="mr-4" :src="item.cover" cover>
+
+                        </v-img>
                     </template>
 
                     <v-list-item-title class="font-weight-bold" v-text="item.title"></v-list-item-title>
 
-                    <v-row style="height: 100px;">
-                        <v-col cols="4">
-                            <div v-text="item.description"></div>
-                        </v-col>
-                        <v-col cols="4">
-                            <v-chip-group>
-                                <v-chip>
-                                Chip
-                            </v-chip>
-                            <v-chip>
-                                Chip
-                            </v-chip>
-                            <v-chip>
-                                Chip
-                            </v-chip>
-                            </v-chip-group>
-                        </v-col>
-                        <v-col cols="4" class="justify-end">
-                            <v-btn-group :variant="'outlined'" style="background-color: #36393f;">
-                                <v-btn>编辑</v-btn>
-                                <v-btn>删除</v-btn>
-                                <v-btn>下架</v-btn>
-                            </v-btn-group>
-                        </v-col>
-
-                    </v-row>
+                    <div v-text="item.description" style="line-height: 25px;overflow: hidden;"></div>
+                    <v-chip-group>
+                        <v-chip v-for="item in item.labelNames.split(',')">
+                            {{item}}
+                        </v-chip>
+                    </v-chip-group>
+                    <template #append>
+                        <v-btn-group :variant="'outlined'">
+                            <v-btn color="blue">编辑</v-btn>
+                            <v-btn color="red">删除</v-btn>
+                        </v-btn-group>
+                    </template>
                 </v-list-item>
                 <v-divider class="ma-2" />
                 <div class="mt-2 mb-2"></div>
@@ -57,4 +45,8 @@ const getVideo = () => {
 }
 
 getVideo()
+
+const removeVideo =(id)=>{
+    apiRemoveVideo
+}
 </script>

@@ -19,7 +19,7 @@
                             <VListItem>
                                 <v-chip class="ma-2 font-weight-bold" color="green" label>
                                     <v-icon start :icon="'mdi-file-cloud-outline'"></v-icon>
-                                    审核队列: 快速
+                                    审核队列: {{ queueState }}
                                 </v-chip>
                             </VListItem>
                         </VList>
@@ -113,7 +113,8 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue';
 import { apiClassifyGetAll } from '../../../apis/classify';
-import { apiVideoPush, apiVideoUpload } from '../../../apis/video';
+import { apiVideoPush } from '../../../apis/user/videoManger';
+import { apiGetAuditQueueState, apiVideoUpload } from '../../../apis/video';
 
 const items = ref([
     {
@@ -137,6 +138,7 @@ const allClassifyList = ref([])
 const currentVideoIndex = ref(null)
 const videoFileRef = ref()
 const uploadList = ref([])
+const queueState = ref("快速")
 const currentVideo = computed(()=> currentVideoIndex.value>-1?uploadList.value[currentVideoIndex.value]:null)
 onMounted(() => {
     apiClassifyGetAll().then(({ data }) => {
@@ -146,9 +148,17 @@ onMounted(() => {
         }
         allClassifyList.value = data.data
     })
+    getQueueState()
 })
+const getQueueState = ()=>{
+    apiGetAuditQueueState().then(({data})=>{
+        if(!data.state) {
+            return
+        }
+        queueState.value = data.message
+    })
+}
 const clearUp = () => {
-    console.log(currentVideo.value)
     if (currentVideo.value.status <1) {
         currentVideo.value.subscription.unsubscribe()
     }
@@ -158,6 +168,7 @@ const pushVideo = ()=>{
     apiVideoPush(currentVideo.value).then(({data})=>{
         if(data.state) {
             clearUp();
+            getQueueState()
         }
     })
 }

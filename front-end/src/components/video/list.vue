@@ -1,5 +1,5 @@
 <template>
-    <v-card color="background" elevation="0" class="mb-2">
+    <v-card color="background" elevation="0" class="pb-2">
         <v-row dense class="mb-2">
             <v-divider class="ma-2" />
             <v-col v-for="(video, index) in videoList" :key="index" xs="12" sm="6" md="4" lg="3" xl="2">
@@ -12,7 +12,7 @@
 
             </v-col>
         </v-row>
-        <v-dialog v-model="videoDialog" fullscreen transition="dialog-bottom-transition">
+        <v-dialog :model-value="videoDialog" fullscreen transition="dialog-bottom-transition">
             <v-card v-if="currentVideo">
                 <Video :video-info="currentVideo" :close-video="() => playVideo(null)" />
             </v-card>

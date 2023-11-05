@@ -1,14 +1,16 @@
 <template>
     <v-card v-if="props.videoInfo" hover ripple :elevation="0" style="border-color: rgba(37,38,50);border-" rounded="lg">
+        
         <v-img :src="props.videoInfo.cover || '/not-found.png'" class="align-end"
             gradient="to bottom, rgba(0,0,0,.1), rgba(0,0,0,.5)" height="300px" cover>
+            <!-- <v-avatar :image="props.videoInfo.user.head||'/logo.png'" style="position:absolute;top:10px;right:10px"></v-avatar> -->
             <v-card-text class="text-white pa-0" v-if="!overlay">
-                <v-card-actions class="ml-1 mr-1">
+                <v-card-actions class="ml-1 mr-1 pa-0">
                     <v-chip class="ma-2" color="red" text-color="white" prepend-icon="mdi-heart">
                         {{ props.videoInfo.startCount }} 点赞
                     </v-chip>
                     <v-spacer />
-                    <v-btn :variant="'flat'" :density="'comfortable'">{{ props.videoInfo.duration }}</v-btn>
+                    <v-btn :variant="'tonal'" :density="'comfortable'">{{ props.videoInfo.duration }}</v-btn>
                 </v-card-actions>
             </v-card-text>
         </v-img>
@@ -23,7 +25,10 @@
         </v-card-actions>
         <v-overlay scrim="black" :model-value="overlay" contained persistent width="100%">
             <v-card color="rgba(1,1,1,0.5)" height="350px">
-                <v-card-title>播放中</v-card-title>
+                <v-card-title class="pb-0">播放中 </v-card-title>
+                <v-chip-group class="ml-2 mr-2">
+                    <v-chip v-for="item in props.videoInfo.labelNames.split(',')">{{ item }}</v-chip>
+                </v-chip-group>
                 <v-card-subtitle>
                     <v-row>
                         <v-col>
@@ -38,7 +43,7 @@
                     </v-row>
                 </v-card-subtitle>
 
-                <v-card-actions>
+                <v-card-actions class="pb-0 pt-0">
                     <v-btn color="orange-lighten-2" variant="text">
                         描述
                     </v-btn>

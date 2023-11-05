@@ -12,10 +12,20 @@ const routes = [
     meta: {
       isClassify: true
     }
+  },{
+    path: "/video/search/:key",
+    component: Home,
+    meta: {
+      isSearch: true
+    }
   },
   {
     path: "/classify",
     component: () => import("../views/classify/index.vue"),
+  },
+  {
+    path: "/followVideo",
+    component: () => import("../views/followVideo/index.vue"),
   },
   {
     path: "/video",

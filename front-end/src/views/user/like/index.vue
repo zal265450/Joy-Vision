@@ -17,7 +17,7 @@
           </template>
 
           <template v-slot:append>
-            <v-btn color="grey-lighten-1" variant="text">{{ currentType=='fans'?'互相关注':'取消关注' }}</v-btn>
+            <v-btn color="grey-lighten-1" variant="text" @click="unLikeOrLike(item.id)">{{ currentType == 'fans' ? '互相关注' : '取消关注' }}</v-btn>
           </template>
         </v-list-item>
         <v-divider />
@@ -28,24 +28,53 @@
       style="text-align: center;line-height: 300px;">
       好像没有什么内容呢
     </VCard>
+    <v-snackbar v-model="snackbar.show" :color="snackbar.color">
+      {{ snackbar.text }}
+
+      <template v-slot:actions>
+        <v-btn color="blue" variant="text" @click="snackbar.show = false">
+          了解
+        </v-btn>
+      </template>
+    </v-snackbar>
   </v-card>
 </template>
 <script setup>
-import { ref } from 'vue';
-import { apiGetLike } from '../../../apis/user/like';
+import { onMounted, ref } from 'vue';
+import { apiFollows, apiGetLike } from '../../../apis/user/like';
+import { useUserStore } from '../../../stores';
 const currentType = ref("fans")
 const currentItems = ref([])
+const snackbar = ref({
+  show: false,
+  text: ""
+})
+const userStore = useUserStore()
 /**
  * 获取关注/粉丝
  */
 const getLike = () => {
   currentItems.value = []
-  apiGetLike(currentType.value).then(({ data }) => {
+  apiGetLike(currentType.value, userStore.lookId).then(({ data }) => {
     if (!data.state) {
       return;
     }
     currentItems.value = data.data
   })
 }
+
+const unLikeOrLike = (id) => {
+  apiFollows(id).then(({ data }) => {
+    snackbar.value = {
+      text: data.message,
+      show: true
+    }
+    if (!data.state) {
+      return;
+    }
+    getLike()
+  })
+}
+onMounted(getLike)
 
 </script>
