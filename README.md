@@ -72,13 +72,25 @@ Jdk1.8 + SpringBoot + MyBatis + MySql + Redis + 七牛云存储 + 七牛云审�
 
 数据结构：
 
-Set  key:   system:stock:labelId    value: videoIds
+Set ttl: -1
+
+key: system:stock:labelId    
+
+value: videoIds
 
 **用户模型库**
 
 数据结构:
 
-Map key: user:model:userId    value : key labelId  value:概率
+Map ttl: -1
+
+key: user:model:userId   
+ 
+value : 
+
+key: labelId  
+
+value: 概率
 
 **流程**
 
@@ -98,11 +110,15 @@ Map key: user:model:userId    value : key labelId  value:概率
 
 数据结构：
 
-Set : key: hot:video
+Set ttl: 3天
+
+key: hot:video
+
+value: hotVideo
 
 **设计** 
 
-每隔3个小时**切片快速分页扫描全表，**每个视频计算热度值后和系统配置表的热度值做比对，小于则放入热门视频
+每隔3个小时 **切片快速分页扫描全表** ，每个视频计算热度值后和系统配置表的热度值做比对，小于则放入热门视频
 
 **推送：**
 
@@ -128,7 +144,11 @@ A视频24小时内点赞到了1W，B视频1小时内点赞到了1W，则说明B�
 
 数据结构：
 
-Zset： key：hot:rank  value: videoId socore: 热度  ttl: -1
+Zset ttl: -1
+
+key：hot:rank  
+
+value: videoId socore: 热度  
 
 每隔1个小时**切片快速分页扫描全表，**每个视频计算热度值后放入有界的小根堆 -> **TopK问题**
 
@@ -148,7 +168,13 @@ Zset： key：hot:rank  value: videoId socore: 热度  ttl: -1
 
 数据结构：
 
-Zset key: out:follow:feed:userId  value: videoId  score:视频发布时间 TTL:-1
+Zset ttl:-1
+
+key: out:follow:feed:userId  
+
+value: videoId  
+
+score:视频发布时间 
 
 **收件箱**
 
@@ -156,7 +182,13 @@ Zset key: out:follow:feed:userId  value: videoId  score:视频发布时间 TTL:-
 
 数据结构：
 
-Zset key：in:follow:feed:userId value:videoId score:视频发布时间 TTL:5天
+Zset ttl:5天
+
+key：in:follow:feed:userId 
+
+value: videoId 
+
+score: 视频发布时间 
 
 **流程**
 
