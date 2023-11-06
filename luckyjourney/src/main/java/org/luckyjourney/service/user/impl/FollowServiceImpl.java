@@ -1,6 +1,10 @@
 package org.luckyjourney.service.user.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import io.lettuce.core.support.caching.RedisCache;
+import org.luckyjourney.constant.RedisConstant;
 import org.luckyjourney.entity.user.Follow;
 import org.luckyjourney.entity.vo.BasePage;
 import org.luckyjourney.entity.vo.FollowVO;
@@ -9,18 +13,21 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.luckyjourney.service.FeedService;
 import org.luckyjourney.service.user.FollowService;
 import org.luckyjourney.service.video.VideoService;
+import org.luckyjourney.util.RedisCacheUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ObjectUtils;
 
 import javax.annotation.security.DenyAll;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
  * <p>
- *  服务实现类
+ * 服务实现类
  * </p>
  *
  * @author xhy
@@ -36,6 +43,12 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
     @Lazy
     private VideoService videoService;
 
+    @Autowired
+    private RedisTemplate redisTemplate;
+
+    @Autowired
+    private RedisCacheUtil redisCacheUtil;
+
     @Override
     public int getFollowCount(Long userId) {
         return count(new LambdaQueryWrapper<Follow>().eq(Follow::getUserId, userId));
@@ -48,34 +61,52 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
 
     @Override
     public Collection<Long> getFollow(Long userId, BasePage basePage) {
-        final List<Follow> list = list(new LambdaQueryWrapper<Follow>().eq(Follow::getUserId, userId).orderByDesc(Follow::getGmtCreated));
-        final List<Long> followIds = list.stream().skip((basePage.getPage() - 1) * basePage.getLimit()).limit(basePage.getLimit()).map(Follow::getFollowId).collect(Collectors.toList());
-        return followIds;
+        if (basePage == null) {
+            final Set<Object> set = redisCacheUtil.zGet(RedisConstant.USER_FOLLOW + userId);
+            if (ObjectUtils.isEmpty(set)){
+                return Collections.EMPTY_SET;
+            }
+            return set.stream().map(o->Long.valueOf(o.toString())).collect(Collectors.toList());
+        }
+        final Set<ZSetOperations.TypedTuple<Object>> typedTuples = redisCacheUtil.zSetGetByPage(RedisConstant.USER_FOLLOW + userId, basePage.getPage(), basePage.getLimit());
+        // 可能redis崩了,从db拿
+        if (ObjectUtils.isEmpty(typedTuples)) {
+            final List<Follow> follows = page(basePage.page(),new LambdaQueryWrapper<Follow>().eq(Follow::getUserId, userId).orderByDesc(Follow::getGmtCreated)).getRecords();
+            if (ObjectUtils.isEmpty(follows)) {
+                return Collections.EMPTY_LIST;
+            }
+            return follows.stream().map(Follow::getFollowId).collect(Collectors.toList());
+        }
+        return typedTuples.stream().map(t -> Long.parseLong(t.getValue().toString())).collect(Collectors.toList());
     }
 
-    @Override
-    public Collection<Long> getFollow(Long userId) {
-        final List<Long> ids = list(new LambdaQueryWrapper<Follow>().eq(Follow::getUserId, userId).select(Follow::getFollowId)).stream().map(Follow::getFollowId).collect(Collectors.toList());
-        return ids;
-    }
+
+
 
     @Override
     public Collection<Long> getFans(Long userId, BasePage basePage) {
-
-        List<Follow> list = null;
-        if (basePage == null){
-            list = list(new LambdaQueryWrapper<Follow>().eq(Follow::getFollowId, userId).orderByDesc(Follow::getGmtCreated));
-        }else {
-            list = page(basePage.page(),new LambdaQueryWrapper<Follow>().eq(Follow::getFollowId, userId).orderByDesc(Follow::getGmtCreated)).getRecords();
+        if (basePage == null) {
+            final Set<Object> set = redisCacheUtil.zGet(RedisConstant.USER_FANS + userId);
+             if(ObjectUtils.isEmpty(set)){
+                return Collections.EMPTY_SET;
+            }
+            return set.stream().map(o->Long.valueOf(o.toString())).collect(Collectors.toList());
         }
-        final List<Long> followIds = list.stream().skip((basePage.getPage() - 1) * basePage.getLimit()).limit(basePage.getLimit()).map(Follow::getUserId).collect(Collectors.toList());
-        return followIds;
+        final Set<ZSetOperations.TypedTuple<Object>> typedTuples = redisCacheUtil.zSetGetByPage(RedisConstant.USER_FANS + userId, basePage.getPage(), basePage.getLimit());
+        if (ObjectUtils.isEmpty(typedTuples)) {
+            final List<Follow> follows = page(basePage.page(),new LambdaQueryWrapper<Follow>().eq(Follow::getFollowId, userId)).getRecords();
+            if (ObjectUtils.isEmpty(follows)){
+                return Collections.EMPTY_LIST;
+            }
+            return follows.stream().map(Follow::getUserId).collect(Collectors.toList());
+        }
+        return typedTuples.stream().map(t -> Long.parseLong(t.getValue().toString())).collect(Collectors.toList());
     }
 
     @Override
     public Boolean follows(Long followsId, Long userId) {
 
-        if (followsId.equals(userId)){
+        if (followsId.equals(userId)) {
             throw new IllegalArgumentException("你不能关注自己");
         }
 
@@ -85,13 +116,22 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
         follow.setUserId(userId);
         try {
             save(follow);
-        }catch (Exception e){
+            final Date date = new Date();
+            // 自己关注列表添加
+            redisTemplate.opsForZSet().add(RedisConstant.USER_FOLLOW + userId, followsId, date.getTime());
+            // 对方粉丝列表添加
+            redisTemplate.opsForZSet().add(RedisConstant.USER_FANS + followsId, userId, date.getTime());
+        } catch (Exception e) {
             // 删除
-            remove(new LambdaQueryWrapper<Follow>().eq(Follow::getFollowId,followsId).eq(Follow::getUserId,userId));
+            remove(new LambdaQueryWrapper<Follow>().eq(Follow::getFollowId, followsId).eq(Follow::getUserId, userId));
             // 删除收件箱的视频
             // 获取关注人的视频
-            final Collection<Long> videoIds = videoService.listVideoIdByUserId(followsId);
-            feedService.deleteInBoxFeed(userId,videoIds);
+            final List<Long> videoIds = (List<Long>) videoService.listVideoIdByUserId(followsId);
+            feedService.deleteInBoxFeed(userId, videoIds);
+            // 自己关注列表删除
+            redisTemplate.opsForZSet().remove(RedisConstant.USER_FOLLOW + userId, followsId);
+            // 对方粉丝列表删除
+            redisTemplate.opsForZSet().remove(RedisConstant.USER_FANS + followsId, userId);
             return false;
         }
 

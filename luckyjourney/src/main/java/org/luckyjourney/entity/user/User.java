@@ -50,6 +50,9 @@ public class User extends BaseEntity {
     private String avatar;
 
     @TableField(exist = false)
+    private Boolean each;
+
+    @TableField(exist = false)
     private Set<String> roleName;
 
 }

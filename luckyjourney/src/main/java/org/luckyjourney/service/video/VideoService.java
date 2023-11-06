@@ -56,11 +56,11 @@ public interface VideoService extends IService<Video> {
     Collection<Video> getVideoByTypeId(Long typeId);
 
     /**
-     * 根据title查询视频
-     * @param title
+     * 搜索视频
+     * @param search
      * @return
      */
-    IPage<Video> searchVideo(String title,BasePage basePage);
+    IPage<Video> searchVideo(String search,BasePage basePage,Long userId);
 
     /**
      * 审核处理

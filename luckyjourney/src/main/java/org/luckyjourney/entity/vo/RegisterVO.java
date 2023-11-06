@@ -22,4 +22,6 @@ public class RegisterVO {
     private String code;
     @NotBlank(message = "uuid不可为空")
     private String uuid;
+    @NotBlank(message = "用户名不可为空")
+    private String nickName;
 }

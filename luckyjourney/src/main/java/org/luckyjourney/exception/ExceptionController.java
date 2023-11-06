@@ -1,6 +1,7 @@
 package org.luckyjourney.exception;
 
 import org.luckyjourney.util.R;
+import org.springframework.util.ObjectUtils;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -21,7 +22,8 @@ public class ExceptionController {
     @ExceptionHandler(Exception.class)
     public R ex(Exception e){
         e.printStackTrace();
-        return R.error().message(e.getMessage());
+        String msg = ObjectUtils.isEmpty(e.getMessage()) ? e.toString() : e.getMessage();
+        return R.error().message(msg);
     }
 
 

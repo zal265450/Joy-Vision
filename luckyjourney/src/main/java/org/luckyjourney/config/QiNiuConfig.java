@@ -44,6 +44,7 @@ public class QiNiuConfig {
     public static final String VIDEO_URL = "http://ai.qiniuapi.com/v3/video/censor";
     public static final String IMAGE_URL = "http://ai.qiniuapi.com/v3/image/censor";
 
+    public static final String fops = "avthumb/mp4";
 
     public Auth buildAuth() {
         String accessKey = this.getAccessKey();
@@ -55,7 +56,7 @@ public class QiNiuConfig {
     public String videoUploadToken() {
         final Auth auth = buildAuth();
         return auth.uploadToken(bucketName, null, 300, new
-                StringMap().put("mimeLimit", "video/*"));
+                StringMap().put("mimeLimit", "video/*").putNotEmpty("persistentOps", fops));
     }
 
     public String imageUploadToken() {

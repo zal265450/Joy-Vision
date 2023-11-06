@@ -16,6 +16,7 @@ import org.luckyjourney.util.FileUtil;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ObjectUtils;
 
 import javax.validation.constraints.NotBlank;
 import java.util.Collection;
@@ -66,6 +67,7 @@ public class VideoPublishAuditServiceImpl implements AuditService<VideoTask,Vide
      * @return
      */
     public VideoTask audit(VideoTask videoTask,Boolean auditQueueState){
+
         if (auditQueueState){
             new Thread(()->{
                 audit(videoTask);
@@ -100,7 +102,6 @@ public class VideoPublishAuditServiceImpl implements AuditService<VideoTask,Vide
             AuditResponse titleAuditResponse = new AuditResponse(AuditStatus.SUCCESS,"正常");
             AuditResponse descAuditResponse = new AuditResponse(AuditStatus.SUCCESS,"正常");
 
-            //
             if (needAuditVideo){
                   videoAuditResponse = videoAuditService.audit(url);
                   coverAuditResponse = imageAuditService.audit(video.getCover());
@@ -109,14 +110,14 @@ public class VideoPublishAuditServiceImpl implements AuditService<VideoTask,Vide
                 final String duration = FileUtil.getVideoDuration(url);
                 video.setDuration(duration);
                 // 填充视频类型
-                video.setVideoType(fileService.getFileInfo(url).mimeType);
+                video.setVideoType(fileService.getFileInfo(video.getUrl()).mimeType);
 
                 // 推入发件箱
                 feedService.pusOutBoxFeed(video.getUserId(),video.getId(),video.getGmtCreated().getTime());
             }else if (videoTask.getNewState()){
                 interestPushService.deleteSystemStockIn(video);
                 interestPushService.deleteSystemTypeStockIn(video);
-                // 删除发件箱
+                // 删除发件箱以及收件箱
                 final Collection<Long> fans = followService.getFans(video.getUserId(), null);
                 feedService.deleteOutBoxFeed(video.getUserId(),fans,video.getId());
             }
@@ -126,7 +127,7 @@ public class VideoPublishAuditServiceImpl implements AuditService<VideoTask,Vide
             if (!video.getTitle().equals(oldVideo.getTitle())) {
                 titleAuditResponse = textAuditService.audit(video.getTitle());
             }
-            if (!video.getDescription().equals(oldVideo.getDescription())){
+            if (!video.getDescription().equals(oldVideo.getDescription()) && !ObjectUtils.isEmpty(video.getDescription())){
                 descAuditResponse = textAuditService.audit(video.getDescription());
             }
 

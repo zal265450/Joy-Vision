@@ -64,7 +64,7 @@ public class VideoController {
     }
 
     /**
-     * 查看用户所管理的视频
+     * 查看用户所管理的视频 -稿件管理
      * @param basePage
      * @return
      */

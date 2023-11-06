@@ -60,6 +60,7 @@ public interface InterestPushService {
 
     /**
      * 用于给用户推送视频
+     * 推送 X 视频,包含一条和性别有关
      * @param user 传id和sex
      * @return videoIds
      */
