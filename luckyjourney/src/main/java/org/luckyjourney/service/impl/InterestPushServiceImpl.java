@@ -113,6 +113,7 @@ public class InterestPushServiceImpl implements InterestPushService {
                 modelMap.put(labelName, probabilityValue);
             }
         }
+        redisCacheUtil.del(key);
         redisCacheUtil.hmset(key, modelMap);
 
     }
@@ -133,7 +134,6 @@ public class InterestPushServiceImpl implements InterestPushService {
             if (modelMap == null) {
                 modelMap = new HashMap<>();
             }
-            // todo 这里需要将概率等比例缩小，否则可能会有一个标签概率增长巨大
             for (Model model : models) {
                 // 修改用户模型
                 if (modelMap.containsKey(model.getLabel())) {
@@ -145,6 +145,12 @@ public class InterestPushServiceImpl implements InterestPushService {
                 } else {
                     modelMap.put(model.getLabel(), model.getScore());
                 }
+            }
+
+            // 每个标签概率同等加上标签数，再同等除以标签数  防止数据膨胀
+            final int labelSize = modelMap.keySet().size();
+            for (Object o : modelMap.keySet()) {
+                modelMap.put(o,(Double.parseDouble(modelMap.get(o).toString()) + labelSize )/ labelSize);
             }
             // 更新用户模型
             redisCacheUtil.hmset(key, modelMap);
@@ -187,28 +193,26 @@ public class InterestPushServiceImpl implements InterestPushService {
                 Set<Long> ids = list.stream().filter(id->id!=null).map(id->Long.parseLong(id.toString())).collect(Collectors.toSet());
                 String key2 = RedisConstant.HISTORY_VIDEO;
 
-
                 // 去重
-                final List simpIds = redisTemplate.executePipelined((RedisCallback<Object>) connection -> {
+                List simpIds = redisTemplate.executePipelined((RedisCallback<Object>) connection -> {
                     for (Long id : ids) {
                         connection.get((key2 + id + ":" + userId).getBytes());
                     }
                     return null;
                 });
-
-                for (Object simpId : simpIds) {
-                    final Long l = Long.valueOf(simpId.toString());
-                    if (ids.contains(l)){
-                        ids.remove(l);
+                simpIds = (List) simpIds.stream().filter(o->!ObjectUtils.isEmpty(o)).collect(Collectors.toList());;
+                if (!ObjectUtils.isEmpty(simpIds)){
+                    for (Object simpId : simpIds) {
+                        final Long l = Long.valueOf(simpId.toString());
+                        if (ids.contains(l)){
+                            ids.remove(l);
+                        }
                     }
                 }
 
+
                 videoIds.addAll(ids);
 
-                final Long hotVideoId = randomHotVideoId();
-                if (hotVideoId!=null){
-                    videoIds.add(hotVideoId);
-                }
                 // 随机挑选一个视频,根据性别: 男：美女 女：宠物
                 final Long aLong = randomVideoId(sex);
                 if (aLong!=null){
@@ -225,7 +229,7 @@ public class InterestPushServiceImpl implements InterestPushService {
         final ArrayList<String> labelNames = new ArrayList<>();
         int size = labels.size();
         final Random random = new Random();
-        // 获取随机的分类
+        // 获取随机的标签
         for (int i = 0; i < 10; i++) {
             final int randomIndex = random.nextInt(size);
             labelNames.add(RedisConstant.SYSTEM_STOCK + labels.get(randomIndex));

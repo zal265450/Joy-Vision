@@ -1,5 +1,8 @@
 package org.luckyjourney.service.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.SneakyThrows;
 import org.luckyjourney.constant.RedisConstant;
 import org.luckyjourney.service.FeedService;
 import org.luckyjourney.service.user.FollowService;
@@ -18,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @description:
@@ -61,9 +65,9 @@ public class FeedServiceImpl implements FeedService {
     }
 
     @Override
-    public void deleteInBoxFeed(Long userId,Collection<Long> videoIds) {
-
-        redisTemplate.opsForZSet().remove(RedisConstant.IN_FOLLOW + userId, videoIds.toArray(new Object[videoIds.size()]));
+    @Async
+    public void deleteInBoxFeed(Long userId,List<Long> videoIds) {
+        redisTemplate.opsForZSet().remove(RedisConstant.IN_FOLLOW + userId, videoIds.toArray());
     }
 
 
@@ -87,9 +91,6 @@ public class FeedServiceImpl implements FeedService {
     public void init(Long userId,Long min,Long max,Collection<Long> followIds) {
         String t1 = RedisConstant.OUT_FOLLOW;
         String t2 = RedisConstant.IN_FOLLOW;
-
-
-
         // 查看关注人的发件箱
         final List<Set<DefaultTypedTuple>> result = redisTemplate.executePipelined((RedisCallback<Object>) connection -> {
                 for (Long followId : followIds) {
@@ -97,7 +98,7 @@ public class FeedServiceImpl implements FeedService {
                 }
                 return null;
             });
-
+        final ObjectMapper objectMapper = new ObjectMapper();
         final HashSet<Long> ids = new HashSet<>();
         // 放入收件箱
         redisTemplate.executePipelined((RedisCallback<Object>) connection -> {
@@ -109,7 +110,11 @@ public class FeedServiceImpl implements FeedService {
                         final Object value = tuple.getValue();
                         ids.add(Long.parseLong(value.toString()));
                         final byte[] key = (t2 + userId).getBytes();
-                        connection.zAdd(key, tuple.getScore(), Long.valueOf(value.toString()).toString().getBytes());
+                        try {
+                            connection.zAdd(key, tuple.getScore(), objectMapper.writeValueAsBytes(value));
+                        } catch (JsonProcessingException e) {
+                            e.printStackTrace();
+                        }
                         connection.expire(key, RedisConstant.HISTORY_TIME);
                     }
                 }

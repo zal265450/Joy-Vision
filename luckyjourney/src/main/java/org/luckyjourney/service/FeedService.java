@@ -3,6 +3,7 @@ package org.luckyjourney.service;
 import io.jsonwebtoken.lang.Collections;
 
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @description:
@@ -42,7 +43,7 @@ public interface FeedService {
      * @param userId
      * @param videoIds 关注人发的视频id
      */
-    void deleteInBoxFeed(Long userId,Collection<Long> videoIds);
+    void deleteInBoxFeed(Long userId, List<Long> videoIds);
 
     /**
      * 初始化关注流-拉模式 with TTL

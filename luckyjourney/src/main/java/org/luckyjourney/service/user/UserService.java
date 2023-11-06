@@ -1,5 +1,6 @@
 package org.luckyjourney.service.user;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import org.luckyjourney.entity.user.User;
 import org.luckyjourney.entity.video.Type;
@@ -45,7 +46,7 @@ public interface UserService extends IService<User> {
      * @param basePage
      * @return
      */
-    List<User> getFollows(Long userId, BasePage basePage);
+    Page<User> getFollows(Long userId, BasePage basePage);
 
     /**
      * 获取粉丝
@@ -53,7 +54,7 @@ public interface UserService extends IService<User> {
      * @param basePage
      * @return
      */
-    List<User> getFans(Long userId, BasePage basePage);
+    Page<User> getFans(Long userId, BasePage basePage);
 
     /**
      * 获取用户基本信息
@@ -100,4 +101,17 @@ public interface UserService extends IService<User> {
      * @param user
      */
     void updateUser(UpdateUserVO user);
+
+    /**
+     * 获取用户搜索记录
+     * @return 搜索的值
+     */
+    Collection<String> searchHistory(Long userId);
+
+    /**
+     * 添加搜索记录
+     * @param userId
+     * @param search
+     */
+    void addSearchHistory(Long userId, String search);
 }

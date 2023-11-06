@@ -10,6 +10,7 @@ import org.luckyjourney.service.user.FavoritesService;
 import org.luckyjourney.service.user.UserService;
 import org.luckyjourney.util.R;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.ObjectUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -47,6 +48,10 @@ public class CustomerController {
         return R.ok().data(userService.getInfo(userId));
     }
 
+    /**
+     * 获取用户信息
+     * @return
+     */
     @GetMapping("/getInfo")
     public R getDefaultInfo(){
         return R.ok().data(userService.getInfo(UserHolder.get()));
@@ -134,11 +139,15 @@ public class CustomerController {
     @PostMapping("/subscribe")
     public R subscribe(@RequestParam(required = false) String types){
         final HashSet<Long> typeSet = new HashSet<>();
-        for (String s : types.split(",")) {
-            typeSet.add(Long.parseLong(s));
+        String msg = "取消订阅";
+        if (!ObjectUtils.isEmpty(types)){
+            for (String s : types.split(",")) {
+                typeSet.add(Long.parseLong(s));
+            }
+            msg = "订阅成功";
         }
         userService.subscribe(typeSet);
-        return R.ok().message("订阅成功");
+        return R.ok().message(msg);
     }
 
     /**
@@ -187,12 +196,17 @@ public class CustomerController {
         return R.ok().data(qiNiuConfig.imageUploadToken());
     }
 
-    // 修改用户信息
+    /**
+     *  修改用户信息
+     * @param user
+     * @return
+     */
     @PutMapping
     public R updateUser(@RequestBody @Validated UpdateUserVO user){
-
         userService.updateUser(user);
 
         return R.ok().message("修改成功");
     }
+
+
 }

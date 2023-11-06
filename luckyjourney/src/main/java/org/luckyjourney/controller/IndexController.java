@@ -6,6 +6,7 @@ import org.luckyjourney.entity.video.Video;
 import org.luckyjourney.entity.video.VideoShare;
 import org.luckyjourney.entity.vo.BasePage;
 import org.luckyjourney.holder.UserHolder;
+import org.luckyjourney.service.user.UserService;
 import org.luckyjourney.service.video.TypeService;
 import org.luckyjourney.service.video.VideoService;
 import org.luckyjourney.util.JwtUtils;
@@ -25,6 +26,8 @@ import java.util.Arrays;
 @RequestMapping("/luckyjourney/index")
 public class IndexController {
 
+    @Autowired
+    private UserService userService;
 
     @Autowired
     private VideoService videoService;
@@ -47,8 +50,9 @@ public class IndexController {
      * @return
      */
     @GetMapping("/search")
-    public R searchVideo(@RequestParam(required = false) String searchName, BasePage basePage){
-        return R.ok().data( videoService.searchVideo(searchName,basePage));
+    public R searchVideo(@RequestParam(required = false) String searchName, BasePage basePage,HttpServletRequest request){
+
+        return R.ok().data(videoService.searchVideo(searchName,basePage,JwtUtils.getUserId(request)));
     }
 
     /**
@@ -149,5 +153,13 @@ public class IndexController {
         return R.ok().data(videoService.listByUserIdOpenVideo(userId,basePage));
     }
 
+    /**
+     * 获取用户搜索记录
+     * @return
+     */
+    @GetMapping("/search/history")
+    public R searchHistory(HttpServletRequest request){
+        return R.ok().data(userService.searchHistory(JwtUtils.getUserId(request)));
+    }
 
 }

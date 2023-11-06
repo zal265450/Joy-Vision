@@ -1,6 +1,7 @@
 package org.luckyjourney.service.user;
 
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
 import org.luckyjourney.entity.user.Follow;
 import org.luckyjourney.entity.vo.BasePage;
@@ -39,19 +40,14 @@ public interface FollowService extends IService<Follow> {
      */
     Collection<Long> getFollow(Long userId, BasePage basePage);
 
-    /**
-     * 获取所有关注人员
-     * @param userId
-     * @return
-     */
-    Collection<Long> getFollow(Long userId);
+
 
     /**
      * 获取粉丝人员且安排关注时间排序
      * @param userId
      * @return
      */
-    Collection<Long> getFans(Long userId,BasePage basePage);
+    Collection<Long> getFans(Long userId, BasePage basePage);
 
     /**
      * 关注/取关

@@ -2,6 +2,8 @@ package org.luckyjourney.service.user.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import org.luckyjourney.config.QiNiuConfig;
 import org.luckyjourney.constant.AuditStatus;
 import org.luckyjourney.constant.RedisConstant;
 import org.luckyjourney.entity.response.AuditResponse;
@@ -25,6 +27,11 @@ import org.luckyjourney.service.video.TypeService;
 import org.luckyjourney.util.RedisCacheUtil;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
+import org.springframework.data.redis.connection.RedisConnection;
+import org.springframework.data.redis.core.RedisCallback;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
@@ -57,14 +64,20 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     private RedisCacheUtil redisCacheUtil;
 
     @Autowired
+    private RedisTemplate redisTemplate;
+
+
+    @Autowired
     private InterestPushService interestPushService;
 
     @Autowired
     private FavoritesService favoritesService;
 
-
     @Autowired
     private TextAuditService textAuditService;
+
+    @Autowired
+    private ImageAuditService imageAuditService;
 
     @Override
     public boolean register(RegisterVO registerVO) throws Exception {
@@ -84,7 +97,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
 
         final User user = new User();
-        user.setNickName(UUID.randomUUID().toString().substring(0,10));
+        user.setNickName(registerVO.getNickName());
         user.setEmail(registerVO.getEmail());
         user.setPassword(registerVO.getPassword());
 
@@ -119,6 +132,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         final long fansCount = followService.getFansCount(userId);
         userVO.setFollow(followCount);
         userVO.setFans(fansCount);
+        userVO.setAvatar(QiNiuConfig.CNAME+"/"+user.getAvatar());
         return userVO;
     }
 
@@ -129,18 +143,71 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     @Override
-    public List<User> getFollows(Long userId, BasePage basePage) {
-
+    public Page<User> getFollows(Long userId, BasePage basePage) {
+        Page<User> page = new Page<>();
+        // 获取关注列表
         final Collection<Long> followIds = followService.getFollow(userId, basePage);
-        if (ObjectUtils.isEmpty(followIds)) return Collections.EMPTY_LIST;
-        return getUsers(followIds);
+        if (ObjectUtils.isEmpty(followIds)) return page;
+        // 获取粉丝列表
+        final HashSet<Long> fans = new HashSet<>();
+        // 这里需要将数据转换，因为存到redis中数值小是用int保存，取出来需要用long比较
+        fans.addAll(followService.getFans(userId, null));
+        Map<Long,Boolean> map = new HashMap<>();
+        for (Long followId : followIds) {
+            map.put(followId,fans.contains(followId));
+        }
+        String t = QiNiuConfig.CNAME+"/";
+        final ArrayList<User> users = new ArrayList<>();
+        final Map<Long, User> userMap = getBaseInfoUserToMap(map.keySet());
+        for (Long followId : followIds) {
+            final User user = userMap.get(followId);
+            user.setEach(map.get(user.getId()));
+            user.setAvatar(t+user.getAvatar());
+            users.add(user);
+        }
+        page.setRecords(users);
+        page.setTotal(users.size());
+
+        return page;
     }
 
     @Override
-    public List<User> getFans(Long userId, BasePage basePage) {
+    public Page<User> getFans(Long userId, BasePage basePage) {
+        final Page<User> page = new Page<>();
+        // 获取粉丝列表
         final Collection<Long> fansIds = followService.getFans(userId, basePage);
-        if (ObjectUtils.isEmpty(fansIds)) return Collections.EMPTY_LIST;
-        return getUsers(fansIds);
+        if (ObjectUtils.isEmpty(fansIds)) return page;
+        // 获取关注列表
+        final HashSet<Long> followIds = new HashSet<>();
+        followIds.addAll(followService.getFollow(userId,null));
+        Map<Long,Boolean> map = new HashMap<>();
+        // 遍历粉丝，查看关注列表中是否有
+        for (Long fansId : fansIds) {
+            map.put(fansId,followIds.contains(fansId));
+        }
+        final Map<Long, User> userMap = getBaseInfoUserToMap(map.keySet());
+        String t = QiNiuConfig.CNAME+"/";
+        final ArrayList<User> users = new ArrayList<>();
+        // 遍历粉丝列表,保证有序性
+        for (Long fansId : fansIds) {
+            final User user = userMap.get(fansId);
+            user.setEach(map.get(user.getId()));
+            user.setAvatar(t+user.getAvatar());
+            users.add(user);
+        }
+
+        page.setRecords(users);
+        page.setTotal(users.size());
+        return page;
+    }
+
+    private Map<Long,User> getBaseInfoUserToMap(Collection<Long> userIds){
+        List<User> users = new ArrayList<>();
+        if (!ObjectUtils.isEmpty(userIds)){
+            users = list(new LambdaQueryWrapper<User>().in(User::getId, userIds).select(User::getId, User::getNickName, User::getDescription
+                    , User::getSex, User::getAvatar));
+        }
+        return users.stream().collect(Collectors.toMap(User::getId,Function.identity()));
     }
 
     @Override
@@ -244,13 +311,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                 throw new IllegalArgumentException(audit.getMsg());
             }
         }
-        /*if (!oldUser.getAvatar().equals(user.getAvatar())){
+        if (!oldUser.getAvatar().equals(user.getAvatar())){
             oldUser.setAvatar(user.getAvatar());
             final AuditResponse audit = imageAuditService.audit(user.getAvatar());
             if (audit.getAuditStatus() != AuditStatus.SUCCESS) {
                 throw new IllegalArgumentException(audit.getMsg());
             }
-        }*/
+        }
 
         // 校验收藏夹
         favoritesService.exist(userId,user.getDefaultFavoritesId());
@@ -260,6 +327,23 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         oldUser.setDefaultFavoritesId(user.getDefaultFavoritesId());
 
         updateById(oldUser);
+    }
+
+    @Override
+    public Collection<String> searchHistory(Long userId) {
+        List<String> searchs = new ArrayList<>();
+        if (userId!=null){
+            searchs.addAll(redisCacheUtil.zGet(RedisConstant.USER_SEARCH_HISTORY+userId));
+        }
+        return searchs;
+    }
+
+    @Override
+    @Async
+    public void addSearchHistory(Long userId, String search) {
+        if (userId!=null){
+          redisCacheUtil.zadd(RedisConstant.USER_SEARCH_HISTORY+userId,new Date().getTime(),search,-1);
+        }
     }
 
 

@@ -53,6 +53,7 @@ import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -112,11 +113,10 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
         if (video == null) throw new IllegalArgumentException("指定视频不存在");
         if (video.getOpen()) return new Video();
 
-        // 异步
         video.setUrl(QiNiuConfig.CNAME+"/"+video.getUrl());
         // 当前视频用户自己是否有收藏/点赞过信息
-        final CompletableFuture<Object> future = new CompletableFuture<>();
-        // 这里需要优化 todo
+        // 这里需要优化 如果这里开线程获取则系统g了(因为这里的场景不适合) -> 请求数很多
+        // 正确做法: 视频存储在redis中，点赞收藏等行为异步放入DB, 定时任务扫描DB中不重要更新redis
         video.setUser(userService.getInfo(video.getUserId()));
         video.setStart(videoStarService.starState(videoId, userId));
         video.setFavorites(favoritesService.favoritesState(videoId,userId));
@@ -129,13 +129,15 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
     public void publishVideo(Video video) {
 
         final Long userId = UserHolder.get();
+
         Video old = new Video();
         // 不允许修改视频
         final Long videoId = video.getId();
         if (videoId !=null){
             // url不能一致
             old = this.getOne(new LambdaQueryWrapper<Video>().eq(Video::getId, videoId).eq(Video::getUserId, userId));
-            if (!(old.getUrl().equals(video.getUrl())) || !(old.getCover().equals(video.getCover()))){
+
+            if (!(QiNiuConfig.CNAME+"/"+old.getUrl()).equals(video.getUrl()) || !(old.getCover().equals(video.getCover()))){
                 throw new IllegalArgumentException("不能更换视频源,只能修改视频信息");
             }
         }
@@ -235,10 +237,21 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
     }
 
     @Override
-    public IPage<Video> searchVideo(String title, BasePage basePage) {
-        final IPage<Video> page = this.page(basePage.page(), new LambdaQueryWrapper<Video>().like(Video::getTitle, title));
+    public IPage<Video> searchVideo(String search, BasePage basePage,Long userId) {
+        final IPage p = basePage.page();
+        // 如果带YV则精准搜该视频
+        final LambdaQueryWrapper<Video> wrapper = new LambdaQueryWrapper<>();
+        if (search.contains("YV")){
+            wrapper.eq(Video::getYV,search);
+        }else {
+            wrapper.like(!ObjectUtils.isEmpty(search),Video::getTitle, search);
+        }
+        IPage<Video> page = this.page(p, wrapper.like(!ObjectUtils.isEmpty(search),Video::getTitle, search));
+
         final List<Video> videos = page.getRecords();
         setUserVoAndUrl(videos);
+
+        userService.addSearchHistory(userId,search);
         return page;
     }
 
@@ -472,7 +485,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
     @Override
     public void initFollowFeed(Long userId) {
         // 获取所有关注的人
-        final Collection<Long> followIds = followService.getFollow(userId);
+        final Collection<Long> followIds = followService.getFollow(userId,null);
         feedService.initFollowFeed(userId,followIds);
     }
 
@@ -480,7 +493,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
     public IPage<Video> listByUserIdVideo(BasePage basePage, Long userId) {
 
         final IPage page = page(basePage.page(), new LambdaQueryWrapper<Video>().eq(Video::getUserId, userId).orderByDesc(Video::getGmtCreated));
-
+        setUserVoAndUrl(page.getRecords());
         return page;
     }
 
@@ -494,14 +507,19 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
 
     public void setUserVoAndUrl(Collection<Video> videos){
         if (!ObjectUtils.isEmpty(videos)){
+            String t = QiNiuConfig.CNAME+"/";
             final Set<Long> userIds = videos.stream().map(Video::getUserId).collect(Collectors.toSet());
-            final Map<Long, String> userMap = userService.list(userIds).stream().collect(Collectors.toMap(User::getId, User::getNickName));
+            final Map<Long, User> userMap = userService.list(userIds).stream().collect(Collectors.toMap(User::getId, Function.identity()));
             for (Video video : videos) {
                 final UserVO userVO = new UserVO();
+                final User user = userMap.get(video.getUserId());
                 userVO.setId(video.getUserId());
-                userVO.setNickName(userMap.get(video.getUserId()));
+                userVO.setNickName(user.getNickName());
+                userVO.setAvatar(t+user.getAvatar());
+                userVO.setDescription(user.getDescription());
+                userVO.setSex(user.getSex());
                 video.setUser(userVO);
-                video.setUrl(QiNiuConfig.CNAME+"/"+video.getUrl());
+                video.setUrl(t+video.getUrl());
             }
         }
 

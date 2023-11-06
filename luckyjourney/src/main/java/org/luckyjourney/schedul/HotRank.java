@@ -49,7 +49,7 @@ public class HotRank {
     @Scheduled(cron = "0 0 */1 * * ?")
     public void hotRank(){
         // 控制数量
-        final TopK topK = new TopK(50, new PriorityQueue<HotVideo>(50, (o1, o2) -> -(int) (o1.getHot() - o2.getHot())));
+        final TopK topK = new TopK(10, new PriorityQueue<HotVideo>(10, (o1, o2) -> -(int) (o1.getHot() - o2.getHot())));
         long limit = 1000;
         // 每次拿1000个
         long id = 0;
@@ -90,7 +90,7 @@ public class HotRank {
             return null;
         });
         // 清理50后面的
-        redisTemplate.opsForZSet().removeRange(RedisConstant.HOT_RANK,50,-1);
+        redisTemplate.opsForZSet().removeRange(RedisConstant.HOT_RANK,10,-1);
     }
 
     // 热门视频,没有热度排行榜实时且重要
