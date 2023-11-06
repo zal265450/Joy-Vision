@@ -23,11 +23,11 @@ Jdk1.8 + SpringBoot + MyBatis + MySql + Redis + 七牛云存储 + 七牛云审�
 设计实现后端所有功能,功能在下面功能模块将展示
 
 # 架构设计
-![输入图片说明](image/%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1.jpg%E6%8A%96%E9%B8%AD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1.jpg)
+![输入图片说明](image/%E6%8A%96%E9%B8%AD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%20(1).jpg)
 
 # 功能模块
+![输入图片说明](image/%E5%8A%9F%E8%83%BD%E6%A8%A1%E5%9D%97.jpg)
 
-![输入图片说明](image/%E5%8A%9F%E8%83%BD%E6%A8%A1%E5%9D%97.png)
 
 ## 用户
 
@@ -158,7 +158,7 @@ value: videoId socore: 热度
 
 推送关注人发送的视频 -> feed流
 
- **设计 ** 
+ **设计** 
 
 用户拥有**发件箱**和**收件箱**
 
@@ -174,7 +174,7 @@ key: out:follow:feed:userId
 
 value: videoId  
 
-score:视频发布时间 
+score: 视频发布时间 
 
 **收件箱**
 
