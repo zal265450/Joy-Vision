@@ -1,7 +1,6 @@
 import axios from 'axios';
 import { useUserStore } from '../stores';
 const instance = axios.create({
-  // baseURL: "http://luckjourney.liuscraft.top/api/luckyjourney",
   baseURL: "/api",
   timeout: 1000000,
   headers: {
