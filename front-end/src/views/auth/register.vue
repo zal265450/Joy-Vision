@@ -51,6 +51,7 @@
 
                     <v-window-item :value="2">
                         <v-card-text>
+                            <v-text-field v-model="registerInfo.nickName" label="请输入昵称" type="text"></v-text-field>
                             <v-text-field v-model="registerInfo.password" label="请输入密码" type="password"></v-text-field>
                             <v-text-field v-model="registerInfo.confirmPassword" label="请确认密码"
                                 type="password"></v-text-field>
@@ -125,6 +126,7 @@ const getCaptchaImg = () => {
 }
 const registerInfo = reactive({
     email: "",
+    nickName: "",
     code: "",
     captchaCode: "",
     password: "",
