@@ -21,13 +21,6 @@
                     <v-list-item-title v-text="item.name"></v-list-item-title>
                 </v-list-item>
                 <VListSubheader v-if="favoriteItems.length == 0">您没有收藏夹</VListSubheader>
-                <v-menu v-model:model-value="isShowMenu">
-                    <v-list>
-                        <v-list-item v-for="(item, index) in items" :key="index" :value="index">
-                            <v-list-item-title>{{ item.title }}</v-list-item-title>
-                        </v-list-item>
-                    </v-list>
-                </v-menu>
             </v-list>
         </v-navigation-drawer>
         <v-main class="ml-1">
@@ -39,34 +32,25 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import { apiGetFavorites } from '../../../apis/user/favorites';
 import { apiGetVideoByFavoriteId } from '../../../apis/video';
+import FavoriteEdit from '../../../components/favorite/edit.vue';
 import VideoList from '../../../components/video/list.vue';
-import FavoriteEdit from './edit.vue';
 const favoriteItems = ref([])
 const videoList = ref([])
-const currentVideo = ref(null)
-const videoDialog = ref(false)
 const currentFavoriteIndex = ref([0])
 const currentFavorite = computed(() => currentFavoriteIndex.value > -1 ? favoriteItems.value[currentFavoriteIndex.value] : null)
 const getUserFavorites = () => {
     apiGetFavorites().then(({ data }) => {
         favoriteItems.value = data.data
         if (favoriteItems.value.length == 0) {
-            currentFavoriteIndex.value = null
+            currentFavoriteIndex.value = []
             return;
         }
         if ((currentFavoriteIndex.value > -1 && currentFavoriteIndex.value < favoriteItems.value.length)) {
             return;
         } else if (favoriteItems.value.length > 0) {
-            currentFavoriteIndex.value = 0
+            currentFavoriteIndex.value = [0]
         }
     })
-}
-const playVideo = (video) => {
-    console.log("???")
-    videoDialog.value = false
-    currentVideo.value = video
-    videoDialog.value = video ? true : false
-    console.log(videoDialog.value, video)
 }
 const getFavoriteVideo = () => {
     if (currentFavorite.value == null) {

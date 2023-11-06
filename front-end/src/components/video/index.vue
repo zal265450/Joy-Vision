@@ -1,56 +1,15 @@
 <template>
-  <v-app v-if="videoInfo">
-    <v-navigation-drawer permanent app v-model="drawer" location="right" :width="350" style="background-color: #252632;">
-      <!-- <v-card class="mx-auto" max-width="344" elevation="0">
-        <v-img :src="currentVideo.cover" height="200px" cover></v-img>
-        <v-card-title>
-          {{ currentVideo.title }}
-        </v-card-title>
-
-        <v-card-subtitle>
-          <v-row>
-            <v-col>
-              {{ currentVideo.historyCount }} 播放
-            </v-col>
-            <v-col>
-              {{ currentVideo.historyCount }} 点赞
-            </v-col>
-            <v-col>
-              {{ currentVideo.historyCount }} 收藏
-            </v-col>
-          </v-row>
-        </v-card-subtitle>
-
-        <v-card-actions>
-          <v-btn color="orange-lighten-2" variant="text">
-            描述
-          </v-btn>
-
-          <v-spacer></v-spacer>
-
-          <v-btn :icon="showDescription ? 'mdi-chevron-up' : 'mdi-chevron-down'"
-            @click="showDescription = !showDescription"></v-btn>
-        </v-card-actions>
-
-        <v-expand-transition>
-          <div v-show="showDescription">
-            <v-divider></v-divider>
-
-            <v-card-text>
-              {{ currentVideo.description || "作者很懒，没有给一点描述" }}
-            </v-card-text>
-          </div>
-        </v-expand-transition>
-      </v-card> -->
+  <v-layout v-if="currentVideo" full-height>
+    <v-navigation-drawer app permanent v-model="drawer" location="right" :width="350" style="background-color: #252632;">
       <div class="pa-4 ">
         <VideoCard :overlay="currentIndex == index" class="mb-4" :video-info="videoItem"
           v-for="(videoItem, index) in similarList" :key="index" @click="currentIndex = index" />
       </div>
     </v-navigation-drawer>
     <v-main>
-      <v-card :height="videoHeight" :width="videoWidth" rounded="0">
+      <v-card rounded="0" width="100%" height="100%">
         <video ref="video" class="video-js vjs-default-skin" controls :poster="currentVideo.cover">
-          <source :src="currentVideo.url" :type="currentVideo.videoType" />
+          <source :src="currentVideo.url" :type="currentVideo.videoType || 'video/mp4'" />
         </video>
         <div style="position: absolute;left: 15px;top: 15px;z-index: 99999;">
           <v-btn size="40" color="bg" icon @click="closeVideo">
@@ -59,8 +18,8 @@
         </div>
         <v-card class="pa-2" elevation="0" style="display: flex; flex-direction: column;
     gap: 12px;position: absolute; background-color: transparent; right: 25px; bottom: 25px;z-index: 99999;">
-          <v-badge color="red" icon="mdi-plus" location="bottom" @click="()=>{}">
-            <v-avatar class="elevation-2" image="/logo.png"></v-avatar>
+          <v-badge color="red" icon="mdi-plus" location="bottom" @click="likeUser()">
+            <v-avatar class="elevation-2" :image="currentVideo.user.avatar|| '/logo.png'"></v-avatar>
           </v-badge>
           <v-btn size="40" color="blue" icon @click="openRgihtD()">
             <v-icon :size="20">mdi-more</v-icon>
@@ -96,11 +55,12 @@
         </template>
       </v-snackbar>
     </v-main>
-  </v-app>
+  </v-layout>
 </template>
 <script setup>
 import { computed, getCurrentInstance, onMounted, onUnmounted, ref, watch } from 'vue';
-import { apiAddHistory, apiGetVideoBySimilar, apiSetUserVideoModel, apiStarVideo } from '../../apis/video';
+import { apiFollows } from '../../apis/user/like';
+import { apiAddHistory, apiGetVideoBySimilar, apiInitFollowFeed, apiSetUserVideoModel, apiStarVideo } from '../../apis/video';
 import FavoriteCom from '../../components/favorite/index.vue';
 import VideoCard from '../../components/video/card.vue';
 import strUtils from '../../utils/strUtil';
@@ -132,22 +92,17 @@ const snackbar = ref({
 const drawer = ref(true)
 const instance = getCurrentInstance().proxy
 const video = ref()
-const windowHeight = ref(document.body.clientHeight)
-const windowWidth = ref(document.body.clientWidth)
 const videoPlayer = ref()
 const similarList = ref([
   props.videoInfo
 ])
-if (props.videoList && props.videoList.length > 0) {
-  similarList.value = props.videoList
-}
+
 const currentIndex = ref(0)
 const currentVideo = computed(() => {
   return currentIndex.value >= 0 ? similarList.value[currentIndex.value] : props.videoInfo
 })
 const openRgihtD = () => {
   drawer.value = !drawer.value
-  video.value.focus()
 }
 const favoriteCallBack = (e) => {
   if (e == "已收藏") {
@@ -163,16 +118,25 @@ const favoriteCallBack = (e) => {
 const isAddHistory = ref(true)
 const isLikeVideo = ref(false)
 const windowKeyEvent = (event) => {
-  if (event.which == 38) {
-    if (currentIndex.value < 1) {
-      return;
-    }
-    currentIndex.value--
-  } else if (event.which == 40) {
-    if (currentIndex.value >= similarList.value.length - 1) {
-      return;
-    }
-    currentIndex.value++;
+  switch (event.which) {
+    case 38:
+      if (currentIndex.value < 1) {
+        return;
+      }
+      currentIndex.value--
+      break
+    case 40:
+      if (currentIndex.value >= similarList.value.length - 1) {
+        return;
+      }
+      currentIndex.value++;
+      break
+    case 27:
+      props.closeVideo()
+      break
+    case 70:
+      videoPlayer.value.requestFullscreen()
+      break
   }
 }
 const copyUrl = () => {
@@ -188,11 +152,16 @@ onUnmounted(() => {
 const firstInitVideo = () => {
   if (videoPlayer.value || !currentVideo.value) return;
   videoPlayer.value = instance.$video(video.value, {
+    playbackRates: [0.5, 1, 1.5, 2],
     notSupportedMessage: "暂不支持该视频类型",
     fill: true,
     autoplay: true
   })
+  videoPlayer.value.volume(localStorage.getItem("volume") || 1)
   window.addEventListener("keydown", windowKeyEvent)
+  videoPlayer.value.on("volumechange", () => {
+    localStorage.setItem("volume", videoPlayer.value.volume())
+  })
   videoPlayer.value.on("timeupdate", function () {
     // 播放三秒后添加历史记录
     if (this.currentTime() >= 3 && isAddHistory.value) {
@@ -208,17 +177,32 @@ const firstInitVideo = () => {
     } else isLikeVideo.value = false
 
   })
-  videoPlayer.value.play()
-  apiGetVideoBySimilar(props.videoInfo.labelNames, props.videoInfo.id).then(({ data }) => {
-    similarList.value = similarList.value.concat(data.data)
+  if(props.videoInfo) {
+    videoPlayer.value.play()
+  video.value.style['background-image'] = `url(${props.videoInfo.cover})`
+  }
+  if (props.videoList.length == 0) {
+    apiGetVideoBySimilar(props.videoInfo.labelNames, props.videoInfo.id).then(({ data }) => {
+      similarList.value = similarList.value.concat(data.data)
+    })
+  }
+
+}
+const likeUser = () => {
+  apiFollows(currentVideo.value.user.id).then(({ data }) => {
+    if(data.message == '已关注') {
+      apiInitFollowFeed()
+    }
+    snackbar.value = {
+      text: data.message,
+      show: true
+    }
   })
 }
 onMounted(() => {
-  window.onresize = () => { }
-  window.onresize = () => {
-    windowHeight.value = document.body.clientHeight
-    windowWidth.value = document.body.clientWidth
-  }
+  video.value.style['background-size'] = " cover"
+  video.value.style['background-position'] = "center"
+  video.value.style['backdrop-filter'] = "blur(50px)"
   firstInitVideo()
 })
 const starVideo = () => {
@@ -242,10 +226,14 @@ const starVideo = () => {
 }
 const playVideo = (n) => {
   if (n) {
-    firstInitVideo()
-    isAddHistory.value = true
+
     // videoPlayer.value.reset()
     setTimeout(() => {
+
+      video.value.style['background-image'] = `url(${n.cover})`
+
+      firstInitVideo()
+      isAddHistory.value = true
       videoPlayer.value.src([
         {
           src: n.url,
@@ -259,11 +247,15 @@ const playVideo = (n) => {
     }, 10)
   }
 }
+watch(() => props.videoList, () => {
+  if (props.videoList && props.videoList.length > 0) {
+    similarList.value = props.videoList
+  }
+}, {
+  immediate: true,
+  deep: true
+})
 watch(currentVideo, playVideo)
-const videoHeight = computed(() => {
-  return windowHeight.value
-})
-const videoWidth = computed(() => {
-  return windowWidth.value - (drawer.value ? 350 : 0)
-})
+
+
 </script>   

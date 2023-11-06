@@ -5,7 +5,7 @@
         <VDivider />
         <v-row dense class="ma-2">
             <v-col v-for="(item, index) in classifyDataList" :key="index">
-                <v-chip :size="'large'" closable :close-icon="item.used? 'mdi-close-circle':'mdi-plus-circle'" @click:close="closeEvent(item.id, true)">
+                <v-chip :size="'large'" closable :close-icon="item.used? 'mdi-close-circle':'mdi-plus-circle'" @click:close="closeEvent(item.id, !item.used)">
                     <template #prepend>
                         <VAvatar :image="item.image" :icon="item.icon || 'mdi-file-document-alert-outline'" start></VAvatar>
                     </template>

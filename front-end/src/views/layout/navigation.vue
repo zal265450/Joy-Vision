@@ -15,7 +15,7 @@
       <!-- <v-list-item prepend-icon="mdi-video" title="推荐视频(高级)" to="/video"></v-list-item> -->
       <!-- <v-list-item prepend-icon="mdi-label-multiple" title="视频分类" to="/classify"></v-list-item> -->
       <template v-if="userStore.token">
-        <v-list-item prepend-icon="mdi-upload" title="个人中心" to="/user"></v-list-item>
+        <v-list-item prepend-icon="mdi-account" title="个人中心" to="/user"></v-list-item>
         <v-list-item prepend-icon="mdi-heart" title="关注的人" to="/followVideo"></v-list-item>
       </template>
       <v-list-item :prepend-icon="item.icon || 'mdi-file-document-alert-outline'" :title="item.name"

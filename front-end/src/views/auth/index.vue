@@ -31,6 +31,7 @@
 <script setup>
 import { onMounted, ref } from 'vue';
 import { apiGetUserInfo } from '../../apis/user/user';
+import { apiInitFollowFeed } from '../../apis/video';
 import router from '../../router';
 import { useUserStore } from '../../stores';
 import login from './login.vue';
@@ -51,6 +52,7 @@ const getUserInfo = () => {
       })
       return
     }
+    apiInitFollowFeed()
     userStroe.$patch({
       info: data.data
     })

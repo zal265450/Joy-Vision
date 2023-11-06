@@ -6,6 +6,9 @@ import request from '../request';
  * @returns 成功
  */
 export const apiVideoPush = (videoInfo)=>{
+    if(!videoInfo) return;
+    videoInfo = Object.assign({},videoInfo)
+    videoInfo.labelNames= videoInfo.labelNames.join(",")
     videoInfo.auditStatus = 0
     return request.post("/video", videoInfo);
 }

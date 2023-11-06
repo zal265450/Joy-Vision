@@ -5,7 +5,7 @@
       <div class="text-subtitle-2 font-weight-black mb-1">邮箱</div>
       <v-text-field label="请输入邮箱" v-model="loginInfo.email" single-line variant="outlined"></v-text-field>
       <div class="text-subtitle-2 font-weight-black mb-1">密码</div>
-      <v-text-field label="请输入密码" v-model="loginInfo.password" single-line variant="outlined"></v-text-field>
+      <v-text-field label="请输入密码" type="password" v-model="loginInfo.password" single-line variant="outlined" @keyup.enter="loginVertify()"></v-text-field>
 
       <v-btn :disabled="loading" :loading="loading" block class="text-none mb-4" color="blue" size="x-large"
         variant="flat" @click="loginVertify()">
