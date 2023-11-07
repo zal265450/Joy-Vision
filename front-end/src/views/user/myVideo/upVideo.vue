@@ -96,6 +96,7 @@
 </template>
 <script setup>
 import { computed, onMounted, ref } from 'vue';
+import { apiGetCdnAuthFile } from '../../../apis/user/auth';
 import { apiGetAuditQueueState, apiVideoUpload } from '../../../apis/video';
 import VideoEdit from './edit.vue';
 const snackbar = ref({
@@ -185,7 +186,7 @@ const uploadVideo = () => {
             curUploadInfo.result = e
             curUploadInfo.status = 1
             curUploadInfo.url = e.key
-            curUploadInfo.cover = `http://oss.luckjourney.liuscraft.top/${e.key}?vframe/jpg/offset/1`
+            curUploadInfo.cover = apiGetCdnAuthFile(`http://oss.luckjourney.liuscraft.top/${e.key}?vframe/jpg/offset/1`)
             uploadList.value = Object.assign([], uploadList.value)
         }
     })

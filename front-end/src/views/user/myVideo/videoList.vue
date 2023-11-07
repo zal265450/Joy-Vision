@@ -75,7 +75,7 @@
     </v-card>
 </template>
 <script setup>
-import { onMounted, ref, watch } from 'vue';
+import { onMounted, onUpdated, ref, watch } from 'vue';
 import { apiGetCdnAuthFile } from '../../../apis/user/auth';
 import { apiRemoveVideo } from '../../../apis/user/videoManger';
 import { apiGetVideoByUser } from '../../../apis/video';
@@ -103,6 +103,9 @@ const getVideo = () => {
         pageInfo.value.pages = data.data.pages
     })
 }
+onUpdated(()=>{
+    getVideo()
+})
 onMounted(() => {
     getVideo()
 })
