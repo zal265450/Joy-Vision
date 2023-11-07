@@ -98,6 +98,12 @@ public class LoginController {
         return R.ok().message("验证成功");
     }
 
+    /**
+     * 注册
+     * @param registerVO
+     * @return
+     * @throws Exception
+     */
     @PostMapping("/register")
     public R register(@RequestBody @Validated RegisterVO registerVO) throws Exception {
         if (!loginService.register(registerVO)) {
@@ -108,8 +114,7 @@ public class LoginController {
 
     /**
      * 找回密码
-     * 邮箱
-     *
+     * @param findPWVO
      * @return
      */
     @PostMapping("/findPassword")

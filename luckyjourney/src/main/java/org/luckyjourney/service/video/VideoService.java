@@ -63,7 +63,7 @@ public interface VideoService extends IService<Video> {
     IPage<Video> searchVideo(String search,BasePage basePage,Long userId);
 
     /**
-     * 审核处理
+     * 审核放行处理
      * @param video
      */
     void auditProcess(Video video);
@@ -172,5 +172,16 @@ public interface VideoService extends IService<Video> {
      */
     IPage<Video> listByUserIdVideo(BasePage basePage, Long userId);
 
+    /**
+     * 获取该用户所发布的视频
+     * @param userId
+     * @return
+     */
     Collection<Long> listVideoIdByUserId(Long userId);
+
+    /**
+     * 下架视频
+     * @param id
+     */
+    void violations(Long id);
 }

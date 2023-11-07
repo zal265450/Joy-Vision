@@ -15,13 +15,37 @@
 <div class="layuimini-container">
     <div class="layuimini-main">
 
-        
+        <fieldset class="table-search-fieldset">
+            <legend>搜索信息</legend>
+            <div style="margin: 10px 10px 10px 10px">
+                <form class="layui-form layui-form-pane" action="">
+                    <div class="layui-form-item">
+                        <div class="layui-inline">
+                            <label class="layui-form-label">YV号</label>
+                            <div class="layui-input-inline">
+                                <input type="text" name="YV" autocomplete="off" class="layui-input" id="YV">
+                            </div>
+                        </div>
+                        <div class="layui-inline">
+                            <label class="layui-form-label">视频名称</label>
+                            <div class="layui-input-inline">
+                                <input type="text" name="title" autocomplete="off" class="layui-input" id="title">
+                            </div>
+                        </div>
+                        <div class="layui-inline">
+                            <button type="button" class="layui-btn layui-btn-primary"  lay-submit lay-filter="data-search-btn"><i class="layui-icon"></i> 搜 索</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </fieldset>
 
         <table class="layui-hide" id="currentTableId" lay-filter="currentTableFilter"></table>
 
         <script type="text/html" id="currentTableBar">
+            <a class="layui-btn layui-btn-normal layui-btn-xs data-count-edit" lay-event="violations">下架</a>
             <a class="layui-btn layui-btn-normal layui-btn-xs data-count-edit" lay-event="audit">审核</a>
-            <a class="layui-btn layui-btn-normal layui-btn-xs data-count-edit" lay-event="delete">删除</a>
+            <a class="layui-btn layui-btn-normal layui-btn-danger layui-btn-xs data-count-edit" lay-event="delete">删除</a>
         </script>
     </div>
 </div>
@@ -68,9 +92,11 @@
             cols: [[
                 {type: "checkbox", width: 50},
                 { field: 'id', title: 'ID' ,sort: true,hide:true},
+                { field: 'yv', title: 'YV号' },
                 { field: 'title', title: '名称' },
                 { field: 'auditStateName', title: '审核状态' },
                 { field: 'openName', title: '视频状态' },
+                { field: 'msg', title: '审核消息' },
                 { field: 'typeName', title: '分类' },
                 { field: 'userName', title: '上传者' },
                 {title: '操作', minWidth: 150, toolbar: '#currentTableBar', align: "center"}
@@ -83,8 +109,8 @@
 
         // 监听搜索操作
         form.on('submit(data-search-btn)', function (data) {
-            var email = $('input[id="emailSearch"]').val()
-            var name = $('input[id="nameSearch"]').val()
+            var YV = $('input[id="YV"]').val()
+            var title = $('input[id="title"]').val()
             //执行搜索重载
             table.reload('currentTableId', {
 
@@ -92,8 +118,8 @@
                     curr: 1
                 }
                 , where: {
-                    email: email,
-                    name:name
+                    YV: YV,
+                    title:title
                 }
             });
             return false;
@@ -121,6 +147,42 @@
                 });
             }else if(obj.event == 'audit'){
                 // 打开窗口，显示审核内容，以及是否放行
+                layer.confirm('确定放行选中的视频吗?', function(index){
+                    $.ajax({
+                        url: ipURL + '/admin/video/audit',
+                        method: 'post',
+                        beforeSend: function (request) {
+                            request.setRequestHeader("token", localStorage.token);
+                        },
+                        success: function (res) {
+                            layer.msg(res.message);
+                            layer.close(index);
+                            treeData();
+                        },
+                        error: function (data) {
+                            layer.msg(data.message);
+                        }
+                    });
+                });
+            }else if(obj.event == 'violations'){
+                // 打开窗口，显示审核内容，以及是否放行
+                layer.confirm('确定下架选中的视频吗?', function(index){
+                    $.ajax({
+                        url: ipURL + '/admin/video/violations/'+data.id,
+                        method: 'post',
+                        beforeSend: function (request) {
+                            request.setRequestHeader("token", localStorage.token);
+                        },
+                        success: function (res) {
+                            layer.msg(res.message);
+                            layer.close(index);
+                            treeData();
+                        },
+                        error: function (data) {
+                            layer.msg(data.message);
+                        }
+                    });
+                });
             }
         });
 

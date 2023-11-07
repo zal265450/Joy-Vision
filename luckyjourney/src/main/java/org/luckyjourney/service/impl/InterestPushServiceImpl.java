@@ -72,7 +72,7 @@ public class InterestPushServiceImpl implements InterestPushService {
         // 随机推送10个
         final byte[] key = (RedisConstant.SYSTEM_TYPE_STOCK + typeId).getBytes();
         final List<Integer> list = redisTemplate.executePipelined((RedisCallback<Object>) connection -> {
-            for (int i = 0; i < 10; i++) {
+            for (int i = 0; i < 12; i++) {
                 connection.sRandMember(key);
             }
             return null;
@@ -302,7 +302,8 @@ public class InterestPushServiceImpl implements InterestPushService {
         int size = modelMap.size();
         final AtomicInteger n = new AtomicInteger(0);
         modelMap.forEach((k, v) -> {
-            int probability = ((Double) v).intValue() / size;
+            // 防止结果为0,每个同等加上标签数
+            int probability = (((Double) v).intValue() + size) / size;
             n.getAndAdd(probability);
             probabilityMap.put(k.toString(), probability);
         });
@@ -310,9 +311,6 @@ public class InterestPushServiceImpl implements InterestPushService {
 
         final AtomicInteger index = new AtomicInteger(0);
         // 初始化数组
-        // 美女: 50
-        // 美食：30
-        // 体育: 20
         probabilityMap.forEach((type, p) -> {
             int i = index.get();
             int limit = i + p;

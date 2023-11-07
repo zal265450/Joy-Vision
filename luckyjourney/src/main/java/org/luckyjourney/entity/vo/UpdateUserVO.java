@@ -2,6 +2,9 @@ package org.luckyjourney.entity.vo;
 
 import lombok.Data;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+
 /**
  * @description: 修改用户信息
  * @Author: Xhy
@@ -10,7 +13,7 @@ import lombok.Data;
 @Data
 public class UpdateUserVO {
 
-
+    @NotBlank(message = "昵称不可为空")
     private String nickName;
 
     private String avatar;

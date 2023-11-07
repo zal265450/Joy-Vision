@@ -5,6 +5,7 @@ import com.qiniu.http.Response;
 import com.qiniu.storage.Configuration;
 import com.qiniu.storage.Region;
 import com.qiniu.util.StringMap;
+import org.luckyjourney.constant.AuditStatus;
 import org.luckyjourney.entity.Setting;
 import org.luckyjourney.entity.json.BodyJson;
 import org.luckyjourney.entity.json.ScoreJson;
@@ -46,6 +47,13 @@ public class VideoAuditService extends AbstractAuditService<String,AuditResponse
 
     @Override
     public AuditResponse audit(String url) {
+        AuditResponse auditResponse = new AuditResponse();
+        auditResponse.setAuditStatus(AuditStatus.SUCCESS);
+
+        if (!isNeedAudit()) {
+            return auditResponse;
+        }
+
         String body = videoBody.replace("${url}", url);
         String method = "POST";
         // 获取token
@@ -56,7 +64,6 @@ public class VideoAuditService extends AbstractAuditService<String,AuditResponse
         header.put("Content-Type", contentType);
         Configuration cfg = new Configuration(Region.region2());
         final Client client = new Client(cfg);
-        AuditResponse auditResponse = new AuditResponse();
         try {
             Response response = client.post(videoUrl, body.getBytes(), header, contentType);
             final Map map = objectMapper.readValue(response.getInfo().split(" \n")[2], Map.class);

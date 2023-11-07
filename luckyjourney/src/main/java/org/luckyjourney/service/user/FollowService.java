@@ -51,9 +51,17 @@ public interface FollowService extends IService<Follow> {
 
     /**
      * 关注/取关
-     * @param followsId 对方id
+     * @param followId 对方id
      * @param userId 自己id
      * @return
      */
-    Boolean follows(Long followsId,Long userId);
+    Boolean follows(Long followId,Long userId);
+
+    /**
+     * userId 是否关注 followId
+     * @param followId
+     * @param userId
+     * @return
+     */
+    Boolean isFollows(Long followId,Long userId);
 }

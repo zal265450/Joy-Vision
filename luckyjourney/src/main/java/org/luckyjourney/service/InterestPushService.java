@@ -16,14 +16,14 @@ import java.util.List;
 public interface InterestPushService {
 
     /**
-     * 用户发布视频后调用
+     * 推入标签库
      * 传videoId,typeId
      * @param video
      */
     void pushSystemStockIn(Video video);
 
     /**
-     * 往分类库中添加,用于后续随机推送分类视频
+     * 添加分类库,用于后续随机推送分类视频
      * @param video
      */
     void pushSystemTypeStockIn(Video video);
@@ -36,7 +36,7 @@ public interface InterestPushService {
     Collection<Long> listVideoIdByTypeId(Long typeId);
 
     /**
-     * 删除视频
+     * 删除标签内视频
      * @param video
      */
     void deleteSystemStockIn(Video video);

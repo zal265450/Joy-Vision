@@ -204,7 +204,6 @@ public class CustomerController {
     @PutMapping
     public R updateUser(@RequestBody @Validated UpdateUserVO user){
         userService.updateUser(user);
-
         return R.ok().message("修改成功");
     }
 

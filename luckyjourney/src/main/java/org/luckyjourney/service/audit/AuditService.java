@@ -10,7 +10,7 @@ import java.util.function.Supplier;
 public interface AuditService<T,R> {
 
     /**
-     *  审核，接受一个任务且执行
+     *  审核规范
      * @param task
      * @return
      */

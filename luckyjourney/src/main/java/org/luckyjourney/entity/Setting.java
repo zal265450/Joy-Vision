@@ -27,9 +27,14 @@ public class Setting implements Serializable {
     @TableId(value = "id", type = IdType.AUTO)
     private Integer id;
 
+    // 审核策略
     private String auditPolicy;
 
+    // 热门视频热度限制
     private Double hotLimit;
+
+    // 审核开关
+    private Boolean auditOpen;
 
     @TableField(exist = false)
     private SettingScoreJson settingScoreJson;

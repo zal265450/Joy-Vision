@@ -7,6 +7,7 @@ import org.luckyjourney.entity.Captcha;
 import org.luckyjourney.entity.user.User;
 import org.luckyjourney.entity.vo.FindPWVO;
 import org.luckyjourney.entity.vo.RegisterVO;
+import org.luckyjourney.exception.BaseException;
 import org.luckyjourney.service.CaptchaService;
 import org.luckyjourney.service.LoginService;
 import org.luckyjourney.service.user.UserService;
@@ -44,11 +45,11 @@ public class LoginServiceImpl implements LoginService {
         LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
         user = userService.getOne(wrapper.eq(User::getEmail, user.getEmail()));
         if (ObjectUtils.isEmpty(user)){
-            throw new IllegalArgumentException("没有该账号");
+            throw new BaseException("没有该账号");
         }
 
         if (!password.equals(user.getPassword())) {
-            throw new IllegalArgumentException("密码不一致");
+            throw new BaseException("密码不一致");
         }
 
         return user;
@@ -57,12 +58,12 @@ public class LoginServiceImpl implements LoginService {
     @Override
     public Boolean checkCode(String email, Integer code) {
         if (ObjectUtils.isEmpty(email) || ObjectUtils.isEmpty(code)){
-            throw new IllegalArgumentException("参数为空");
+            throw new BaseException("参数为空");
         }
         final Object o = redisCacheUtil.get(RedisConstant.EMAIL_CODE + email);
 
         if (!code.toString().equals(o)){
-            throw new IllegalArgumentException("验证码不正确");
+            throw new BaseException("验证码不正确");
 
         }
         return true;
@@ -85,7 +86,7 @@ public class LoginServiceImpl implements LoginService {
         // 邮箱是否被注册
         final int count = userService.count(new LambdaQueryWrapper<User>().eq(User::getEmail, captcha.getEmail()));
         if (count == 1){
-            throw new IllegalArgumentException("邮箱已被注册");
+            throw new BaseException("邮箱已被注册");
         }
 
 

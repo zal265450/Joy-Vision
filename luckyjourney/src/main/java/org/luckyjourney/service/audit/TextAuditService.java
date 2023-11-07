@@ -39,6 +39,13 @@ public class TextAuditService extends AbstractAuditService<String,AuditResponse>
 
     @Override
     public AuditResponse audit(String text) {
+        AuditResponse auditResponse = new AuditResponse();
+        auditResponse.setAuditStatus(AuditStatus.SUCCESS);
+
+        if (!isNeedAudit()) {
+            return auditResponse;
+        }
+
         String body = textBody.replace("${text}", text);
         String method = "POST";
         // 获取token
@@ -49,7 +56,6 @@ public class TextAuditService extends AbstractAuditService<String,AuditResponse>
         header.put("Content-Type", contentType);
         Configuration cfg = new Configuration(Region.region2());
         final Client client = new Client(cfg);
-        AuditResponse auditResponse = new AuditResponse();
         try {
             Response response = client.post(textUrl, body.getBytes(), header, contentType);
 

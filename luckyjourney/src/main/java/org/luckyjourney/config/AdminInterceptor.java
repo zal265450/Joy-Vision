@@ -25,7 +25,6 @@ public class AdminInterceptor implements HandlerInterceptor {
 
     private ObjectMapper objectMapper = new ObjectMapper();
 
-
     private UserService userService;
 
    public AdminInterceptor(UserService userService){

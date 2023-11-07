@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.luckyjourney.config.QiNiuConfig;
 import org.luckyjourney.constant.AuditMsgMap;
 import org.luckyjourney.constant.AuditStatus;
+import org.luckyjourney.entity.Setting;
 import org.luckyjourney.entity.json.*;
 import org.luckyjourney.entity.response.AuditResponse;
 import org.luckyjourney.service.SettingService;
@@ -33,10 +34,12 @@ public abstract class AbstractAuditService<T,R> implements AuditService<T,R> {
 
     static final String contentType = "application/json";
 
-
-
-
-
+    /**
+     * 审核
+     * @param scoreJsonList
+     * @param bodyJson
+     * @return
+     */
     protected AuditResponse audit(List<ScoreJson> scoreJsonList, BodyJson bodyJson) {
         AuditResponse audit = new AuditResponse();
         // 遍历的是通过,人工,失败的审核规则,我当前没有办法知道是什么状态
@@ -62,7 +65,6 @@ public abstract class AbstractAuditService<T,R> implements AuditService<T,R> {
 
     /**
      * 返回对应规则的信息
-     *
      * @param types
      * @param minPolitician
      * @return
@@ -102,8 +104,6 @@ public abstract class AbstractAuditService<T,R> implements AuditService<T,R> {
         AuditResponse auditResponse = new AuditResponse();
         auditResponse.setFlag(true);
         auditResponse.setAuditStatus(scoreJson.getAuditStatus());
-
-
 
         final Double minPolitician = scoreJson.getMinPolitician();
         final Double maxPolitician = scoreJson.getMaxPolitician();
@@ -149,6 +149,11 @@ public abstract class AbstractAuditService<T,R> implements AuditService<T,R> {
         return auditResponse;
     }
 
+    /**
+     * 最后检查,可能没得分,检查suggestion
+     * @param scenes
+     * @return
+     */
     private boolean endCheck(ScenesJson scenes){
         final TypeJson terror = scenes.getTerror();
         final TypeJson politician = scenes.getPolitician();
@@ -159,6 +164,13 @@ public abstract class AbstractAuditService<T,R> implements AuditService<T,R> {
         return true;
     }
 
-
+    /**
+     * 根据系统配置表查询是否需要审核
+     * @return
+     */
+    protected Boolean isNeedAudit(){
+        final Setting setting = settingService.list(null).get(0);
+        return setting.getAuditOpen();
+    }
 
 }
