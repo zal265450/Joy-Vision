@@ -1,7 +1,7 @@
 <template>
   <v-layout v-if="currentVideo" full-height>
     <v-navigation-drawer app permanent v-model="drawer" location="right" :width="350" style="background-color: #252632;">
-      <v-card color="background" class="pa-4" id="videoPlayList" >
+      <v-card color="background" class="pa-4" id="videoPlayList">
         <VideoCard :overlay="currentIndex == index" class="mb-4" :video-info="videoItem"
           v-for="(videoItem, index) in similarList" :key="index" @click="currentIndex = index" />
       </v-card>
@@ -19,7 +19,7 @@
         <v-card class="pa-2" elevation="0" style="display: flex; flex-direction: column;
     gap: 12px;position: absolute; background-color: transparent; right: 25px; bottom: 25px;z-index: 99999;">
           <v-badge color="red" icon="mdi-plus" location="bottom" @click="likeUser()">
-            <v-avatar class="elevation-2" :image="currentVideo.user.avatar|| '/logo.png'"></v-avatar>
+            <v-avatar class="elevation-2" :image="currentVideo.user.avatar?apiGetCdnAuthFile(currentVideo.user.avatar): '/logo.png'"></v-avatar>
           </v-badge>
           <v-btn size="40" color="blue" icon @click="openRgihtD()">
             <v-icon :size="20">mdi-more</v-icon>
@@ -58,7 +58,7 @@
   </v-layout>
 </template>
 <script setup>
-import { computed, getCurrentInstance, onMounted, onUnmounted, ref, watch } from 'vue';
+import { computed, getCurrentInstance, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import { apiGetCdnAuthFile } from '../../apis/user/auth';
 import { apiFollows } from '../../apis/user/like';
 import { apiAddHistory, apiGetVideoBySimilar, apiInitFollowFeed, apiSetUserVideoModel, apiStarVideo } from '../../apis/video';
@@ -104,7 +104,7 @@ const similarList = ref([
 
 const currentIndex = ref(0)
 const currentVideo = computed(() => {
-  
+
   let temp = currentIndex.value >= 0 ? similarList.value[currentIndex.value] : props.videoInfo
   temp.playUrl = apiGetCdnAuthFile(temp.url)
   temp.playCover = apiGetCdnAuthFile(temp.cover)
@@ -187,12 +187,12 @@ const firstInitVideo = () => {
     } else isLikeVideo.value = false
 
   })
-  if(currentVideo) {
+  nextTick(() => {
+    video.value.style['background-image'] = `url(${currentVideo.playCover})`
     videoPlayer.value.play()
-  video.value.style['background-image'] = `url(${currentVideo.cover})`
-  }
+  })
   if (props.videoList.length == 0) {
-    apiGetVideoBySimilar(currentVideo.labelNames, currentVideo.id).then(({ data }) => {
+    apiGetVideoBySimilar(props.videoInfo.labelNames, props.videoInfo.id).then(({ data }) => {
       similarList.value = similarList.value.concat(data.data)
     })
   }
@@ -200,7 +200,7 @@ const firstInitVideo = () => {
 }
 const likeUser = () => {
   apiFollows(currentVideo.value.user.id).then(({ data }) => {
-    if(data.message == '已关注') {
+    if (data.message == '已关注') {
       apiInitFollowFeed()
     }
     snackbar.value = {
@@ -213,8 +213,8 @@ onMounted(() => {
   video.value.style['background-size'] = " cover"
   video.value.style['background-position'] = "center"
   video.value.style['backdrop-filter'] = "blur(50px)"
-  if(document.documentElement.clientWidth < 800) 
-    drawer.value=false
+  if (document.documentElement.clientWidth < 800)
+    drawer.value = false
   firstInitVideo()
 })
 

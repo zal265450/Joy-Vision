@@ -12,16 +12,12 @@ const routes = [
     meta: {
       isClassify: true
     }
-  },{
+  }, {
     path: "/video/search/:key",
     component: Home,
     meta: {
       isSearch: true
     }
-  },
-  {
-    path: "/classify",
-    component: () => import("../views/classify/index.vue"),
   },
   {
     path: "/followVideo",
@@ -45,6 +41,10 @@ const routes = [
         component: () => import("../views/user/home/index.vue"),
       },
       {
+        path: "classify",
+        component: () => import("../views/user/classify/index.vue"),
+      },
+      {
         path: "video",
         component: () => import("../views/user/myVideo/index.vue"),
       },
@@ -54,11 +54,11 @@ const routes = [
       },
       {
         path: "like",
-        component: ()=> import("../views/user/like/index.vue")
+        component: () => import("../views/user/like/index.vue")
       },
       {
         path: "history",
-        component: ()=> import("../views/user/history/index.vue")
+        component: () => import("../views/user/history/index.vue")
       }
     ],
   },
