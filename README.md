@@ -12,7 +12,13 @@
 
 # 职责分工
 
- **前端** 
+ **前端 - 刘顺顺**
+
+ 负责设计实现前端所有模块的页面和交互 
+
+ **技术选型：**
+
+vite + vue3 + axios + pina + router + vuetifyUI + videojs + 七牛云sdk
 
  **后端 - 胡展鸿** 
 
