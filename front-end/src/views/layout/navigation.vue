@@ -11,8 +11,8 @@
 
 
     <v-list density="compact" nav>
-      <v-list-item prepend-icon="mdi-home" title="首页" to="/"></v-list-item>
-      <!-- <v-list-item prepend-icon="mdi-video" title="推荐视频(高级)" to="/video"></v-list-item> -->
+      <v-list-item prepend-icon="mdi-home" title="热门视频" to="/"></v-list-item>
+      <v-list-item prepend-icon="mdi-video" title="推荐视频" to="/pushVideo"></v-list-item>
       <!-- <v-list-item prepend-icon="mdi-label-multiple" title="视频分类" to="/classify"></v-list-item> -->
       <template v-if="userStore.token">
         <v-list-item prepend-icon="mdi-account" title="个人中心" to="/user"></v-list-item>

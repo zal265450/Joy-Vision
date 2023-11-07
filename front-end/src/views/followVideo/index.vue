@@ -1,6 +1,6 @@
 <template>
     <v-card style="height: 100%;" elevation="2" color="background">
-        <Video :video-list="videoList" v-if="videoList.length > 0" />
+        <Video :next-video="nextVideo" :video-list="videoList" v-if="videoList.length > 0" />
         <v-card v-else class="mx-auto mt-15" elevation="5" max-width="500" >
             <div class="py-12 text-center">
                 <v-icon class="mb-6" icon="mdi-eye" size="128"></v-icon>
@@ -24,12 +24,21 @@ import { onMounted, ref } from 'vue';
 import { apiGetFollowVideo } from '../../apis/video.js';
 import Video from '../../components/video/index.vue';
 const videoList = ref([])
-onMounted(() => {
+
+const nextVideo = (idnex) =>{
+    if((videoList.value.length - idnex) <= 3) {
+        getVideo()
+    }
+}
+const getVideo =()=>{
     apiGetFollowVideo().then(({ data }) => {
         if (!data.state) {
             return;
         }
         videoList.value = data.data
     })
+}
+onMounted(() => {
+    getVideo()
 })
 </script>

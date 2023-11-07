@@ -1,10 +1,10 @@
 <template>
   <v-layout v-if="currentVideo" full-height>
     <v-navigation-drawer app permanent v-model="drawer" location="right" :width="350" style="background-color: #252632;">
-      <div class="pa-4 ">
+      <v-card color="background" class="pa-4" id="videoPlayList" >
         <VideoCard :overlay="currentIndex == index" class="mb-4" :video-info="videoItem"
           v-for="(videoItem, index) in similarList" :key="index" @click="currentIndex = index" />
-      </div>
+      </v-card>
     </v-navigation-drawer>
     <v-main>
       <v-card rounded="0" width="100%" height="100%">
@@ -226,10 +226,9 @@ const starVideo = () => {
 }
 const playVideo = (n) => {
   if (n) {
-
+    props.nextVideo(currentIndex.value)
     // videoPlayer.value.reset()
     setTimeout(() => {
-
       video.value.style['background-image'] = `url(${n.cover})`
 
       firstInitVideo()
