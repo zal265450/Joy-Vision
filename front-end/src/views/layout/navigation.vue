@@ -1,5 +1,5 @@
 <template>
-  <v-navigation-drawer permanent color="#252632">
+  <v-navigation-drawer color="#252632">
     <v-list v-if="userStore.token">
       <v-list-item :prepend-avatar="userStore.info.avatar || '/logo.png'" :title="userStore.info.nickName"
         :subtitle="userStore.info.description"></v-list-item>

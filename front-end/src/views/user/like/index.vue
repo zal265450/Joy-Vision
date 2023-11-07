@@ -11,7 +11,7 @@
       <template v-for="item in currentItems">
         <v-list-item :to="`/user?lookId=${item.id}`" :title="item.nickName" :subtitle="item.description || '这个人很懒，没有任何描述'">
           <template v-slot:prepend>
-            <v-avatar :image="item.avatar|| '/logo.png'" :color="item.sex ? 'blue' : 'pink'">
+            <v-avatar :image="item.avatar?apiGetCdnAuthFile(item.avatar): '/logo.png'" :color="item.sex ? 'blue' : 'pink'">
               <v-icon color="white">{{ item.sex ? 'mdi-human-male' : 'mdi-human-female' }}</v-icon>
             </v-avatar>
           </template>

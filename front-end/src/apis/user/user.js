@@ -30,3 +30,11 @@ export const apiUploadAvatar = async (file, callBack={next:()=>{},error:()=>{}, 
 export const apiChangeUserInfo = (info)=>{
     return request.put(`/customer`, info)
 }
+
+/**
+ * 获取搜索记录
+ * @returns 
+ */
+export const apiGetUserSearchHistory = ()=>{
+    return request.get(`/index/search/history`)
+}

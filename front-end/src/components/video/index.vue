@@ -8,11 +8,11 @@
     </v-navigation-drawer>
     <v-main>
       <v-card rounded="0" width="100%" height="100%">
-        <video ref="video" class="video-js vjs-default-skin" controls :poster="currentVideo.cover">
-          <source :src="currentVideo.url" :type="currentVideo.videoType || 'video/mp4'" />
+        <video ref="video" class="video-js vjs-default-skin" controls :poster="apiGetCdnAuthFile(currentVideo.cover)">
+          <source :src="apiGetCdnAuthFile(currentVideo.url)" :type="currentVideo.videoType || 'video/mp4'" />
         </video>
         <div style="position: absolute;left: 15px;top: 15px;z-index: 99999;">
-          <v-btn size="40" color="bg" icon @click="closeVideo">
+          <v-btn size="40" color="bg" icon v-if="!hideClose" @click="closeVideo">
             <v-icon :size="20">mdi-close</v-icon>
           </v-btn>
         </div>
@@ -59,6 +59,7 @@
 </template>
 <script setup>
 import { computed, getCurrentInstance, onMounted, onUnmounted, ref, watch } from 'vue';
+import { apiGetCdnAuthFile } from '../../apis/user/auth';
 import { apiFollows } from '../../apis/user/like';
 import { apiAddHistory, apiGetVideoBySimilar, apiInitFollowFeed, apiSetUserVideoModel, apiStarVideo } from '../../apis/video';
 import FavoriteCom from '../../components/favorite/index.vue';
@@ -72,6 +73,10 @@ const props = defineProps({
   videoList: {
     type: Array,
     default: []
+  },
+  hideClose: {
+    type: Boolean,
+    default: false
   },
   nextVideo: {
     type: Function,
@@ -99,7 +104,11 @@ const similarList = ref([
 
 const currentIndex = ref(0)
 const currentVideo = computed(() => {
-  return currentIndex.value >= 0 ? similarList.value[currentIndex.value] : props.videoInfo
+  
+  let temp = currentIndex.value >= 0 ? similarList.value[currentIndex.value] : props.videoInfo
+  temp.playUrl = apiGetCdnAuthFile(temp.url)
+  temp.playCover = apiGetCdnAuthFile(temp.cover)
+  return temp
 })
 const openRgihtD = () => {
   drawer.value = !drawer.value
@@ -149,6 +158,7 @@ const copyUrl = () => {
 onUnmounted(() => {
   window.removeEventListener("keydown", windowKeyEvent)
 })
+
 const firstInitVideo = () => {
   if (videoPlayer.value || !currentVideo.value) return;
   videoPlayer.value = instance.$video(video.value, {
@@ -177,12 +187,12 @@ const firstInitVideo = () => {
     } else isLikeVideo.value = false
 
   })
-  if(props.videoInfo) {
+  if(currentVideo) {
     videoPlayer.value.play()
-  video.value.style['background-image'] = `url(${props.videoInfo.cover})`
+  video.value.style['background-image'] = `url(${currentVideo.cover})`
   }
   if (props.videoList.length == 0) {
-    apiGetVideoBySimilar(props.videoInfo.labelNames, props.videoInfo.id).then(({ data }) => {
+    apiGetVideoBySimilar(currentVideo.labelNames, currentVideo.id).then(({ data }) => {
       similarList.value = similarList.value.concat(data.data)
     })
   }
@@ -203,8 +213,11 @@ onMounted(() => {
   video.value.style['background-size'] = " cover"
   video.value.style['background-position'] = "center"
   video.value.style['backdrop-filter'] = "blur(50px)"
+  if(document.documentElement.clientWidth < 800) 
+    drawer.value=false
   firstInitVideo()
 })
+
 const starVideo = () => {
 
   apiStarVideo(currentVideo.value.id).then(({ data }) => {
@@ -229,15 +242,15 @@ const playVideo = (n) => {
     props.nextVideo(currentIndex.value)
     // videoPlayer.value.reset()
     setTimeout(() => {
-      video.value.style['background-image'] = `url(${n.cover})`
+      video.value.style['background-image'] = `url(${n.playCover})`
 
       firstInitVideo()
       isAddHistory.value = true
       videoPlayer.value.src([
         {
-          src: n.url,
+          src: n.playUrl,
           type: n.videoType,
-          poster: n.cover
+          poster: n.playCover
         }
       ])
       videoPlayer.value.load()

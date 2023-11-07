@@ -11,6 +11,15 @@ export const apiAuth = (type=1, data)=>{
 }
 
 /**
+ * 忘记密码，重新设置密码
+ * @param {object} data 
+ * @returns 
+ */
+export const apiForgetPassword = (data)=>{
+    return request.post(`/login/findPassword`, data)
+}
+
+/**
  * 获取验证码
  * @param {int} type 验证码类型 1=图形验证码 0=邮箱验证码
  * @param {object} data 请求体
@@ -34,4 +43,19 @@ export const apiCheckCode = (data)=>{
     return request.post(`/login/check`,null, {
         params: data
     })
+}
+
+
+/**
+ * 访问文件
+ * @returns 
+ */
+export const apiGetCdnAuthFile = (url)=>{
+    return request.getUri({
+        url: "/cdn/auth/get",
+        params: {
+            url
+        }
+    })
+
 }
