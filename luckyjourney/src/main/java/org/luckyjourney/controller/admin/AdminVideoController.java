@@ -49,8 +49,13 @@ public class AdminVideoController {
 
     @GetMapping("/page")
     @Authority("admin:video:page")
-    public R list(BasePage basePage){
-        final IPage<Video> page = videoService.page(basePage.page(), null);
+    public R list(BasePage basePage,@RequestParam(required = false) String YV,@RequestParam(required = false) String title){
+
+        final LambdaQueryWrapper<Video> wrapper = new LambdaQueryWrapper<>();
+
+        wrapper.like(!ObjectUtils.isEmpty(YV),Video::getYv,YV).like(!ObjectUtils.isEmpty(title),Video::getTitle,title);
+
+        final IPage<Video> page = videoService.page(basePage.page(), wrapper);
 
         final List<Video> records = page.getRecords();
         if (ObjectUtils.isEmpty(records)) return R.ok();
@@ -71,12 +76,17 @@ public class AdminVideoController {
         for (Video video : records) {
             video.setAuditStateName(AuditStatus.getName(video.getAuditStatus()));
             video.setUserName(userMap.get(video.getUserId()));
-            video.setOpenName(video.getOpen() ? "公开" : "私密");
+            video.setOpenName(video.getOpen() ? "私密" : "公开");
             video.setTypeName(typeMap.get(video.getTypeId()));
         }
-        return R.ok().data(records).count(records.size());
+        return R.ok().data(records).count(page.getTotal());
     }
 
+    /**
+     * 删除视频
+     * @param id
+     * @return
+     */
     @DeleteMapping("/{id}")
     @Authority("admin:video:delete")
     public R delete(@PathVariable Long id){
@@ -84,10 +94,27 @@ public class AdminVideoController {
         return R.ok().message("删除成功");
     }
 
+    /**
+     * 放行视频
+     * @param video
+     * @return
+     */
     @PostMapping("/audit")
     @Authority("admin:video:audit")
     public R audit(@RequestBody Video video){
         videoService.auditProcess(video);
         return R.ok().message("审核放行");
+    }
+
+    /**
+     * 下架视频
+     * @param id
+     * @return
+     */
+    @PostMapping("/violations/{id}")
+    @Authority("admin:video:violations")
+    public R Violations(@PathVariable Long id){
+        videoService.violations(id);
+        return R.ok().message("下架成功");
     }
 }

@@ -3,6 +3,7 @@ package org.luckyjourney.entity.vo;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -17,7 +18,8 @@ import java.util.Objects;
  */
 @Data
 @NoArgsConstructor
-public class HotVideo implements Comparable<HotVideo>, Serializable {
+@ToString
+public class HotVideo implements  Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -45,10 +47,6 @@ public class HotVideo implements Comparable<HotVideo>, Serializable {
         this.setHotFormat( formatNum+"万");
     }
 
-    @Override
-    public int compareTo(HotVideo o) {
-        return (int)o.getHot().doubleValue();
-    }
 
     @Override
     public boolean equals(Object o) {

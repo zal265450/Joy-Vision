@@ -14,7 +14,7 @@ import javax.validation.constraints.NotBlank;
 
 /**
  * <p>
- * 
+ *  收藏夹
  * </p>
  *
  * @author xhy

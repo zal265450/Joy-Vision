@@ -8,6 +8,7 @@ import org.luckyjourney.constant.RedisConstant;
 import org.luckyjourney.entity.user.Follow;
 import org.luckyjourney.entity.vo.BasePage;
 import org.luckyjourney.entity.vo.FollowVO;
+import org.luckyjourney.exception.BaseException;
 import org.luckyjourney.mapper.FollowMapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.luckyjourney.service.FeedService;
@@ -107,7 +108,7 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
     public Boolean follows(Long followsId, Long userId) {
 
         if (followsId.equals(userId)) {
-            throw new IllegalArgumentException("你不能关注自己");
+            throw new BaseException("你不能关注自己");
         }
 
         // 直接保存(唯一索引),保存失败则删除
@@ -136,5 +137,11 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
         }
 
         return true;
+    }
+
+    @Override
+    public Boolean isFollows(Long followId, Long userId) {
+        if (userId == null || followId == null) return false;
+        return count(new LambdaQueryWrapper<Follow>().eq(Follow::getFollowId,followId).eq(Follow::getUserId,userId)) == 1;
     }
 }

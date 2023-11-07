@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * @description:
@@ -72,7 +73,9 @@ public class IndexController {
      */
     @GetMapping("/types")
     public R getTypes(){
-        return R.ok().data(typeService.list(new LambdaQueryWrapper<Type>().select(Type::getIcon,Type::getId,Type::getName)));
+        final List<Type> types = typeService.list(new LambdaQueryWrapper<Type>().select(Type::getIcon, Type::getId, Type::getName).orderByDesc(Type::getSort));
+
+        return R.ok().data(types);
     }
 
     /**

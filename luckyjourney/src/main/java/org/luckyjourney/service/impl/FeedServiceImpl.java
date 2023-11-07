@@ -41,7 +41,8 @@ public class FeedServiceImpl implements FeedService {
 
 
 
-    @Override //todo 记得加上异步，现在跑数据
+    @Override
+    @Async
     public void pusOutBoxFeed(Long userId, Long videoId, Long time) {
         redisCacheUtil.zadd(RedisConstant.OUT_FOLLOW + userId, time, videoId, -1);
     }

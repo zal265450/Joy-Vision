@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.annotation.IdType;
 
 import java.util.Arrays;
 import java.util.Date;
+
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import java.io.Serializable;
 import java.util.List;
@@ -38,6 +40,8 @@ public class Type extends BaseEntity {
     private Boolean open;
 
     private String labelNames;
+
+    private Integer sort;
 
     public List<String> buildLabel(){
         return Arrays.asList(labelNames.split(","));

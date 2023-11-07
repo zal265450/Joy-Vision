@@ -3,6 +3,7 @@ package org.luckyjourney.service.user.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import org.luckyjourney.entity.user.Favorites;
 import org.luckyjourney.entity.user.FavoritesVideo;
+import org.luckyjourney.exception.BaseException;
 import org.luckyjourney.holder.UserHolder;
 import org.luckyjourney.mapper.user.FavoritesMapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -41,7 +42,7 @@ public class FavoritesServiceImpl extends ServiceImpl<FavoritesMapper, Favorites
         // 不能删除默认收藏夹
         final Favorites favorites = getOne(new LambdaQueryWrapper<Favorites>().eq(Favorites::getId, id).eq(Favorites::getUserId, userId));
         if (favorites.getName().equals("默认收藏夹")){
-            throw new IllegalArgumentException("默认收藏夹不允许被删除");
+            throw new BaseException("默认收藏夹不允许被删除");
         }
 
         final boolean result = remove(new LambdaQueryWrapper<Favorites>().eq(Favorites::getId, id).eq(Favorites::getUserId, userId));
@@ -49,7 +50,7 @@ public class FavoritesServiceImpl extends ServiceImpl<FavoritesMapper, Favorites
         if (result){
             favoritesVideoService.remove(new LambdaQueryWrapper<FavoritesVideo>().eq(FavoritesVideo::getFavoritesId,id));
         }else {
-            throw new IllegalArgumentException("你小子想删别人的收藏夹?");
+            throw new BaseException("你小子想删别人的收藏夹?");
         }
     }
 
@@ -80,7 +81,7 @@ public class FavoritesServiceImpl extends ServiceImpl<FavoritesMapper, Favorites
         // 校验
         final Favorites favorites = getOne(new LambdaQueryWrapper<Favorites>().eq(Favorites::getId, favoritesId).eq(Favorites::getUserId, userId));
         if (favorites == null){
-            throw new IllegalArgumentException("收藏夹为空");
+            throw new BaseException("收藏夹为空");
         }
 
         final List<Long> videoIds = favoritesVideoService.list(new LambdaQueryWrapper<FavoritesVideo>().eq(FavoritesVideo::getFavoritesId, favoritesId))
@@ -119,7 +120,7 @@ public class FavoritesServiceImpl extends ServiceImpl<FavoritesMapper, Favorites
     public void exist(Long userId, Long fId) {
         final int count = count(new LambdaQueryWrapper<Favorites>().eq(Favorites::getUserId, userId).eq(Favorites::getId, fId));
         if (count == 0){
-            throw new IllegalArgumentException("收藏夹选择错误");
+            throw new BaseException("收藏夹选择错误");
         }
     }
 }

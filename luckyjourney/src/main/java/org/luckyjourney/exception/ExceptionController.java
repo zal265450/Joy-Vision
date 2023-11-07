@@ -26,6 +26,10 @@ public class ExceptionController {
         return R.error().message(msg);
     }
 
+    @ExceptionHandler(BaseException.class)
+    public R bex(BaseException e){
+        return R.error().message(e.getMsg());
+    }
 
 
     // 数据校验异常处理

@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.google.code.kaptcha.Producer;
 import org.luckyjourney.constant.RedisConstant;
 import org.luckyjourney.entity.Captcha;
+import org.luckyjourney.exception.BaseException;
 import org.luckyjourney.mapper.CaptchaMapper;
 import org.luckyjourney.service.CaptchaService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -59,12 +60,12 @@ public class CaptchaServiceImpl extends ServiceImpl<CaptchaMapper, Captcha> impl
         String email = captcha.getEmail();
         final String code1 = captcha.getCode();
         captcha = this.getOne(new LambdaQueryWrapper<Captcha>().eq(Captcha::getUuid, captcha.getUuid()));
-        if (captcha == null) throw new Exception("uuId为空");
+        if (captcha == null) throw new BaseException("uuId为空");
 
         this.removeById(captcha.getUuid());
 
         if (!captcha.getCode().equalsIgnoreCase(captcha.getCode()) && captcha.getExpireTime().getTime() >= System.currentTimeMillis()){
-            throw new IllegalArgumentException("uuid过期");
+            throw new BaseException("uuid过期");
         }
         if (!code1.equals(captcha.getCode())){
             return false;

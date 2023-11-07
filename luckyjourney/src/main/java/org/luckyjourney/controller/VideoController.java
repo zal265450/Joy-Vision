@@ -4,6 +4,7 @@ package org.luckyjourney.controller;
 import org.luckyjourney.entity.video.Video;
 import org.luckyjourney.entity.vo.BasePage;
 import org.luckyjourney.holder.UserHolder;
+import org.luckyjourney.limit.Limit;
 import org.luckyjourney.service.FileService;
 import org.luckyjourney.service.video.VideoService;
 import org.luckyjourney.util.R;
@@ -47,6 +48,7 @@ public class VideoController {
      * @return
      */
     @PostMapping
+    @Limit(limit = 5,time = 3600L,msg = "发布视频一小时内不可超过5次")
     public R publishVideo(@RequestBody @Validated Video video){
         videoService.publishVideo(video);
         return R.ok().message("发布成功,请等待审核");

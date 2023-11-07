@@ -4,15 +4,17 @@ import lombok.Data;
 import org.luckyjourney.entity.video.Video;
 
 /**
- * @description:
+ * @description: 封装发布视频
  * @Author: Xhy
  * @CreateTime: 2023-11-02 13:57
  */
 @Data
 public class VideoTask {
 
+    // 新视频
     private Video video;
 
+    // 老视频
     private Video oldVideo;
 
     // 是否是新增

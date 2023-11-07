@@ -13,6 +13,7 @@ import org.luckyjourney.entity.user.User;
 import org.luckyjourney.entity.user.UserSubscribe;
 import org.luckyjourney.entity.video.Type;
 import org.luckyjourney.entity.vo.*;
+import org.luckyjourney.exception.BaseException;
 import org.luckyjourney.holder.UserHolder;
 import org.luckyjourney.mapper.user.UserMapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -85,12 +86,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         // 邮箱是否存在
         final int count = count(new LambdaQueryWrapper<User>().eq(User::getEmail, registerVO.getEmail()));
         if (count == 1){
-            throw new Exception("邮箱已被注册");
+            throw new BaseException("邮箱已被注册");
         }
         final String code = registerVO.getCode();
         final Object o = redisCacheUtil.get(RedisConstant.EMAIL_CODE + registerVO.getEmail());
         if (o == null){
-            throw new IllegalArgumentException("验证码为空");
+            throw new BaseException("验证码为空");
         }
         if (!code.equals(o)){
             return false;
@@ -100,7 +101,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         user.setNickName(registerVO.getNickName());
         user.setEmail(registerVO.getEmail());
         user.setPassword(registerVO.getPassword());
-
+        user.setAvatar("");
         save(user);
 
         // 创建默认收藏夹
@@ -132,7 +133,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         final long fansCount = followService.getFansCount(userId);
         userVO.setFollow(followCount);
         userVO.setFans(fansCount);
-        userVO.setAvatar(QiNiuConfig.CNAME+"/"+user.getAvatar());
+        if (!ObjectUtils.isEmpty(userVO.getAvatar())){
+            if (!ObjectUtils.isEmpty(user.getAvatar())){
+                userVO.setAvatar(QiNiuConfig.CNAME+"/"+user.getAvatar());
+            }
+        }
         return userVO;
     }
 
@@ -162,7 +167,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         for (Long followId : followIds) {
             final User user = userMap.get(followId);
             user.setEach(map.get(user.getId()));
-            user.setAvatar(t+user.getAvatar());
+            if (!ObjectUtils.isEmpty(user.getAvatar())){
+                user.setAvatar(t+user.getAvatar());
+            }
+
             users.add(user);
         }
         page.setRecords(users);
@@ -212,7 +220,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Override
     public List<User> list(Collection<Long> userIds) {
-        return list(new LambdaQueryWrapper<User>().in(User::getId,userIds).select(User::getId,User::getNickName,User::getSex));
+        return list(new LambdaQueryWrapper<User>().in(User::getId,userIds)
+                .select(User::getId,User::getNickName,User::getSex,User::getAvatar,User::getDescription));
     }
 
     @Override
@@ -222,7 +231,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         // 校验分类
         final Collection<Type> types = typeService.listByIds(typeIds);
         if (typeIds.size()!=types.size()){
-            throw new IllegalArgumentException("不存在的分类");
+            throw new BaseException("不存在的分类");
         }
         final Long userId = UserHolder.get();
         final ArrayList<UserSubscribe> userSubscribes = new ArrayList<>();
@@ -301,26 +310,29 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             oldUser.setNickName(user.getNickName());
             final AuditResponse audit = textAuditService.audit(user.getNickName());
             if (audit.getAuditStatus() != AuditStatus.SUCCESS) {
-                throw new IllegalArgumentException(audit.getMsg());
+                throw new BaseException(audit.getMsg());
             }
         }
-        if (!oldUser.getDescription().equals(user.getDescription())){
+        if (!ObjectUtils.isEmpty(user.getDescription()) && !oldUser.getDescription().equals(user.getDescription())){
             oldUser.setDescription(user.getDescription());
             final AuditResponse audit = textAuditService.audit(user.getNickName());
             if (audit.getAuditStatus() != AuditStatus.SUCCESS) {
-                throw new IllegalArgumentException(audit.getMsg());
+                throw new BaseException(audit.getMsg());
             }
         }
-        if (!oldUser.getAvatar().equals(user.getAvatar())){
-            oldUser.setAvatar(user.getAvatar());
-            final AuditResponse audit = imageAuditService.audit(user.getAvatar());
+        if (!ObjectUtils.isEmpty(user.getAvatar()) && !oldUser.getAvatar().equals(user.getAvatar())){
+            final AuditResponse audit = imageAuditService.audit(QiNiuConfig.CNAME+"/"+user.getAvatar());
             if (audit.getAuditStatus() != AuditStatus.SUCCESS) {
-                throw new IllegalArgumentException(audit.getMsg());
+                throw new BaseException(audit.getMsg());
             }
+            oldUser.setAvatar(user.getAvatar());
         }
 
-        // 校验收藏夹
-        favoritesService.exist(userId,user.getDefaultFavoritesId());
+        if (!ObjectUtils.isEmpty(user.getDefaultFavoritesId())){
+            // 校验收藏夹
+            favoritesService.exist(userId,user.getDefaultFavoritesId());
+        }
+
 
         oldUser.setSex(user.getSex());
 

@@ -5,6 +5,7 @@ import com.qiniu.http.Response;
 import com.qiniu.storage.Configuration;
 import com.qiniu.storage.Region;
 import com.qiniu.util.StringMap;
+import org.luckyjourney.constant.AuditStatus;
 import org.luckyjourney.entity.Setting;
 import org.luckyjourney.entity.json.*;
 import org.luckyjourney.entity.response.AuditResponse;
@@ -39,6 +40,13 @@ public class ImageAuditService extends AbstractAuditService<String,AuditResponse
 
     @Override
     public AuditResponse audit(String url) {
+        AuditResponse auditResponse = new AuditResponse();
+        auditResponse.setAuditStatus(AuditStatus.SUCCESS);
+
+        if (!isNeedAudit()) {
+            return auditResponse;
+        }
+
         String body = imageBody.replace("${url}", url);
         String method = "POST";
         // 获取token
@@ -49,7 +57,6 @@ public class ImageAuditService extends AbstractAuditService<String,AuditResponse
         header.put("Content-Type", contentType);
         Configuration cfg = new Configuration(Region.region2());
         final Client client = new Client(cfg);
-        AuditResponse auditResponse = new AuditResponse();
         try {
             Response response = client.post(imageUlr, body.getBytes(), header, contentType);
 
@@ -65,6 +72,7 @@ public class ImageAuditService extends AbstractAuditService<String,AuditResponse
             auditResponse = audit(auditRule, bodyJson);
             return auditResponse;
         } catch (Exception e) {
+            auditResponse.setAuditStatus(AuditStatus.SUCCESS);
             e.printStackTrace();
         }
         return auditResponse;
