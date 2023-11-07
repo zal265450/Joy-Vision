@@ -27,7 +27,7 @@ Jdk1.8 + SpringBoot + MyBatis + MySql + Redis + 七牛云存储 + 七牛云审�
 
  **后端** 
 
-1.将docs中sql文件导入
+1.将docs中sql文件导入  **注: 如果导入全部数据的sql文件请联系我** 
 
 2.配置参数： MySql数据源,redis数据源,邮箱参数,七牛云参数,七牛云CNAME
 
