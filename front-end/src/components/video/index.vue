@@ -94,6 +94,20 @@ const snackbar = ref({
   text: ""
 })
 
+
+const handleMouseWheel = (event) =>{
+  if(event.deltaY == 100) {
+    if (currentIndex.value >= similarList.value.length - 1) {
+        return;
+      }
+      currentIndex.value++;
+  }else {
+    if (currentIndex.value < 1) {
+        return;
+      }
+      currentIndex.value--
+  }
+}
 const drawer = ref(true)
 const instance = getCurrentInstance().proxy
 const video = ref()
@@ -156,6 +170,7 @@ const copyUrl = () => {
   }
 }
 onUnmounted(() => {
+  document.removeEventListener('wheel', handleMouseWheel);
   window.removeEventListener("keydown", windowKeyEvent)
 })
 
@@ -168,6 +183,7 @@ const firstInitVideo = () => {
     autoplay: true
   })
   videoPlayer.value.volume(localStorage.getItem("volume") || 1)
+  document.addEventListener('wheel', handleMouseWheel);
   window.addEventListener("keydown", windowKeyEvent)
   videoPlayer.value.on("volumechange", () => {
     localStorage.setItem("volume", videoPlayer.value.volume())
