@@ -43,6 +43,9 @@ public class Type extends BaseEntity {
 
     private Integer sort;
 
+    @TableField(exist = false)
+    private Boolean used;
+
     public List<String> buildLabel(){
         return Arrays.asList(labelNames.split(","));
     }

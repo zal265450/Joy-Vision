@@ -16,7 +16,10 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @description:
@@ -72,9 +75,18 @@ public class IndexController {
      * @return
      */
     @GetMapping("/types")
-    public R getTypes(){
+    public R getTypes(HttpServletRequest request){
         final List<Type> types = typeService.list(new LambdaQueryWrapper<Type>().select(Type::getIcon, Type::getId, Type::getName).orderByDesc(Type::getSort));
 
+        final Set<Long> set = userService.listSubscribeType(JwtUtils.getUserId(request)).stream().map(Type::getId).collect(Collectors.toSet());
+
+        for (Type type : types) {
+            if (set.contains(type.getId())) {
+                type.setUsed(true);
+            }else {
+                type.setUsed(false);
+            }
+        }
         return R.ok().data(types);
     }
 

@@ -47,6 +47,8 @@ public class ImageAuditService extends AbstractAuditService<String,AuditResponse
             return auditResponse;
         }
 
+        url = appendUUID(url);
+
         String body = imageBody.replace("${url}", url);
         String method = "POST";
         // 获取token
