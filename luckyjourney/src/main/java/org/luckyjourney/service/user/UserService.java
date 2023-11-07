@@ -120,4 +120,7 @@ public interface UserService extends IService<User> {
      * @param userId
      */
     void deleteSearchHistory(Long userId);
+
+
+    Collection<Type> listNoSubscribeType(Long aLong);
 }

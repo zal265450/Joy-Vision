@@ -159,6 +159,12 @@ public class CustomerController {
         return R.ok().data(userService.listSubscribeType(UserHolder.get()));
     }
 
+    // 获取用户没订阅的分类
+    @GetMapping("/noSubscribe")
+    public R listNoSubscribeType(){
+        return R.ok().data(userService.listNoSubscribeType(UserHolder.get()));
+    }
+
     /**
      * 关注/取关
      * @param followsUserId

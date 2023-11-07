@@ -26,9 +26,6 @@ public class AuthController implements InitializingBean {
 
 
     @Autowired
-    private Cache cache;
-
-    @Autowired
     private SettingService settingService;
 
 
@@ -42,7 +39,8 @@ public class AuthController implements InitializingBean {
         }
         // 如果不是指定ip调用的该接口，则不返回
         final String s = UUID.randomUUID().toString();
-        cache.put(s,true);
+        LocalCache.put(s,true);
+//        cache.put(s,true);
 
         if (url.contains("?")){
             url = url+"&uuid="+s;
@@ -54,9 +52,10 @@ public class AuthController implements InitializingBean {
 
     @PostMapping
     public void auth(@RequestParam(required = false) String uuid, HttpServletResponse response) throws IOException {
-        if (uuid == null || cache.getIfPresent(uuid) == null){
+        if (uuid == null || LocalCache.containsKey(uuid) == null){
             response.sendError(401);
         }else {
+            LocalCache.rem(uuid);
             response.sendError(200);
         }
     }

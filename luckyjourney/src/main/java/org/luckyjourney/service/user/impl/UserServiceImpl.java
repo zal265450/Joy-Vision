@@ -262,6 +262,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Override
     public Collection<Type> listSubscribeType(Long userId) {
+        if (userId == null){
+            return Collections.EMPTY_SET;
+        }
         final List<Long> typeIds = userSubscribeService.list(new LambdaQueryWrapper<UserSubscribe>().eq(UserSubscribe::getUserId, userId))
                 .stream().map(UserSubscribe::getTypeId).collect(Collectors.toList());
         final List<Type> types = typeService.list(new LambdaQueryWrapper<Type>()
@@ -367,6 +370,24 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if (userId!=null){
             redisCacheUtil.del(RedisConstant.USER_SEARCH_HISTORY+userId);
         }
+    }
+
+    @Override
+    public Collection<Type> listNoSubscribeType(Long userId) {
+
+        // 获取用户订阅的分类
+        final Set<Long> set = listSubscribeType(userId).stream().map(Type::getId).collect(Collectors.toSet());
+        // 获取所有分类
+        final List<Type> allType = typeService.list(null);
+
+        final ArrayList<Type> types = new ArrayList<>();
+        for (Type type : allType) {
+            if (!set.contains(type.getId())) {
+                types.add(type);
+            }
+        }
+
+        return types;
     }
 
 
