@@ -1,22 +1,46 @@
 <template>
-    <v-navigation-drawer
-        >
-          <v-list>
-            <v-list-item
-              prepend-avatar="/logo.png"
-              title="七牛云-小虎"
-              subtitle="xiaohu@qiniu.com"
-            ></v-list-item>
-          </v-list>
-  
-          <v-divider></v-divider>
-  
-          <v-list density="compact" nav>
-            <v-list-item prepend-icon="mdi-home" title="首页" value="home"></v-list-item>
-            <v-list-item prepend-icon="mdi-fire" title="推荐" value="fire"></v-list-item>
-            <v-list-item prepend-icon="mdi-account-multiple" title="粉丝/关注" value="shared"></v-list-item>
-            <v-list-item prepend-icon="mdi-star" title="收藏夹" value="starred"></v-list-item>
-            
-          </v-list>
-        </v-navigation-drawer>
-  </template>
+  <v-navigation-drawer color="#252632">
+    <v-list v-if="userStore.token">
+      <v-list-item :prepend-avatar="userStore.info.avatar?apiGetCdnAuthFile(userStore.info.avatar):'/logo.png'" :title="userStore.info.nickName"
+        :subtitle="userStore.info.description"></v-list-item>
+    </v-list>
+    <v-list v-else>
+      <v-list-item prepend-icon="mdi-account" title="未登录" subtitle="请先登录，享受更多服务"></v-list-item>
+    </v-list>
+    <v-divider />
+
+
+    <v-list density="compact" nav>
+      <v-list-item prepend-icon="mdi-home" title="热门视频" to="/"></v-list-item>
+      <v-list-item prepend-icon="mdi-video" title="推荐视频" to="/pushVideo"></v-list-item>
+      <!-- <v-list-item prepend-icon="mdi-label-multiple" title="视频分类" to="/classify"></v-list-item> -->
+      <template v-if="userStore.token">
+        <v-list-item prepend-icon="mdi-account" title="个人中心" to="/user"></v-list-item>
+        <v-list-item prepend-icon="mdi-heart" title="关注的人" to="/followVideo"></v-list-item>
+      </template>
+      <v-list-item :prepend-icon="item.icon || 'mdi-file-document-alert-outline'" :title="item.name"
+        v-for="item in allClassifyList" :to="`/video/${item.id}`"></v-list-item>
+    </v-list>
+  </v-navigation-drawer>
+</template>
+<script setup>
+import { ref } from 'vue';
+import { apiClassifyGetAll } from '../../apis/classify';
+import { apiGetCdnAuthFile } from '../../apis/user/auth';
+import { useUserStore } from '../../stores';
+const userStore = useUserStore()
+const allClassifyList = ref([])
+apiClassifyGetAll().then(({ data }) => {
+  if (!data.state) {
+    allClassifyList.value = []
+    return;
+  }
+  allClassifyList.value = data.data
+})
+</script>
+<style lang="scss" scoped>
+.v-navigation-drawer {
+  border: none !important;
+
+}
+</style>

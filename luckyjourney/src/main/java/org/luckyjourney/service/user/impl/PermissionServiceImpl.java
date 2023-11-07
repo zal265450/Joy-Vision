@@ -48,7 +48,7 @@ public class PermissionServiceImpl extends ServiceImpl<PermissionMapper, Permiss
         }
     }
     @Override
-    public Map<String, Object> toTree(HttpServletRequest request) {
+    public Map<String, Object> initMenu(Long uId) {
 
 
         // 创建返回结果map
@@ -60,11 +60,13 @@ public class PermissionServiceImpl extends ServiceImpl<PermissionMapper, Permiss
         Set<String> set = new HashSet<>();
 
         // 根据当期用户获取菜单
-        Integer uId = Integer.parseInt(JwtUtils.getMemberIdByJwtToken(request));
 
         // 根据用户id查询对应的角色id
         List<Long> rIds = userRoleService.list(new LambdaQueryWrapper<UserRole>().eq(UserRole::getUserId,uId).select(UserRole::getRoleId)).stream().map(UserRole::getRoleId).collect(Collectors.toList());
 
+        if (ObjectUtils.isEmpty(rIds)){
+            return Collections.EMPTY_MAP;
+        }
         // 根据角色查询对应的权限id
         List<Integer> pIds = rolePermissionService.list(new LambdaQueryWrapper<RolePermission>().in(RolePermission::getRoleId, rIds).select(RolePermission::getPermissionId)).stream().map(RolePermission::getPermissionId).collect(Collectors.toList());
 
@@ -95,7 +97,7 @@ public class PermissionServiceImpl extends ServiceImpl<PermissionMapper, Permiss
         }
 
         // 保存用户权限
-        AuthorityUtils.setAuthority(String.valueOf(uId),set);
+        AuthorityUtils.setAuthority(uId,set);
         MenuKey menuKey1 = new MenuKey();
         MenuKey menuKey2 = new MenuKey();
         menuKey1.setTitle("首页");

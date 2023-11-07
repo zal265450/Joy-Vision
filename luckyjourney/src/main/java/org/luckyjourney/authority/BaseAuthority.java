@@ -11,7 +11,7 @@ public class BaseAuthority implements AuthorityVerify {
             return false;
         }
         // 获取当前用户权限
-        String uId = JwtUtils.getMemberIdByJwtToken(request);
+        Long uId = JwtUtils.getUserId(request);
         for (String permission : permissions) {
             if (!AuthorityUtils.verify(uId,permission)) {
                 return false;

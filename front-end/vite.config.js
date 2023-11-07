@@ -12,6 +12,29 @@ export default defineConfig({
     }
   },
   server: {
-    port: 5378
-  }
+    port: 5378,
+    proxy: {
+      '/api': {
+        target: 'http://luckjourney.liuscraft.top/api',
+        rewrite: (path) => path.replace(/^\/api/, ""),
+        changeOrigin: true
+      }
+    }
+  },
+  rules: [
+    {
+      test: /\.scss$/,
+      use: [
+        'style-loader',
+        {
+          loader: 'css-loader',
+          options: { sourceMap: true },
+        },
+        {
+          loader: 'sass-loader',
+          options: { sourceMap: true },
+        },
+      ],
+    },
+  ],
 })

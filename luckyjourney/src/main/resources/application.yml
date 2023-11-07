@@ -2,10 +2,36 @@ spring:
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss
     time-zone: GMT+8
+  datasource:
+    driver-class-name: com.p6spy.engine.spy.P6SpyDriver
+    url: jdbc:p6spy:mysql://127.0.0.1:3306/lucky-journey?serverTimezone=GMT%2B8
+    username: lucky-journey
+    password: 123456
+  mail:
+    host: smtp.qq.com
+    port: 465
+    username: ******
+    password: ******
+    properties:
+      mail:
+        smtp:
+          ssl:
+            enable: true
+  redis:
+    host: 127.0.0.1
+    port: 6379
+    password: 123456
+
 mybatis-plus:
   global-config:
     db-config:
       logic-delete-field: is_deleted
       logic-delete-value: 1
       logic-not-delete-value: 0
-
+qiniu:
+  kodo:
+    access-key: ***********
+    secret-key: ***********
+    bucket-name: ***********
+server:
+  port: 8882
