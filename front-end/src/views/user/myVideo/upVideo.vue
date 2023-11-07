@@ -169,6 +169,9 @@ const uploadVideo = () => {
         labelNames: []
     }
     uploadList.value.push(curUploadInfo)
+    if(uploadList.value.length==1) {
+        currentVideoIndex.value = 0
+    }
     curUploadInfo.subscription = apiVideoUpload(curFile, {
         next: (e) => {
             curUploadInfo.progress = e.total.percent

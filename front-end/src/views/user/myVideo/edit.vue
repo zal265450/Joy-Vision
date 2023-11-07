@@ -4,8 +4,9 @@
 
         <v-textarea variant="filled" label="视频描述" :rows="3" v-model="currentVideo.description" clearable></v-textarea>
         <v-hover v-slot="{ isHovering, props }">
-            <v-card v-if="!currentVideo.id" v-bind="props" class="mb-2 mx-auto" height="70px" width="70px" :rounded="10"
+            <v-card v-if="!currentVideo.id" v-bind="props" class="mb-2 mx-auto" height="150px" width="150px" :rounded="10"
                 @click="avatarFileRef.click()">
+                视频封面:
                 <v-img :rounded="10" :src="coverImg" />
                 <v-overlay :model-value="isHovering == true || uploading > -1" contained scrim="black"
                     class="align-center justify-center">
