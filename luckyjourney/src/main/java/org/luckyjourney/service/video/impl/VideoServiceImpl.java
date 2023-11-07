@@ -550,7 +550,6 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
 
     public void setUserVoAndUrl(Collection<Video> videos){
         if (!ObjectUtils.isEmpty(videos)){
-            String t = QiNiuConfig.CNAME+"/";
             final Set<Long> userIds = videos.stream().map(Video::getUserId).collect(Collectors.toSet());
             final Map<Long, User> userMap = userService.list(userIds).stream().collect(Collectors.toMap(User::getId, Function.identity()));
             for (Video video : videos) {
@@ -559,12 +558,12 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
                 userVO.setId(video.getUserId());
                 userVO.setNickName(user.getNickName());
                 if (!ObjectUtils.isEmpty(user.getAvatar())){
-                    userVO.setAvatar(t+user.getAvatar());
+                    userVO.setAvatar(user.getAvatar());
                 }
                 userVO.setDescription(user.getDescription());
                 userVO.setSex(user.getSex());
                 video.setUser(userVO);
-                video.setUrl(t+video.getUrl());
+                video.setUrl(video.getUrl());
             }
         }
 

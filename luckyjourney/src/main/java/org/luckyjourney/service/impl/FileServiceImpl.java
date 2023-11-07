@@ -106,7 +106,7 @@ public class FileServiceImpl implements FileService {
         }else {
             key = key+"?uuid="+s;
         }
-        return QiNiuConfig.CNAME.concat("/").concat(key);
+        return QiNiuConfig.CNAME.concat(key);
     }
 
 }

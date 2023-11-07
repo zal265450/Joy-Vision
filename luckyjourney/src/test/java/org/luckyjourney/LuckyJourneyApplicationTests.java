@@ -9,6 +9,10 @@ import com.qiniu.storage.UploadManager;
 import com.qiniu.storage.model.DefaultPutRet;
 import com.qiniu.util.Auth;
 import org.junit.jupiter.api.Test;
+import org.luckyjourney.config.QiNiuConfig;
+import org.luckyjourney.entity.video.Video;
+import org.luckyjourney.mapper.video.VideoMapper;
+import org.luckyjourney.service.video.VideoService;
 import org.luckyjourney.util.RedisCacheUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -18,10 +22,12 @@ import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
 
+import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @SpringBootTest
 class LuckyJourneyApplicationTests {
@@ -32,8 +38,18 @@ class LuckyJourneyApplicationTests {
     @Autowired
     private RedisTemplate redisTemplate;
 
+    @Resource
+    private VideoMapper videoMapper;
+
     @Test
     void contextLoads() {
+
+        List<Video> videos = videoMapper.selectList(null);
+        List<Video> collect = videos.stream().map(e -> {
+            e.setCover(e.getCover().replace(QiNiuConfig.CNAME, ""));
+            videoMapper.updateById(e);
+            return e;
+        }).collect(Collectors.toList());
 
 
 
