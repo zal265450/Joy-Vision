@@ -75,7 +75,8 @@
     </v-card>
 </template>
 <script setup>
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, watch } from 'vue';
+import { apiGetCdnAuthFile } from '../../../apis/user/auth';
 import { apiRemoveVideo } from '../../../apis/user/videoManger';
 import { apiGetVideoByUser } from '../../../apis/video';
 import Video from '../../../components/video/index.vue';
@@ -94,7 +95,7 @@ const snackbar = ref({
     text: ""
 })
 const getVideo = () => {
-    apiGetVideoByUser().then(({ data }) => {
+    apiGetVideoByUser(pageInfo.value.page).then(({ data }) => {
         if (!data.state) {
             return;
         }
@@ -102,7 +103,6 @@ const getVideo = () => {
         pageInfo.value.pages = data.data.pages
     })
 }
-
 onMounted(() => {
     getVideo()
 })
@@ -147,4 +147,7 @@ const playVideo = (video) => {
     currentVideo.value = video
     videoDialog.value = video ? true : false
 }
+watch(()=>pageInfo.value.page, ()=>{
+    getVideo()
+}, {immediate:true})
 </script>

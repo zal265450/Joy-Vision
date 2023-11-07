@@ -162,7 +162,6 @@ export const apiSetUserVideoModel = (id, labels, score)=>{
         id, labels, score
     })
 }
-var firstGetFollowVideo = true
 /**
  * 推送关注人的视频
  * @param {number} lastTime 
@@ -198,4 +197,13 @@ export const apiGetUserVideoById = (userId, page=1, limit=10)=>{
             limit
         }
     })
+}
+
+/**
+ * 分享视频记录
+ * @param {int} id 视频Id
+ * @returns 
+ */
+export const apiShareVideo = (id)=>{
+    return request.post(`/index/share/${id}`)
 }

@@ -39,9 +39,12 @@
               </v-badge>
             </template>
           </FavoriteCom>
-          <v-btn size="40" color="success" icon @click="copyUrl()">
+          <v-badge color="red" :content="currentVideo.startCount" location="bottom">
+            <v-btn size="40" color="success" icon @click="copyUrl()">
             <v-icon :size="20">mdi-near-me</v-icon>
           </v-btn>
+          </v-badge>
+          
 
         </v-card>
       </v-card>
@@ -61,7 +64,7 @@
 import { computed, getCurrentInstance, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import { apiGetCdnAuthFile } from '../../apis/user/auth';
 import { apiFollows } from '../../apis/user/like';
-import { apiAddHistory, apiGetVideoBySimilar, apiInitFollowFeed, apiSetUserVideoModel, apiStarVideo } from '../../apis/video';
+import { apiAddHistory, apiGetVideoBySimilar, apiInitFollowFeed, apiSetUserVideoModel, apiShareVideo, apiStarVideo } from '../../apis/video';
 import FavoriteCom from '../../components/favorite/index.vue';
 import VideoCard from '../../components/video/card.vue';
 import strUtils from '../../utils/strUtil';
@@ -94,6 +97,24 @@ const snackbar = ref({
   text: ""
 })
 
+const shareBtn = ()=>{
+  apiShareVideo(currentVideo.value.id)
+}
+
+const handleMouseWheel = (event) =>{
+  console.log(event.deltaY)
+  if(event.deltaY >0) {
+    if (currentIndex.value >= similarList.value.length - 1) {
+        return;
+      }
+      currentIndex.value++;
+  }else {
+    if (currentIndex.value < 1) {
+        return;
+      }
+      currentIndex.value--
+  }
+}
 const drawer = ref(true)
 const instance = getCurrentInstance().proxy
 const video = ref()
@@ -149,13 +170,14 @@ const windowKeyEvent = (event) => {
   }
 }
 const copyUrl = () => {
-
+  shareBtn()
   snackbar.value = {
     text: strUtils.copyContent(location.host + "/#/?play=" + currentVideo.value.id) ? "视频地址复制成功" : "视频地址复制失败",
     show: true
   }
 }
 onUnmounted(() => {
+  document.removeEventListener('wheel', handleMouseWheel);
   window.removeEventListener("keydown", windowKeyEvent)
 })
 
@@ -168,6 +190,7 @@ const firstInitVideo = () => {
     autoplay: true
   })
   videoPlayer.value.volume(localStorage.getItem("volume") || 1)
+  document.addEventListener('wheel', handleMouseWheel);
   window.addEventListener("keydown", windowKeyEvent)
   videoPlayer.value.on("volumechange", () => {
     localStorage.setItem("volume", videoPlayer.value.volume())
