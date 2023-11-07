@@ -100,6 +100,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         final User user = new User();
         user.setNickName(registerVO.getNickName());
         user.setEmail(registerVO.getEmail());
+        user.setDescription("这个人很懒...");
         user.setPassword(registerVO.getPassword());
         user.setAvatar("");
         save(user);
@@ -346,6 +347,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         List<String> searchs = new ArrayList<>();
         if (userId!=null){
             searchs.addAll(redisCacheUtil.zGet(RedisConstant.USER_SEARCH_HISTORY+userId));
+            searchs = searchs.subList(0,searchs.size() < 20 ? searchs.size() : 20);
         }
         return searchs;
     }
@@ -355,6 +357,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     public void addSearchHistory(Long userId, String search) {
         if (userId!=null){
           redisCacheUtil.zadd(RedisConstant.USER_SEARCH_HISTORY+userId,new Date().getTime(),search,-1);
+        }
+    }
+
+    @Override
+    public void deleteSearchHistory(Long userId) {
+        if (userId!=null){
+            redisCacheUtil.del(RedisConstant.USER_SEARCH_HISTORY+userId);
         }
     }
 

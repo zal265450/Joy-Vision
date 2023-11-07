@@ -16,9 +16,21 @@
 
         <form class="layui-form" action="" lay-filter="example">
             <fieldset class="layui-elem-field layui-field-title" style="margin-top: 20px;">
-                <legend>热门视频热度之(小于该值则显示在热门视频上)</legend>
+                <legend>资源放行白名单</legend>
                 </legend></legend>
             </fieldset>
+            <div class="layui-form-item">
+                <label class="layui-form-label">白名单IP</label>
+                <div class="layui-input-block">
+                    <input id="allowIp" type="text" name="allowIp" autocomplete="off" placeholder="请输入白名单ip,多个用,分割" class="layui-input">
+                </div>
+            </div>
+            <fieldset class="layui-elem-field layui-field-title" style="margin-top: 20px;">
+                <legend>热门视频热度(小于该值则显示在热门视频上)</legend>
+                </legend></legend>
+            </fieldset>
+
+
 
             <input id="id" name="id" lay-verify="required" autocomplete="off" class="layui-input" type="hidden">
             <input id="successAudit" name="successAudit" lay-verify="required" autocomplete="off" class="layui-input" type="hidden">
@@ -237,6 +249,7 @@
                 $("#hotLimit").attr("value", setting.hotLimit);
                 $("#id").attr("value", setting.id);
                 $("#auditOpen").attr("value", setting.auditOpen);
+                $("#allowIp").attr("value", setting.allowIp);
 
                 $("#successAudit").attr("value", succ.auditStatus);
                 $("#manualAudit").attr("value", manualScore.auditStatus);
@@ -319,6 +332,7 @@
             var setting = {
                 id: d.id,
                 auditOpen: d.auditOpen,
+                allowIp: d.allowIp,
                 hotLimit: d.hotLimit,
                 auditPolicy: JSON.stringify(auditPolicy)
             }

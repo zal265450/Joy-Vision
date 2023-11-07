@@ -83,13 +83,6 @@ public class LoginServiceImpl implements LoginService {
     @Override
     public Boolean getCode(Captcha captcha) throws Exception {
 
-        // 邮箱是否被注册
-        final int count = userService.count(new LambdaQueryWrapper<User>().eq(User::getEmail, captcha.getEmail()));
-        if (count == 1){
-            throw new BaseException("邮箱已被注册");
-        }
-
-
         return captchaService.validate(captcha);
     }
 

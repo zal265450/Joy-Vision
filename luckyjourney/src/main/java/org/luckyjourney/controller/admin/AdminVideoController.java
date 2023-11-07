@@ -8,6 +8,7 @@ import org.luckyjourney.entity.video.Type;
 import org.luckyjourney.entity.video.Video;
 import org.luckyjourney.entity.user.User;
 import org.luckyjourney.entity.vo.BasePage;
+import org.luckyjourney.entity.vo.VideoStatistics;
 import org.luckyjourney.service.user.UserService;
 import org.luckyjourney.service.video.TypeService;
 import org.luckyjourney.service.video.VideoService;
@@ -116,5 +117,26 @@ public class AdminVideoController {
     public R Violations(@PathVariable Long id){
         videoService.violations(id);
         return R.ok().message("下架成功");
+    }
+
+
+    /**
+     * 视频数据统计
+     * @return
+     */
+    @GetMapping("/statistics")
+    @Authority("admin:video:statistics")
+    public R show(){
+        final VideoStatistics videoStatistics = new VideoStatistics();
+        final int allCount = videoService.count(new LambdaQueryWrapper<Video>());
+        final int processCount = videoService.count(new LambdaQueryWrapper<Video>().eq(Video::getAuditStatus, AuditStatus.PROCESS));
+        final int successCount = videoService.count(new LambdaQueryWrapper<Video>().eq(Video::getAuditStatus, AuditStatus.SUCCESS));
+        final int passCount = videoService.count(new LambdaQueryWrapper<Video>().eq(Video::getAuditStatus, AuditStatus.PASS));
+        videoStatistics.setAllCount(allCount);
+        videoStatistics.setPassCount(passCount);
+        videoStatistics.setSuccessCount(successCount);
+        videoStatistics.setProcessCount(processCount);
+
+        return R.ok().data(videoStatistics);
     }
 }

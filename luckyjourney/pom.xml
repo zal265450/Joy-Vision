@@ -19,6 +19,11 @@
     <dependencies>
 
 
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+        </dependency>
+
         <!-- 对url进行解析获取时长 -->
         <dependency>
             <groupId>ws.schild</groupId>

@@ -6,6 +6,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.InputStream;
+import java.util.Map;
 
 /**
  * @author xhy
@@ -17,7 +18,7 @@ public interface FileService {
      * 获取签名
      * @return
      */
-    String getToken();
+    String   getToken();
 
     /**
      * 上传文件

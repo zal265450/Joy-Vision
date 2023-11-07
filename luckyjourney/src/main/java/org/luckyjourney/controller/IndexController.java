@@ -165,4 +165,10 @@ public class IndexController {
         return R.ok().data(userService.searchHistory(JwtUtils.getUserId(request)));
     }
 
+    // 删除搜索记录
+    @DeleteMapping("/search/history")
+    public R deleteSearchHistory(HttpServletRequest request){
+        userService.deleteSearchHistory(JwtUtils.getUserId(request));
+        return R.ok();
+    }
 }

@@ -39,8 +39,7 @@ public class VideoController {
      */
     @GetMapping("/token")
     public R getToken(){
-        final String token = fileService.getToken();
-        return R.ok().data(token);
+        return R.ok().data(fileService.getToken());
     }
 
     /**发布视频/修改视频
