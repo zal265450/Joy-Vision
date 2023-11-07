@@ -55,6 +55,9 @@ const getFavorites = ()=>{
                 return
             }
             favoriteItems.value = data.data
+            if(favoriteItems.value.length>0) {
+                dialogm1.value = favoriteItems.value[0].id
+            }
         })
 }
 watch(dialog, (newV) => {
