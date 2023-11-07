@@ -7,36 +7,38 @@
     </VContainer>
 </template>
 <script setup>
-import { onMounted, ref } from 'vue';
-import { apiClassifyGetAll, apiClassifySubscribe, apiGetClassifyByUser } from '../../../apis/classify';
+import { nextTick, onMounted, ref } from 'vue';
+import { apiClassifySubscribe, apiGetClassifyByUser, apiGetNoSubscribe } from '../../../apis/classify';
 import AllClassify from './all.vue';
 import MyClassify from './my.vue';
 const allClassifyList = ref([])
 const myClassifyList = ref([])
 const refreshData = ()=>{
-    apiGetClassifyByUser().then(({data})=>{
+    nextTick(()=>{
+        apiGetClassifyByUser().then(({data})=>{
         if (!data.state) {
             myClassifyList.value = []
             return;
         }
         myClassifyList.value = data.data
     })
-    apiClassifyGetAll().then(({ data }) => {
+    apiGetNoSubscribe().then(({ data }) => {
         if (!data.state) {
             allClassifyList.value = []
             return;
         }
         allClassifyList.value = data.data
     })
+    })
 }
 
 const subscribe = (id, sub=false)=>{
     if(sub) {
-        myClassifyList.value.push(allClassifyList.value.filter((e)=>e.id == id).pop())
-    }else {
-        myClassifyList.value = myClassifyList.value.filter(e=> e.id != id)
+        myClassifyList.value.push(id)
+    }else{
+        myClassifyList.value.splice(id, 1)
     }
-    apiClassifySubscribe(myClassifyList.value.map(e=> e.id).join(",")).then(({data})=>{
+    apiClassifySubscribe(myClassifyList.value.map(e=> e.id)).then(({data})=>{
         if(data.state) {
             refreshData()
         }

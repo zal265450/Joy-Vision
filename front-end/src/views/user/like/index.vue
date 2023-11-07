@@ -46,6 +46,7 @@
 </template>
 <script setup>
 import { ref, watch } from 'vue';
+import { apiGetCdnAuthFile } from '../../../apis/user/auth';
 import { apiFollows, apiGetLike } from '../../../apis/user/like';
 import { useUserStore } from '../../../stores';
 const currentType = ref("fans")

@@ -20,7 +20,7 @@
             <span style="max-height: 20px;color: white;" class="ml-1 overflow-hidden">{{ props.videoInfo.title }}</span>
             <!-- <v-card-subtitle>{{ props.videoInfo.userName || "无" }}</v-card-subtitle> -->
             <v-spacer></v-spacer>
-            <v-btn size="small" color="white" variant="tonal" v-if="props.videoInfo.user" @click.stop @click="gotoUserInfo()">@{{ props.videoInfo.user.nickName
+            <v-btn size="small" color="white" variant="tonal" v-if="props.videoInfo.user" @click.stop :to="userStore.token?`/user?lookId=${props.videoInfo.user.id}`:''">@{{ props.videoInfo.user.nickName
             }}</v-btn>
         </v-card-actions>
         <v-overlay scrim="black" :model-value="overlay" contained persistent width="100%" style="top:0px">
@@ -83,7 +83,6 @@
 <script setup>
 import { onMounted, ref, watch } from 'vue';
 import { apiGetCdnAuthFile } from '../../apis/user/auth';
-import router from '../../router';
 import { useUserStore } from '../../stores';
 import strUtils from '../../utils/strUtil';
 const showDescription = ref(false)
@@ -113,11 +112,6 @@ const cardRef = ref()
 onMounted(() => {
     showDescription.value = props.overlay
 })
-const gotoUserInfo = ()=>{
-    if(userStore.$state.token) {
-        router.push({path: `/user?lookId=${props.videoInfo.user.id}`})
-    }
-}
 watch(() => props.overlay, (e) => {
     showDescription.value = e
     if(e) {
