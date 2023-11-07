@@ -12,7 +12,7 @@
 [demo视频地址2：http://luckjourney.liuscraft.top/#/?play=4819](luckjourney.liuscraft.top/#/?play=4819)  首选
 
 
-[demo视频地址3：链接：https://pan.baidu.com/s/1NCoawrvnpNSfmMRMbAaEqg 提取码：zjof]
+[demo视频地址3：链接：https://pan.baidu.com/s/1NCoawrvnpNSfmMRMbAaEqg 提取码：zjof](https://pan.baidu.com/s/1NCoawrvnpNSfmMRMbAaEqg)
 
  **注意：该项目技术选型，方案实现，是基于当前项目体量以及实际场景选择，避免过度设计，增加服务器成本，开发成本，运营成本。优化地方下面会提出** 
 
