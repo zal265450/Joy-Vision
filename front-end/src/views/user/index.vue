@@ -16,6 +16,7 @@
                 <v-tab value="one" to="/user/video" v-if="isSelf">创作中心</v-tab>
                 <v-tab value="two" to="/user/favorites" v-if="isSelf">收藏夹</v-tab>
                 <v-tab value="3" to="/user/history" v-if="isSelf">历史记录</v-tab>
+                <v-tab value="two3" to="/user/classify" v-if="isSelf">订阅分类</v-tab>
                 <v-tab value="4" :to="`/user/like${isSelf?'':'?lookId='+userInfo.id}`">关注/粉丝</v-tab>
                 <v-spacer></v-spacer>
                 <v-btn class="ma-2" variant="text" @click="editDialog = !editDialog" v-if="isSelf">编辑信息</v-btn>
@@ -68,6 +69,7 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
+import { apiGetCdnAuthFile } from '../../apis/user/auth';
 import { apiChangeUserInfo, apiGetUserInfo, apiUploadAvatar } from '../../apis/user/user';
 import router from '../../router';
 import { useUserStore } from '../../stores';
@@ -99,7 +101,7 @@ const avatarImg = computed(() => {
         return "/logo.png"
     }
     if (userInfo.value.avatar == null || userInfo.value.avatar.indexOf("null") != -1) return "/logo.png"
-    return userInfo.value.avatar
+    return apiGetCdnAuthFile(userInfo.value.avatar)
 })
 const uploadAvatar = () => {
     if (!avatarFileRef.value.files[0]) return;

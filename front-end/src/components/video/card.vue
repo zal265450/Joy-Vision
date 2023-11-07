@@ -1,7 +1,7 @@
 <template>
     <v-card ref="cardRef" v-if="props.videoInfo"  hover ripple :elevation="0" rounded="lg">
         
-        <v-img :src="props.videoInfo.cover || '/not-found.png'" class="align-end"
+        <v-img :src="props.videoInfo.cover?apiGetCdnAuthFile(props.videoInfo.cover):'/not-found.png'" class="align-end"
             gradient="to bottom, rgba(0,0,0,.1), rgba(0,0,0,.5)" height="300px" cover>
             <!-- <v-avatar :image="props.videoInfo.user.head||'/logo.png'" style="position:absolute;top:10px;right:10px"></v-avatar> -->
             <v-card-text class="text-white pa-0" v-if="!overlay">
@@ -61,18 +61,31 @@
                         <v-card-text>
                             {{ props.videoInfo.description || "作者很懒，没有给一点描述" }}
                         </v-card-text>
+                        <v-card-actions>
+                            <v-chip :density="'compact'" @click="copyUrl()">YV: {{ props.videoInfo.yv }}</v-chip>
+                        </v-card-actions>
                     </div>
                 </v-expand-transition>
             </v-card>
-
         </v-overlay>
+        <v-snackbar v-model="snackbar.show" :color="snackbar.color">
+        {{ snackbar.text }}
+
+        <template v-slot:actions>
+          <v-btn color="blue" variant="text" @click="snackbar.show = false">
+            了解
+          </v-btn>
+        </template>
+      </v-snackbar>
     </v-card>
 </template>
 
 <script setup>
 import { onMounted, ref, watch } from 'vue';
+import { apiGetCdnAuthFile } from '../../apis/user/auth';
 import router from '../../router';
 import { useUserStore } from '../../stores';
+import strUtils from '../../utils/strUtil';
 const showDescription = ref(false)
 const userStore = useUserStore()
 const props = defineProps({
@@ -85,6 +98,17 @@ const props = defineProps({
         default: false
     }
 })
+const snackbar = ref({
+  show: false,
+  text: ""
+})
+const copyUrl = () => {
+
+snackbar.value = {
+  text: strUtils.copyContent(props.videoInfo.yv) ? "视频YV号复制成功" : "视频YV号复制失败",
+  show: true
+}
+}
 const cardRef = ref()
 onMounted(() => {
     showDescription.value = props.overlay

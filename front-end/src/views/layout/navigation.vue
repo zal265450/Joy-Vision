@@ -1,7 +1,7 @@
 <template>
-  <v-navigation-drawer permanent color="#252632">
+  <v-navigation-drawer color="#252632">
     <v-list v-if="userStore.token">
-      <v-list-item :prepend-avatar="userStore.info.avatar || '/logo.png'" :title="userStore.info.nickName"
+      <v-list-item :prepend-avatar="userStore.info.avatar?apiGetCdnAuthFile(userStore.info.avatar):'/logo.png'" :title="userStore.info.nickName"
         :subtitle="userStore.info.description"></v-list-item>
     </v-list>
     <v-list v-else>
@@ -26,6 +26,7 @@
 <script setup>
 import { ref } from 'vue';
 import { apiClassifyGetAll } from '../../apis/classify';
+import { apiGetCdnAuthFile } from '../../apis/user/auth';
 import { useUserStore } from '../../stores';
 const userStore = useUserStore()
 const allClassifyList = ref([])

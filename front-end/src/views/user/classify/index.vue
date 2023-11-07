@@ -8,7 +8,7 @@
 </template>
 <script setup>
 import { onMounted, ref } from 'vue';
-import { apiClassifyGetAll, apiClassifySubscribe, apiGetClassifyByUser } from '../../apis/classify';
+import { apiClassifyGetAll, apiClassifySubscribe, apiGetClassifyByUser } from '../../../apis/classify';
 import AllClassify from './all.vue';
 import MyClassify from './my.vue';
 const allClassifyList = ref([])

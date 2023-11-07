@@ -1,6 +1,6 @@
 <template>
     <v-card style="height: 100%;" elevation="2" color="background">
-        <Video :video-list="videoList" v-if="videoList.length > 0" :next-video="nextVideo" />
+        <Video :video-list="videoList" :hide-close="true" v-if="videoList.length > 0" :next-video="nextVideo" />
     </v-card>
 </template>
 <script setup>

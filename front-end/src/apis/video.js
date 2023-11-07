@@ -185,9 +185,6 @@ export const apiInitFollowFeed = ()=>{
     return request.post("/video/init/follow/feed")
 }
 
-export const apiGetPlayAuthToken = ()=>{}
-
-
 /**
  * 根据用户id获取视频
  * @param {int} id 用户id
