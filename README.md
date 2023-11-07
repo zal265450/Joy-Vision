@@ -37,9 +37,9 @@ Jdk1.8 + SpringBoot + MyBatis + MySql + Redis + 七牛云存储 + 七牛云审�
 
 后台管理地址:http://localhost:8882/page/login.html
 
-** 前端 **
+ **前端** 
 
-## 本地启动
+ **本地启动** 
 
 1.进入front-end文件夹
 
@@ -51,7 +51,7 @@ Jdk1.8 + SpringBoot + MyBatis + MySql + Redis + 七牛云存储 + 七牛云审�
 
 5.访问: http://127.0.0.1:5378/#/ 可查看前端项目。
 
-## 部署
+ **部署** 
 
 1.进入front-end文件夹
 
