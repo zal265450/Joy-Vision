@@ -61,11 +61,22 @@
                         <v-card-text>
                             {{ props.videoInfo.description || "作者很懒，没有给一点描述" }}
                         </v-card-text>
+                        <v-card-actions>
+                            <v-chip :density="'compact'" @click="copyUrl()">YV: {{ props.videoInfo.yv }}</v-chip>
+                        </v-card-actions>
                     </div>
                 </v-expand-transition>
             </v-card>
-
         </v-overlay>
+        <v-snackbar v-model="snackbar.show" :color="snackbar.color">
+        {{ snackbar.text }}
+
+        <template v-slot:actions>
+          <v-btn color="blue" variant="text" @click="snackbar.show = false">
+            了解
+          </v-btn>
+        </template>
+      </v-snackbar>
     </v-card>
 </template>
 
@@ -74,6 +85,7 @@ import { onMounted, ref, watch } from 'vue';
 import { apiGetCdnAuthFile } from '../../apis/user/auth';
 import router from '../../router';
 import { useUserStore } from '../../stores';
+import strUtils from '../../utils/strUtil';
 const showDescription = ref(false)
 const userStore = useUserStore()
 const props = defineProps({
@@ -86,6 +98,17 @@ const props = defineProps({
         default: false
     }
 })
+const snackbar = ref({
+  show: false,
+  text: ""
+})
+const copyUrl = () => {
+
+snackbar.value = {
+  text: strUtils.copyContent(props.videoInfo.yv) ? "视频YV号复制成功" : "视频YV号复制失败",
+  show: true
+}
+}
 const cardRef = ref()
 onMounted(() => {
     showDescription.value = props.overlay
