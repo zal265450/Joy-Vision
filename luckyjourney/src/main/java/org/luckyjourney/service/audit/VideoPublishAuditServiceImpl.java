@@ -1,5 +1,6 @@
 package org.luckyjourney.service.audit;
 
+import com.github.benmanes.caffeine.cache.Cache;
 import org.luckyjourney.config.QiNiuConfig;
 import org.luckyjourney.constant.AuditStatus;
 import org.luckyjourney.entity.response.AuditResponse;
@@ -20,6 +21,7 @@ import org.springframework.util.ObjectUtils;
 
 import javax.validation.constraints.NotBlank;
 import java.util.Collection;
+import java.util.UUID;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -55,6 +57,9 @@ public class VideoPublishAuditServiceImpl implements AuditService<VideoTask,Vide
 
     @Autowired
     private FollowService followService;
+
+    @Autowired
+    private Cache cache;
 
     private int maximumPoolSize = 8;
 
@@ -107,9 +112,12 @@ public class VideoPublishAuditServiceImpl implements AuditService<VideoTask,Vide
                   coverAuditResponse = imageAuditService.audit(video.getCover());
                 interestPushService.pushSystemTypeStockIn(video);
                 interestPushService.pushSystemStockIn(video);
-                final String duration = FileUtil.getVideoDuration(url);
+
+                // 加上uuid
+                final String uuid = UUID.randomUUID().toString();
+                cache.put(uuid,true);
+                final String duration = FileUtil.getVideoDuration(url+"?uuid="+uuid);
                 video.setDuration(duration);
-                // 填充视频类型
                 video.setVideoType(fileService.getFileInfo(video.getUrl()).mimeType);
 
                 // 推入发件箱
