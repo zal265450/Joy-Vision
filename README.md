@@ -9,8 +9,10 @@
 
 [demo视频地址1：http://s36d82b8z.hn-bkt.clouddn.com/demo/幸运日项目展示.mp4](http://s36d82b8z.hn-bkt.clouddn.com/demo/%E5%B9%B8%E8%BF%90%E6%97%A5%E9%A1%B9%E7%9B%AE%E5%B1%95%E7%A4%BA.mp4)
 
-[demo视频地址2：http://luckjourney.liuscraft.top/#/?play=4819](luckjourney.liuscraft.top/#/?play=4819)
+[demo视频地址2：http://luckjourney.liuscraft.top/#/?play=4819](luckjourney.liuscraft.top/#/?play=4819)  首选
 
+
+[demo视频地址3：链接：https://pan.baidu.com/s/1NCoawrvnpNSfmMRMbAaEqg 提取码：zjof]
 
  **注意：该项目技术选型，方案实现，是基于当前项目体量以及实际场景选择，避免过度设计，增加服务器成本，开发成本，运营成本。优化地方下面会提出** 
 
