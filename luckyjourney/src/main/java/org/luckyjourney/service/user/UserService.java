@@ -114,4 +114,10 @@ public interface UserService extends IService<User> {
      * @param search
      */
     void addSearchHistory(Long userId, String search);
+
+    /**
+     * 删除搜索记录
+     * @param userId
+     */
+    void deleteSearchHistory(Long userId);
 }

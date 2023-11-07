@@ -3,6 +3,7 @@ package org.luckyjourney.controller.admin;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.luckyjourney.authority.Authority;
+import org.luckyjourney.config.LocalCache;
 import org.luckyjourney.entity.Setting;
 import org.luckyjourney.entity.json.SettingScoreJson;
 import org.luckyjourney.service.SettingService;
@@ -39,6 +40,9 @@ public class AdminSettingController {
     @Authority("admin:setting:update")
     public R update(@RequestBody @Validated Setting setting){
         settingService.updateById(setting);
+        for (String s : setting.getAllowIp().split(",")) {
+            LocalCache.put(s,true);
+        }
         return R.ok().message("修改成功");
     }
 }

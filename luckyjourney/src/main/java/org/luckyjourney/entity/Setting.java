@@ -36,6 +36,9 @@ public class Setting implements Serializable {
     // 审核开关
     private Boolean auditOpen;
 
+    // 资源放行ip
+    private String allowIp;
+
     @TableField(exist = false)
     private SettingScoreJson settingScoreJson;
 

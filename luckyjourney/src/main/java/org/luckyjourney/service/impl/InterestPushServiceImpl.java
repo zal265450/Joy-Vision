@@ -88,6 +88,7 @@ public class InterestPushServiceImpl implements InterestPushService {
     }
 
     @Override
+    @Async
     public void deleteSystemStockIn(Video video) {
         final List<String> labels = video.buildLabel();
         final Long videoId = video.getId();
@@ -258,6 +259,7 @@ public class InterestPushServiceImpl implements InterestPushService {
     }
 
     @Override
+    @Async
     public void deleteSystemTypeStockIn(Video video) {
         final Long typeId = video.getTypeId();
         redisCacheUtil.setRemove(RedisConstant.SYSTEM_TYPE_STOCK + typeId,video.getId());
