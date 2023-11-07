@@ -3,7 +3,19 @@
         <v-text-field variant="filled" label="视频标题" v-model="currentVideo.title" clearable></v-text-field>
 
         <v-textarea variant="filled" label="视频描述" :rows="3" v-model="currentVideo.description" clearable></v-textarea>
+        <v-hover v-slot="{ isHovering, props }">
+            <v-card v-if="!currentVideo.id" v-bind="props" class="mb-2 mx-auto" height="70px" width="70px" :rounded="10"
+                @click="avatarFileRef.click()">
+                <v-img :rounded="10" :src="coverImg" />
+                <v-overlay :model-value="isHovering == true || uploading > -1" contained scrim="black"
+                    class="align-center justify-center">
+                    <v-icon v-if="uploading == -1">mdi-upload</v-icon>
+                    <v-progress-circular v-else :model-value="uploading"></v-progress-circular>
+                </v-overlay>
+            </v-card>
+        </v-hover>
 
+        <input hidden v-on:change="uploadAvatar" ref="avatarFileRef" type="file" accept="image/*" />
         <v-autocomplete v-model="currentVideo.typeId" :items="allClassifyList" chips closable-chips
             color="blue-grey-lighten-2" item-title="name" item-value="id" label="视频分类" no-data-text="无视频分类">
             <template v-slot:chip="{ props, item }">
@@ -26,14 +38,26 @@
                 发布视频
             </v-btn>
         </v-card-actions>
+        <v-snackbar v-model="snackbar.show" :color="snackbar.color">
+            {{ snackbar.text }}
+
+            <template v-slot:actions>
+                <v-btn color="blue" variant="text" @click="snackbar.show = false">
+                    了解
+                </v-btn>
+            </template>
+        </v-snackbar>
     </div>
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { apiClassifyGetAll } from '../../../apis/classify';
+import { apiGetCdnAuthFile } from '../../../apis/user/auth';
+import { apiUploadAvatar } from '../../../apis/user/user';
 import { apiVideoPush } from '../../../apis/user/videoManger';
-
+const avatarFileRef = ref()
+const uploading = ref(-1)
 const allClassifyList = ref([])
 const { currentVideo, save, clear } = defineProps({
     currentVideo: {
@@ -49,9 +73,49 @@ const { currentVideo, save, clear } = defineProps({
         default: () => { }
     }
 })
+const snackbar = ref({
+    show: false,
+    text: ""
+})
 const clearUp = () => {
     clear()
 }
+const uploadAvatar = () => {
+    if (!avatarFileRef.value.files[0]) return;
+    apiUploadAvatar(avatarFileRef.value.files[0], {
+        next: (e) => {
+            uploading.value = e.total.percent
+        }, error: () => {
+            uploading.value = -1
+            snackbar.value = {
+                text: "上传失败",
+                show: true,
+                color: "error"
+            }
+        }, complete: (e) => {
+            uploading.value = -1
+            currentVideo.cover = e.key
+            snackbar.value = {
+                text: "上传完成",
+                show: true,
+                color: "success"
+            }
+        }
+    })
+}
+const coverImg = computed(() => {
+    if (!currentVideo) {
+        return "/logo.png"
+    }
+    if (avatarFileRef.value && avatarFileRef.value.files && avatarFileRef.value.files[0]) {
+        var URL = window.URL || window.webkitURL;
+        return URL.createObjectURL(avatarFileRef.value.files[0])
+    }
+    if (currentVideo.cover == null || currentVideo.cover == "") {
+        return "/logo.png"
+    }
+    return apiGetCdnAuthFile(currentVideo.cover)
+})
 onMounted(() => {
     apiClassifyGetAll().then(({ data }) => {
         if (!data.state) {
