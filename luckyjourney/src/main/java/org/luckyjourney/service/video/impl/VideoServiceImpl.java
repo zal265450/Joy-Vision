@@ -165,6 +165,11 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
             video.setUrl(null);
             video.setCover(null);
         }else {
+            // 如果没设置封面,我们帮他设置一个封面
+            if (ObjectUtils.isEmpty(video.getCover())){
+                String cover = QiNiuConfig.CNAME+"/"+video.getUrl()+"?vframe/jpg/offset/1";
+                video.setCover(cover);
+            }
             video.setYv("YV"+UUID.randomUUID().toString().replace("-","").substring(8));
         }
 
@@ -248,7 +253,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
         }else {
             wrapper.like(!ObjectUtils.isEmpty(search),Video::getTitle, search);
         }
-        IPage<Video> page = this.page(p, wrapper.like(!ObjectUtils.isEmpty(search),Video::getTitle, search));
+        IPage<Video> page = this.page(p, wrapper);
 
         final List<Video> videos = page.getRecords();
         setUserVoAndUrl(videos);
@@ -515,7 +520,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
         video.setLabelNames(type.getLabelNames());
         // 修改视频信息
         video.setOpen(true);
-        video.setMsg("该视频违反了抖鸭平台的规则,已被下架私密");
+        video.setMsg("该视频违反了幸运日平台的规则,已被下架私密");
         video.setAuditStatus(AuditStatus.PASS);
         // 删除分类中的视频
         interestPushService.deleteSystemTypeStockIn(video);

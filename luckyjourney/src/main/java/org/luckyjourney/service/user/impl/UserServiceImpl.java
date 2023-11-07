@@ -41,6 +41,8 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static org.luckyjourney.constant.RedisConstant.USER_SEARCH_HISTORY_TIME;
+
 /**
  * <p>
  *  服务实现类
@@ -356,7 +358,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Async
     public void addSearchHistory(Long userId, String search) {
         if (userId!=null){
-          redisCacheUtil.zadd(RedisConstant.USER_SEARCH_HISTORY+userId,new Date().getTime(),search,-1);
+          redisCacheUtil.zadd(RedisConstant.USER_SEARCH_HISTORY+userId,new Date().getTime(),search,USER_SEARCH_HISTORY_TIME);
         }
     }
 
