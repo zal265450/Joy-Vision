@@ -105,7 +105,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
         // 私密则返回为空
         if (video.getOpen()) return new Video();
 
-        video.setUrl(QiNiuConfig.CNAME+"/"+video.getUrl());
+        video.setUrl(video.getUrl());
         // 当前视频用户自己是否有收藏/点赞过等信息
         // 这里需要优化 如果这里开线程获取则系统g了(因为这里的场景不适合) -> 请求数很多
         // 正确做法: 视频存储在redis中，点赞收藏等行为异步放入DB, 定时任务扫描DB中不重要更新redis
@@ -130,7 +130,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
             // url不能一致
             old = this.getOne(new LambdaQueryWrapper<Video>().eq(Video::getId, videoId).eq(Video::getUserId, userId));
 
-            if (!(QiNiuConfig.CNAME+"/"+old.getUrl()).equals(video.getUrl()) || !(old.getCover().equals(video.getCover()))){
+            if (!(old.getUrl()).equals(video.getUrl()) || !(old.getCover().equals(video.getCover()))){
                 throw new BaseException("不能更换视频源,只能修改视频信息");
             }
         }
@@ -167,7 +167,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
         }else {
             // 如果没设置封面,我们帮他设置一个封面
             if (ObjectUtils.isEmpty(video.getCover())){
-                String cover = QiNiuConfig.CNAME+"/"+video.getUrl()+"?vframe/jpg/offset/1";
+                String cover = video.getUrl()+"?vframe/jpg/offset/1";
                 video.setCover(cover);
             }
             video.setYv("YV"+UUID.randomUUID().toString().replace("-","").substring(8));

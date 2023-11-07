@@ -38,4 +38,11 @@ public interface FileService {
      * @return
      */
     FileInfo getFileInfo(String url);
+
+    /**
+     * 根据文件Key获取授权的url，用于访问文件
+     * @param key 文件Key
+     * @return 授权的url地址
+     */
+    String getOssFileAuthUrl(String key);
 }

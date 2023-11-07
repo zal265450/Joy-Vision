@@ -138,7 +138,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         userVO.setFans(fansCount);
         if (!ObjectUtils.isEmpty(userVO.getAvatar())){
             if (!ObjectUtils.isEmpty(user.getAvatar())){
-                userVO.setAvatar(QiNiuConfig.CNAME+"/"+user.getAvatar());
+                userVO.setAvatar(user.getAvatar());
             }
         }
         return userVO;
@@ -324,7 +324,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             }
         }
         if (!ObjectUtils.isEmpty(user.getAvatar()) && !oldUser.getAvatar().equals(user.getAvatar())){
-            final AuditResponse audit = imageAuditService.audit(QiNiuConfig.CNAME+"/"+user.getAvatar());
+            final AuditResponse audit = imageAuditService.audit(user.getAvatar());
             if (audit.getAuditStatus() != AuditStatus.SUCCESS) {
                 throw new BaseException(audit.getMsg());
             }

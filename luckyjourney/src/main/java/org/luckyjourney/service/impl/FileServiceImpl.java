@@ -1,5 +1,6 @@
 package org.luckyjourney.service.impl;
 
+import com.github.benmanes.caffeine.cache.Cache;
 import com.google.gson.Gson;
 import com.qiniu.common.QiniuException;
 import com.qiniu.http.Response;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.util.Map;
+import java.util.UUID;
 
 
 @Service
@@ -25,6 +27,9 @@ public class FileServiceImpl implements FileService {
 
     @Autowired
     private QiNiuConfig qiNiuConfig;
+
+    @Autowired
+    private Cache cache;
 
     @Override
     public String getToken() {
@@ -89,6 +94,19 @@ public class FileServiceImpl implements FileService {
             System.err.println(ex.response.toString());
         }
         return new FileInfo();
+    }
+
+    @Override
+    public String getOssFileAuthUrl(String key) {
+        final String s = UUID.randomUUID().toString();
+        cache.put(s,true);
+
+        if (key.contains("?")){
+            key = key+"&uuid="+s;
+        }else {
+            key = key+"?uuid="+s;
+        }
+        return QiNiuConfig.CNAME.concat("/").concat(key);
     }
 
 }

@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 
+import javax.annotation.Resource;
 import javax.validation.constraints.NotBlank;
 import java.util.Collection;
 import java.util.UUID;
@@ -88,7 +89,7 @@ public class VideoPublishAuditServiceImpl implements AuditService<VideoTask,Vide
     public VideoTask audit(VideoTask videoTask) {
         executor.submit(()->{
             final Video video = videoTask.getVideo();
-            final String url = QiNiuConfig.CNAME+"/"+video.getUrl();
+            final String url = fileService.getOssFileAuthUrl(video.getUrl());
             // 只有视频在新增或者公开时候才需要调用审核视频/封面
             // 新增 ： 必须审核
             // 修改: 新老状态不一致
