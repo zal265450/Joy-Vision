@@ -1,11 +1,12 @@
 <template>
-    <v-card>
+    <v-card >
         <v-tabs v-model="tab" color="#7bbfea">
             <v-tab v-for="item in items" :key="item">
                 {{ item }}
             </v-tab>
         </v-tabs>
-        <v-window v-model="tab" class="ma-2">
+        <v-divider/>
+        <v-window v-model="tab" >
             <!-- 发布稿件(视频) -->
             <v-window-item value="0">
                 <UploadVideo></UploadVideo>
@@ -23,6 +24,6 @@ import UploadVideo from './upVideo.vue';
 import videoList from './videoList.vue';
 const tab = ref(0)
 const items = ref([
-    '上传稿件', '稿件管理', '异常稿件'
+    '上传稿件', '稿件管理'
 ])
 </script>

@@ -12,9 +12,9 @@
                 </v-card-text>
 
                 <v-card-actions>
-                    <v-btn text="取消" @click="isActive.value = false"></v-btn>
+                    <v-btn color="red" text="删除" @click="deleteFavorite()" v-if="props.editData"></v-btn>
                     <v-spacer></v-spacer>
-                    <v-btn text="保存" @click="saveFavorite()"></v-btn>
+                    <v-btn color="blue" text="保存" @click="saveFavorite()"></v-btn>
                 </v-card-actions>
             </v-card>
         </template>
@@ -22,7 +22,7 @@
 </template>
 <script setup>
 import { computed, ref, watch } from 'vue';
-import { apiSaveFavorite } from '../../../apis/user/favorites';
+import { apiRemoveFavorite, apiSaveFavorite } from '../../apis/user/favorites';
 const dialog = ref(false)
 const props = defineProps({
     editData: {
@@ -42,7 +42,14 @@ const saveFavorite = () => {
             return;
         }
         dialog.value = false
-        currentData.value = null
+    })
+}
+const deleteFavorite = ()=>{
+    apiRemoveFavorite(currentData.value.id).then(({data})=>{
+        if(!data.state) {
+            return;
+        }
+        dialog.value = false;
     })
 }
 watch(dialog, (e)=>{

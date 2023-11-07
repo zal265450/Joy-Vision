@@ -1,74 +1,112 @@
 <template>
   <v-container style="height: 500px;">
-    <v-btn-toggle :disabled="isLoading" v-model="currentClassify" borderless color="#5865f2" class="mb-1"
-      style="border-width: 1px;">
-      
-      <v-btn value="0">
-        <span class="hidden-sm-and-down">热门视频</span>
-        <v-icon end>
-          mdi-fire
-        </v-icon>
-      </v-btn>
-      <v-btn :value="item.id" v-for="(item) in userClassifys">
-        <span class="hidden-sm-and-down">{{item.name}}</span>
-        <v-icon end :icon="item.icon||'mdi-file-document-alert-outline'">
-        </v-icon>
-      </v-btn>
-      <v-btn to="/classify">
-        <v-icon>
-          mdi-plus
-        </v-icon>
-      </v-btn>
-    </v-btn-toggle>
-
-    <v-row dense>
-      <v-divider class="ma-2" />
-      <v-col v-for="(video, index) in videoList" :key="index" :cols="3">
-        <VideoCard :video-info="video" @click="playVideo(video)"/>
-      </v-col>
-    </v-row>
-    <v-dialog v-model="videoDialog" height="100%" fullscreen transition="dialog-bottom-transition">
-      <v-card v-if="currentVideo">
-        <Video :video-info="currentVideo" :close-video="()=>playVideo(null)" />
+    <VideoListVue :video-list="videoList" :showHot="currentClassify == 0" />
+    <v-dialog :model-value="dialog" fullscreen transition="dialog-bottom-transition">
+      <v-card v-if="dialog">
+        <Video :video-info="searchVideoInfo" :close-video="() => searchVideoInfo = null" />
       </v-card>
-    </v-dialog>   
+    </v-dialog>
   </v-container>
 </template>
 <script setup>
-import { onMounted, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, onUpdated, ref, watch } from 'vue';
+import { useRoute } from 'vue-router';
 import { apiGetClassifyByUser } from '../../apis/classify';
-import { apiVideoByClassfiy } from '../../apis/video';
-import VideoCard from '../../components/video/card.vue';
+import { apiGetVideoById, apiSearchVideo, apiVideoByClassfiy } from '../../apis/video';
 import Video from '../../components/video/index.vue';
+import VideoListVue from '../../components/video/list.vue';
 const userClassifys = ref([])
-const videoDialog = ref(false)
-const isLoading = ref(false)
+const isLoading = ref(true)
 const videoList = ref([])
 const currentClassify = ref(0)
-const currentVideo = ref(null)
+const route = useRoute()
+const searchVideoInfo = ref(null)
+const pageInfo = ref({
+  page: 1,
+  limit: 15
+})
+const dialog = computed(() => searchVideoInfo.value ? true : false)
 // 获取分类视频
-const getCurrentClassifyVideo = (newV) => {
+const getCurrentClassifyVideo = () => {
+  if (route.meta.isSearch) return;
   isLoading.value = true
-  videoList.value = []
-  apiVideoByClassfiy(newV).then(({ data }) => {
-    videoList.value = data.data
+  apiVideoByClassfiy(currentClassify.value, pageInfo.value.page, pageInfo.value.limit).then(({ data }) => {
+    videoList.value = videoList.value.concat(data.data)
     isLoading.value = false
   })
 }
-watch(currentClassify, getCurrentClassifyVideo, {
-  immediate: true
-})
-const playVideo = (video) => {
-  videoDialog.value = false
-  currentVideo.value = video
-  videoDialog.value = video ? true : false
-  console.log(videoDialog.value, video)
-}
-onMounted(() => {
-  apiGetClassifyByUser().then(({data})=>{
-    userClassifys.value = data.data
+const getSearchVideo = () => {
+  apiSearchVideo(route.params.key, pageInfo.value.page, pageInfo.value.limit).then(({ data }) => {
+    isLoading.value = false
+    if (!data.state) {
+      return;
+    }
+    videoList.value = videoList.value.concat(data.data.records)
   })
-  getCurrentClassifyVideo(currentClassify.value)
+}
+watch(currentClassify, () => {
+  videoList.value = []
+  pageInfo.value.page = 1
+  getCurrentClassifyVideo()
+})
+const initView =
+  () => {
+    if (route.meta.isClassify) {
+      pageInfo.value.page = 1
+      videoList.value = []
+      currentClassify.value = route.params.classify
+    } else if (route.meta.isSearch) {
+      // 搜索
+      videoList.value = []
+      getSearchVideo()
+      currentClassify.value = -1
+      return;
+    } else {
+      pageInfo.value.page = 1
+      videoList.value = []
+      currentClassify.value = 0
+      apiGetClassifyByUser().then(({ data }) => {
+        userClassifys.value = data.data
+      })
+      getCurrentClassifyVideo()
+    }
+    if (route.query.play) {
+      apiGetVideoById(route.query.play).then(({ data }) => {
+        if (!data.state) {
+          return;
+        }
+        searchVideoInfo.value = data.data
+      })
+    }
+  }
+
+const listenScroll = () => {
+  //变量scrollTop是滚动条滚动时，距离顶部的距离
+  var scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
+  //变量windowHeight是可视区的高度
+  var windowHeight = document.documentElement.clientHeight || document.body.clientHeight;
+  //变量scrollHeight是滚动条的总高度
+  var scrollHeight = document.documentElement.scrollHeight || document.body.scrollHeight;
+  //滚动条到底部的条件
+  let aaa = scrollHeight - ((scrollTop + windowHeight))
+  if (aaa < 150 && aaa > -1 && !isLoading.value) {
+    isLoading.value = true
+    pageInfo.value.page++
+    if (route.meta.isSearch) getSearchVideo()
+    else {
+      getCurrentClassifyVideo()
+    }
+  }
+}
+onUpdated(() => {
+  initView()
+})
+onMounted(() => {
+  initView()
+  window.addEventListener('scroll', listenScroll);
+})
+onUnmounted(() => {
+  window.removeEventListener('scroll', listenScroll);
 })
 </script>
 <style scoped></style>

@@ -30,9 +30,13 @@ const refreshData = ()=>{
     })
 }
 
-const subscribe = (id)=>{
-    console.log(id)
-    apiClassifySubscribe(id).then(({data})=>{
+const subscribe = (id, sub=false)=>{
+    if(sub) {
+        myClassifyList.value.push(allClassifyList.value.filter((e)=>e.id == id).pop())
+    }else {
+        myClassifyList.value = myClassifyList.value.filter(e=> e.id != id)
+    }
+    apiClassifySubscribe(myClassifyList.value.map(e=> e.id).join(",")).then(({data})=>{
         if(data.state) {
             refreshData()
         }

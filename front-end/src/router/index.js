@@ -7,18 +7,43 @@ const routes = [
     component: Home,
   },
   {
+    path: "/video/:classify",
+    component: Home,
+    meta: {
+      isClassify: true
+    }
+  },{
+    path: "/video/search/:key",
+    component: Home,
+    meta: {
+      isSearch: true
+    }
+  },
+  {
     path: "/classify",
     component: () => import("../views/classify/index.vue"),
+  },
+  {
+    path: "/followVideo",
+    component: () => import("../views/followVideo/index.vue"),
   },
   {
     path: "/video",
     component: () => import("../views/video/index.vue"),
   },
   {
+    path: "/pushVideo",
+    component: () => import("../views/pushVideo/index.vue"),
+  },
+  {
     path: "/user",
     component: () => import("../views/user/index.vue"),
-    redirect: "/user/video",
+    redirect: "/user/home",
     children: [
+      {
+        path: "home",
+        component: () => import("../views/user/home/index.vue"),
+      },
       {
         path: "video",
         component: () => import("../views/user/myVideo/index.vue"),
@@ -27,6 +52,14 @@ const routes = [
         path: "favorites",
         component: () => import("../views/user/favorites/index.vue"),
       },
+      {
+        path: "like",
+        component: ()=> import("../views/user/like/index.vue")
+      },
+      {
+        path: "history",
+        component: ()=> import("../views/user/history/index.vue")
+      }
     ],
   },
 ];
