@@ -5,7 +5,7 @@
         <VDivider />
         <v-chip-group class="ma-2">
             <v-chip v-for="(item, index) in classifyData" :key="index" :size="'large'" closable
-                @click:close="closeEvent(item.id)">
+                @click:close="closeEvent(index)">
                 <template #prepend>
                     <VAvatar :image="item.image" :icon="item.icon || 'mdi-file-document-alert-outline'" start></VAvatar>
                 </template>
