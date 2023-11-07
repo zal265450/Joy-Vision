@@ -267,6 +267,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
         final List<Long> typeIds = userSubscribeService.list(new LambdaQueryWrapper<UserSubscribe>().eq(UserSubscribe::getUserId, userId))
                 .stream().map(UserSubscribe::getTypeId).collect(Collectors.toList());
+        if (ObjectUtils.isEmpty(typeIds)) return Collections.EMPTY_LIST;
         final List<Type> types = typeService.list(new LambdaQueryWrapper<Type>()
                 .in(Type::getId, typeIds).select(Type::getId, Type::getName, Type::getIcon));
         return types;
