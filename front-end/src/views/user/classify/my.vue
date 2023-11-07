@@ -4,8 +4,8 @@
         <VCardSubtitle style="display: inline;">您所喜欢的分类</VCardSubtitle>
         <VDivider />
         <v-chip-group class="ma-2">
-            <v-chip v-for="(item, index) in classifyData" :key="index" :size="'large'" closable
-                @click:close="closeEvent(index)">
+            <v-chip v-for="(item, index) in classifyData" :key="index" :size="'large'" append-icon="mdi-close"
+                @click="closeEvent(index)">
                 <template #prepend>
                     <VAvatar :image="item.image" :icon="item.icon || 'mdi-file-document-alert-outline'" start></VAvatar>
                 </template>
