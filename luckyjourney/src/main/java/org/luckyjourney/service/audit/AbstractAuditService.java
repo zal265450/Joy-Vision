@@ -33,8 +33,6 @@ public abstract class AbstractAuditService<T,R> implements AuditService<T,R> {
     @Autowired
     protected SettingService settingService;
 
-    @Autowired
-    private Cache cache;
 
     protected ObjectMapper objectMapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
@@ -51,7 +49,7 @@ public abstract class AbstractAuditService<T,R> implements AuditService<T,R> {
         // 遍历的是通过,人工,失败的审核规则,我当前没有办法知道是什么状态
         for (ScoreJson scoreJson : scoreJsonList) {
             audit = audit(scoreJson, bodyJson);
-            // 如果为true,说明违规，提前返回
+            // 如果为true,说明命中得分，提前返回
             if (audit.getFlag()){
                 audit.setAuditStatus(scoreJson.getAuditStatus());
                 return audit;
@@ -89,11 +87,16 @@ public abstract class AbstractAuditService<T,R> implements AuditService<T,R> {
                         info = AuditMsgMap.getInfo(detail.getLabel());
                         auditResponse.setMsg(info);
                         auditResponse.setOffset(type.getOffset());
-                        auditResponse.setFlag(true);
                     }
+                    auditResponse.setFlag(true);
                 }
+
             }
         }
+        if (auditResponse.getFlag() && ObjectUtils.isEmpty(auditResponse.getMsg())){
+            auditResponse.setMsg("该视频违法幸运日平台规则");
+        }
+
         return auditResponse;
     }
 

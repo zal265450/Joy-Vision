@@ -29,7 +29,7 @@ public class AuthController implements InitializingBean {
     private SettingService settingService;
 
 
-    @GetMapping("/get")
+    @GetMapping("/get") // url = > 文件表id
     public void getUUid(HttpServletRequest request, HttpServletResponse response, String url) throws IOException {
 
         String ip = request.getHeader("referer");

@@ -8,8 +8,10 @@ import lombok.Data;
 public class ScoreJson{
     Double minPulp;
     Double maxPulp;
+
     Double minTerror;
     Double maxTerror;
+
     Double minPolitician;
     Double maxPolitician;
 

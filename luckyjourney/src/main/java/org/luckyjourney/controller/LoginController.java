@@ -118,7 +118,7 @@ public class LoginController {
      * @return
      */
     @PostMapping("/findPassword")
-    public R findPassword(@RequestBody @Validated FindPWVO findPWVO){
+    public R findPassword(@RequestBody @Validated FindPWVO findPWVO,HttpServletResponse response){
         final Boolean b = loginService.findPassword(findPWVO);
         return R.ok().message(b ? "修改成功" : "修改失败,验证码不正确");
     }
