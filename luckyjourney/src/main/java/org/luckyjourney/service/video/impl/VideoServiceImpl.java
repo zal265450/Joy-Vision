@@ -248,6 +248,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
         final IPage p = basePage.page();
         // 如果带YV则精准搜该视频
         final LambdaQueryWrapper<Video> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Video::getAuditStatus,AuditStatus.SUCCESS);
         if (search.contains("YV")){
             wrapper.eq(Video::getYv,search);
         }else {
@@ -421,7 +422,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
         if (userId==null){
             return new Page<>();
         }
-        final IPage<Video> page = page(basePage.page(), new LambdaQueryWrapper<Video>().eq(Video::getUserId, userId).orderByDesc(Video::getGmtCreated));
+        final IPage<Video> page = page(basePage.page(), new LambdaQueryWrapper<Video>().eq(Video::getUserId, userId).eq(Video::getAuditStatus,AuditStatus.SUCCESS).orderByDesc(Video::getGmtCreated));
         final List<Video> videos = page.getRecords();
         setUserVoAndUrl(videos);
         return page;
@@ -540,9 +541,9 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
         int today = calendar.get(Calendar.DATE);
         final Long videoId = video.getId();
         // 尝试去找到删除
-        redisTemplate.opsForZSet().remove(RedisConstant.HOT_VIDEO+today,videoId);
-        redisTemplate.opsForZSet().remove(RedisConstant.HOT_VIDEO+(today-1),videoId);
-        redisTemplate.opsForZSet().remove(RedisConstant.HOT_VIDEO+(today-2),videoId);
+        redisTemplate.opsForSet().remove(RedisConstant.HOT_VIDEO+today,videoId);
+        redisTemplate.opsForSet().remove(RedisConstant.HOT_VIDEO+(today-1),videoId);
+        redisTemplate.opsForSet().remove(RedisConstant.HOT_VIDEO+(today-2),videoId);
         redisTemplate.opsForZSet().remove(RedisConstant.HOT_RANK,videoId);
         // 修改视频
         updateById(video);

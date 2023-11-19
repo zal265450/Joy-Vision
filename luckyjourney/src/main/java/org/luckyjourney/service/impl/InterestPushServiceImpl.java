@@ -70,18 +70,13 @@ public class InterestPushServiceImpl implements InterestPushService {
     @Override
     public Collection<Long> listVideoIdByTypeId(Long typeId) {
         // 随机推送10个
-        final byte[] key = (RedisConstant.SYSTEM_TYPE_STOCK + typeId).getBytes();
-        final List<Integer> list = redisTemplate.executePipelined((RedisCallback<Object>) connection -> {
-            for (int i = 0; i < 12; i++) {
-                connection.sRandMember(key);
-            }
-            return null;
-        });
+
+        final List<Object> list = redisTemplate.opsForSet().randomMembers(RedisConstant.SYSTEM_TYPE_STOCK + typeId, 12);
         // 可能会有null
         final HashSet<Long> result = new HashSet<>();
-        for (Integer aLong : list) {
+        for (Object aLong : list) {
             if (aLong!=null){
-                result.add(aLong.longValue());
+                result.add(Long.parseLong(aLong.toString()));
             }
         }
         return result;
@@ -116,6 +111,7 @@ public class InterestPushServiceImpl implements InterestPushService {
         }
         redisCacheUtil.del(key);
         redisCacheUtil.hmset(key, modelMap);
+        // 为用户模型设置ttl
 
     }
 
@@ -140,7 +136,7 @@ public class InterestPushServiceImpl implements InterestPushService {
                 if (modelMap.containsKey(model.getLabel())) {
                     modelMap.put(model.getLabel(), Double.parseDouble(modelMap.get(model.getLabel()).toString()) + model.getScore());
                     final Object o = modelMap.get(model.getLabel());
-                    if (o == null || Double.parseDouble(o.toString()) == 0.0){
+                    if (o == null || Double.parseDouble(o.toString()) > 0.0){
                         modelMap.remove(o);
                     }
                 } else {
@@ -175,7 +171,7 @@ public class InterestPushServiceImpl implements InterestPushService {
                 // 获取视频
                 final Random randomObject = new Random();
                 final ArrayList<String> labelNames = new ArrayList<>();
-                // 随机获取8个视频
+                // 随机获取X个视频
                 for (int i = 0; i < 8; i++) {
                     String labelName = probabilityArray[randomObject.nextInt(probabilityArray.length)];
                     labelNames.add(labelName);
@@ -313,11 +309,11 @@ public class InterestPushServiceImpl implements InterestPushService {
 
         final AtomicInteger index = new AtomicInteger(0);
         // 初始化数组
-        probabilityMap.forEach((type, p) -> {
+        probabilityMap.forEach((labelsId, p) -> {
             int i = index.get();
             int limit = i + p;
             while (i < limit) {
-                probabilityArray[i++] = type;
+                probabilityArray[i++] = labelsId;
             }
             index.set(limit);
         });
