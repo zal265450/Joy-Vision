@@ -235,6 +235,8 @@ CREATE TABLE `sys_setting` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+INSERT INTO `sys_setting` VALUES ('1', '{\"successScore\":{\"minPulp\":\"0.1\",\"maxPulp\":\"0.9999\",\"minTerror\":\"0.1\",\"maxTerror\":\"0.9999\",\"minPolitician\":\"0.1\",\"maxPolitician\":\"0.9999\",\"auditStatus\":\"0\"},\"manualScore\":{\"minPulp\":\"0\",\"maxPulp\":\"0\",\"minTerror\":\"0\",\"maxTerror\":\"0\",\"minPolitician\":\"0\",\"maxPolitician\":\"0\",\"auditStatus\":\"3\"},\"passScore\":{\"minPulp\":\"0\",\"maxPulp\":\"0\",\"minTerror\":\"0\",\"maxTerror\":\"0\",\"minPolitician\":\"0\",\"maxPolitician\":\"0\",\"auditStatus\":\"2\"}}', '500', '1', 'http://127.0.0.1:5378/,http://luckjourney.liuscraft.top/', '1');
+
 -- ----------------------------
 -- Table structure for type
 -- ----------------------------
