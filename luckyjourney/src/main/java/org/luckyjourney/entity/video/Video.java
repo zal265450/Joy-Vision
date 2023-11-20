@@ -3,6 +3,7 @@ package org.luckyjourney.entity.video;
 import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.luckyjourney.config.QiNiuConfig;
 import org.luckyjourney.entity.BaseEntity;
 import org.luckyjourney.entity.user.User;
 import org.luckyjourney.entity.vo.UserVO;
@@ -116,5 +117,16 @@ public class Video extends BaseEntity {
         if (ObjectUtils.isEmpty(this.labelNames)) return Collections.EMPTY_LIST;
         return Arrays.asList(this.labelNames.split(","));
     }
+
+    // 和get方法分开，避免发生歧义
+    public String getVideoUrl(){
+        return QiNiuConfig.CNAME + "/" + this.url;
+    }
+
+    public String getCoverUrl(){
+        return QiNiuConfig.CNAME + "/" + this.cover;
+    }
+
+
 }
 

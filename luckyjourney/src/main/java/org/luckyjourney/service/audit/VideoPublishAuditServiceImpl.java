@@ -90,7 +90,6 @@ public class VideoPublishAuditServiceImpl implements AuditService<VideoTask,Vide
     public VideoTask audit(VideoTask videoTask) {
         executor.submit(()->{
             final Video video = videoTask.getVideo();
-            final String url = QiNiuConfig.CNAME+"/"+video.getUrl();
             // 只有视频在新增或者公开时候才需要调用审核视频/封面
             // 新增 ： 必须审核
             // 修改: 新老状态不一致
@@ -110,8 +109,8 @@ public class VideoPublishAuditServiceImpl implements AuditService<VideoTask,Vide
             AuditResponse descAuditResponse = new AuditResponse(AuditStatus.SUCCESS,"正常");
 
             if (needAuditVideo){
-                  videoAuditResponse = videoAuditService.audit(url);
-                  coverAuditResponse = imageAuditService.audit(video.getCover());
+                  videoAuditResponse = videoAuditService.audit(video.getVideoUrl());
+                  coverAuditResponse = imageAuditService.audit(video.getCoverUrl());
                 interestPushService.pushSystemTypeStockIn(video);
                 interestPushService.pushSystemStockIn(video);
 
@@ -119,7 +118,7 @@ public class VideoPublishAuditServiceImpl implements AuditService<VideoTask,Vide
                 final String uuid = UUID.randomUUID().toString();
                 // 应该用本地缓存
                 LocalCache.put(uuid,true);
-                final String duration = FileUtil.getVideoDuration(url+"?uuid="+uuid);
+                final String duration = FileUtil.getVideoDuration(video.getVideoUrl()+"?uuid="+uuid);
                 video.setDuration(duration);
                 video.setVideoType(fileService.getFileInfo(video.getUrl()).mimeType);
 

@@ -1,6 +1,7 @@
 package org.luckyjourney.entity.vo;
 
 import lombok.Data;
+import org.luckyjourney.config.QiNiuConfig;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -24,4 +25,8 @@ public class UpdateUserVO {
 
     private Long defaultFavoritesId;
 
+
+    public String getAvatarUrl(){
+        return QiNiuConfig.CNAME + "/" + this.avatar;
+    }
 }

@@ -164,14 +164,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         for (Long followId : followIds) {
             map.put(followId,fans.contains(followId));
         }
-        String t = QiNiuConfig.CNAME+"/";
         final ArrayList<User> users = new ArrayList<>();
         final Map<Long, User> userMap = getBaseInfoUserToMap(map.keySet());
         for (Long followId : followIds) {
             final User user = userMap.get(followId);
             user.setEach(map.get(user.getId()));
             if (!ObjectUtils.isEmpty(user.getAvatar())){
-                user.setAvatar(t+user.getAvatar());
+                user.setAvatar(user.getAvatarUrl());
             }
 
             users.add(user);
@@ -197,13 +196,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             map.put(fansId,followIds.contains(fansId));
         }
         final Map<Long, User> userMap = getBaseInfoUserToMap(map.keySet());
-        String t = QiNiuConfig.CNAME+"/";
         final ArrayList<User> users = new ArrayList<>();
         // 遍历粉丝列表,保证有序性
         for (Long fansId : fansIds) {
             final User user = userMap.get(fansId);
             user.setEach(map.get(user.getId()));
-            user.setAvatar(t+user.getAvatar());
+            user.setAvatar(user.getAvatarUrl());
             users.add(user);
         }
 
@@ -327,8 +325,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                 throw new BaseException(audit.getMsg());
             }
         }
-        if (!ObjectUtils.isEmpty(user.getAvatar()) && !oldUser.getAvatar().equals(user.getAvatar())){
-            final AuditResponse audit = imageAuditService.audit(QiNiuConfig.CNAME+"/"+user.getAvatar());
+        if (!ObjectUtils.isEmpty(user.getAvatarUrl()) && !oldUser.getAvatarUrl().equals(user.getAvatarUrl())){
+            final AuditResponse audit = imageAuditService.audit(user.getAvatarUrl());
             if (audit.getAuditStatus() != AuditStatus.SUCCESS) {
                 throw new BaseException(audit.getMsg());
             }

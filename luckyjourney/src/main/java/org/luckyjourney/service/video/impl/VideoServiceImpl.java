@@ -104,12 +104,10 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
 
         // 私密则返回为空
         if (video.getOpen()) return new Video();
-
-        video.setUrl(QiNiuConfig.CNAME+"/"+video.getUrl());
+        setUserVoAndUrl(Collections.singleton(video));
         // 当前视频用户自己是否有收藏/点赞过等信息
         // 这里需要优化 如果这里开线程获取则系统g了(因为这里的场景不适合) -> 请求数很多
         // 正确做法: 视频存储在redis中，点赞收藏等行为异步放入DB, 定时任务扫描DB中不重要更新redis
-        video.setUser(userService.getInfo(video.getUserId()));
         video.setStart(videoStarService.starState(videoId, userId));
         video.setFavorites(favoritesService.favoritesState(videoId,userId));
         video.setFollow(followService.isFollows(video.getUserId(),userId));
@@ -129,8 +127,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
         if (videoId !=null){
             // url不能一致
             old = this.getOne(new LambdaQueryWrapper<Video>().eq(Video::getId, videoId).eq(Video::getUserId, userId));
-
-            if (!(QiNiuConfig.CNAME+"/"+old.getUrl()).equals(video.getUrl()) || !(old.getCover().equals(video.getCover()))){
+            if (!(old.getVideoUrl()).equals(video.getVideoUrl()) || !(old.getCoverUrl().equals(video.getCoverUrl()))){
                 throw new BaseException("不能更换视频源,只能修改视频信息");
             }
         }
@@ -167,7 +164,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
         }else {
             // 如果没设置封面,我们帮他设置一个封面
             if (ObjectUtils.isEmpty(video.getCover())){
-                String cover = QiNiuConfig.CNAME+"/"+video.getUrl()+"?vframe/jpg/offset/1";
+                String cover = video.getUrl()+"?vframe/jpg/offset/1";
                 video.setCover(cover);
             }
             video.setYv("YV"+UUID.randomUUID().toString().replace("-","").substring(8));
@@ -551,7 +548,6 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
 
     public void setUserVoAndUrl(Collection<Video> videos){
         if (!ObjectUtils.isEmpty(videos)){
-            String t = QiNiuConfig.CNAME+"/";
             final Set<Long> userIds = videos.stream().map(Video::getUserId).collect(Collectors.toSet());
             final Map<Long, User> userMap = userService.list(userIds).stream().collect(Collectors.toMap(User::getId, Function.identity()));
             for (Video video : videos) {
@@ -560,12 +556,13 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
                 userVO.setId(video.getUserId());
                 userVO.setNickName(user.getNickName());
                 if (!ObjectUtils.isEmpty(user.getAvatar())){
-                    userVO.setAvatar(t+user.getAvatar());
+                    user.setAvatar(user.getAvatarUrl());
                 }
                 userVO.setDescription(user.getDescription());
                 userVO.setSex(user.getSex());
                 video.setUser(userVO);
-                video.setUrl(t+video.getUrl());
+                video.setUrl(video.getVideoUrl());
+                video.setCover(video.getCoverUrl());
             }
         }
 

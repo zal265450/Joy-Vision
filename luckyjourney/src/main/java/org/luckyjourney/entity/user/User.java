@@ -10,6 +10,7 @@ import java.util.Set;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.luckyjourney.config.QiNiuConfig;
 import org.luckyjourney.entity.BaseEntity;
 
 import javax.validation.constraints.Email;
@@ -55,4 +56,7 @@ public class User extends BaseEntity {
     @TableField(exist = false)
     private Set<String> roleName;
 
+    public String getAvatarUrl(){
+        return QiNiuConfig.CNAME + "/" + this.avatar;
+    }
 }
