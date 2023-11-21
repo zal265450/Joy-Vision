@@ -4,6 +4,7 @@
 
 幸运日是一款短视频平台，拥有热度排行榜，热门视频，兴趣推送，关注推送，内容审核等功能
 
+👍 [教学地址](https://www.bilibili.com/video/BV18M411Z72D/)
 
 👍 [项目地址](http://luckjourney.liuscraft.top/#/)  项目地址防止刷流量,已关闭
 
