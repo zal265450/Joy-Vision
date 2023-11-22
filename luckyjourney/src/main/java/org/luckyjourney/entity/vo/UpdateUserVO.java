@@ -26,7 +26,5 @@ public class UpdateUserVO {
     private Long defaultFavoritesId;
 
 
-    public String getAvatarUrl(){
-        return QiNiuConfig.CNAME + "/" + this.avatar;
-    }
+
 }

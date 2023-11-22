@@ -48,7 +48,7 @@ public class User extends BaseEntity {
     private Long defaultFavoritesId;
 
     // 头像
-    private String avatar;
+    private Long avatar;
 
     @TableField(exist = false)
     private Boolean each;
@@ -56,7 +56,4 @@ public class User extends BaseEntity {
     @TableField(exist = false)
     private Set<String> roleName;
 
-    public String getAvatarUrl(){
-        return QiNiuConfig.CNAME + "/" + this.avatar;
-    }
 }

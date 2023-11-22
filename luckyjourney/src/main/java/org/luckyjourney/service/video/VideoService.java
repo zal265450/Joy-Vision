@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import org.luckyjourney.entity.video.VideoShare;
 import org.luckyjourney.entity.vo.BasePage;
 import org.luckyjourney.entity.vo.HotVideo;
+import org.luckyjourney.entity.vo.VideoVO;
 import org.luckyjourney.schedul.HotRank;
 
 import java.util.*;
@@ -34,7 +35,7 @@ public interface VideoService extends IService<Video> {
      * 修改无法更换视频源
      * @param video
      */
-    void publishVideo(Video video);
+    void publishVideo(VideoVO video);
 
     /**
      * 删除视频

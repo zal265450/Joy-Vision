@@ -15,7 +15,7 @@ public class UserVO{
 
     private String nickName;
 
-    private String avatar;
+    private Long avatar;
 
     private Boolean sex;
 

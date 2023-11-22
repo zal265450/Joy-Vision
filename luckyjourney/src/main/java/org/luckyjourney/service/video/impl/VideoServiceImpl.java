@@ -7,24 +7,26 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.qiniu.storage.model.FileInfo;
+import org.luckyjourney.config.LocalCache;
 import org.luckyjourney.config.QiNiuConfig;
 import org.luckyjourney.constant.AuditStatus;
 import org.luckyjourney.constant.RedisConstant;
+import org.luckyjourney.entity.File;
 import org.luckyjourney.entity.task.VideoTask;
 import org.luckyjourney.entity.user.User;
 import org.luckyjourney.entity.video.Type;
 import org.luckyjourney.entity.video.Video;
 import org.luckyjourney.entity.video.VideoShare;
 import org.luckyjourney.entity.video.VideoStar;
-import org.luckyjourney.entity.vo.BasePage;
-import org.luckyjourney.entity.vo.HotVideo;
-import org.luckyjourney.entity.vo.UserModel;
-import org.luckyjourney.entity.vo.UserVO;
+import org.luckyjourney.entity.vo.*;
 import org.luckyjourney.exception.BaseException;
 import org.luckyjourney.holder.UserHolder;
 import org.luckyjourney.mapper.video.VideoMapper;
 import org.luckyjourney.service.FeedService;
+import org.luckyjourney.service.FileService;
 import org.luckyjourney.service.InterestPushService;
+import org.luckyjourney.service.QiNiuFileService;
 import org.luckyjourney.service.audit.VideoPublishAuditServiceImpl;
 import org.luckyjourney.service.user.FavoritesService;
 import org.luckyjourney.service.user.FollowService;
@@ -33,7 +35,9 @@ import org.luckyjourney.service.video.TypeService;
 import org.luckyjourney.service.video.VideoService;
 import org.luckyjourney.service.video.VideoShareService;
 import org.luckyjourney.service.video.VideoStarService;
+import org.luckyjourney.util.FileUtil;
 import org.luckyjourney.util.RedisCacheUtil;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
@@ -41,6 +45,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 
+import javax.validation.constraints.NotBlank;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.function.Function;
@@ -56,6 +61,9 @@ import java.util.stream.Collectors;
  */
 @Service
 public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements VideoService {
+
+    @Autowired
+    private QiNiuFileService qiNiuFileService;
 
     @Autowired
     private TypeService typeService;
@@ -93,6 +101,9 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
     @Autowired
     private FeedService feedService;
 
+    @Autowired
+    private FileService fileService;
+
     final ObjectMapper objectMapper = new ObjectMapper();
 
 
@@ -117,31 +128,33 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
 
 
     @Override
-    public void publishVideo(Video video) {
+    public void publishVideo(VideoVO videoVO) {
 
         final Long userId = UserHolder.get();
 
-        Video old = new Video();
+        Video video = new Video();
         // 不允许修改视频
-        final Long videoId = video.getId();
+        final Long videoId = videoVO.getId();
         if (videoId !=null){
             // url不能一致
-            old = this.getOne(new LambdaQueryWrapper<Video>().eq(Video::getId, videoId).eq(Video::getUserId, userId));
-            if (!(old.getVideoUrl()).equals(video.getVideoUrl()) || !(old.getCoverUrl().equals(video.getCoverUrl()))){
+            video = this.getOne(new LambdaQueryWrapper<Video>().eq(Video::getId, videoId).eq(Video::getUserId, userId));
+            if (!(video.getVideoUrl()).equals(videoVO.getVideoUrl()) || !(video.getCoverUrl().equals(videoVO.getCoverUrl()))){
                 throw new BaseException("不能更换视频源,只能修改视频信息");
             }
         }
         // 判断对应分类是否存在
-        final Type type = typeService.getById(video.getTypeId());
+        final Type type = typeService.getById(videoVO.getTypeId());
         if (type == null){
             throw new BaseException("分类不存在");
         }
         // 校验标签最多不能超过5个
-        if (video.buildLabel().size() > 5){
+        if (videoVO.buildLabel().size() > 5){
             throw new BaseException("标签最多只能选择5个");
         }
 
-
+        final String url =videoVO.getUrl();
+        String cover = videoVO.getCover();
+        BeanUtils.copyProperties(videoVO,video);
         // 修改状态
         video.setAuditStatus(AuditStatus.PROCESS);
         video.setUserId(userId);
@@ -150,36 +163,40 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
 
         // 校验
         video.setYv(null);
-        video.setStartCount(null);
-        video.setShareCount(null);
-        video.setHistoryCount(null);
-        video.setFavoritesCount(null);
 
         if (!isAdd){
-            video.setDuration(null);
             video.setVideoType(null);
             video.setLabelNames(null);
             video.setUrl(null);
             video.setCover(null);
         }else {
+            video.setUrl(fileService.saveVideoFile(url,video.getUserId()));
+
             // 如果没设置封面,我们帮他设置一个封面
-            if (ObjectUtils.isEmpty(video.getCover())){
-                String cover = video.getUrl()+"?vframe/jpg/offset/1";
-                video.setCover(cover);
+            if (ObjectUtils.isEmpty(cover)){
+                cover = url+"?vframe/jpg/offset/1";
             }
+            video.setCover(fileService.savePhotoFile(cover,video.getUserId()));
+
             video.setYv("YV"+UUID.randomUUID().toString().replace("-","").substring(8));
         }
 
         this.saveOrUpdate(video);
 
         final VideoTask videoTask = new VideoTask();
-        videoTask.setOldVideo(old);
-        videoTask.setVideo(video);
+        videoTask.setOldVideo(video);
+        videoVO.setGmtCreated(video.getGmtCreated());
+        videoVO.setId(video.getId());
+        videoTask.setVideo(videoVO);
         videoTask.setIsAdd(isAdd);
-        videoTask.setOldState(isAdd ? video.getOpen() : old.getOpen());
-        videoTask.setNewState(video.getOpen());
+        videoTask.setOldState(isAdd ? videoVO.getOpen() : video.getOpen());
+        videoTask.setNewState(videoVO.getOpen());
         videoPublishAuditService.audit(videoTask,false);
     }
+
+
+
+
 
     @Override
     public void deleteVideo(Long id) {
@@ -455,7 +472,9 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
             });
             return null;
         });
-
+        if (ObjectUtils.isEmpty(hotVideoIds)) {
+            return Collections.EMPTY_LIST;
+        }
         final ArrayList<Long> videoIds = new ArrayList<>();
         // 会返回结果有null，做下校验
         for (Object videoId : hotVideoIds) {
@@ -548,21 +567,26 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
 
     public void setUserVoAndUrl(Collection<Video> videos){
         if (!ObjectUtils.isEmpty(videos)){
-            final Set<Long> userIds = videos.stream().map(Video::getUserId).collect(Collectors.toSet());
+            Set<Long> userIds = new HashSet<>();
+            final ArrayList<Long> fileIds = new ArrayList<>();
+            for (Video video : videos) {
+                userIds.add(video.getUserId());
+                fileIds.add(video.getUrl());
+                fileIds.add(video.getCover());
+            }
+            final Map<Long, File> fileMap = fileService.listByIds(fileIds).stream().collect(Collectors.toMap(File::getId, Function.identity()));
             final Map<Long, User> userMap = userService.list(userIds).stream().collect(Collectors.toMap(User::getId, Function.identity()));
             for (Video video : videos) {
                 final UserVO userVO = new UserVO();
                 final User user = userMap.get(video.getUserId());
                 userVO.setId(video.getUserId());
                 userVO.setNickName(user.getNickName());
-                if (!ObjectUtils.isEmpty(user.getAvatar())){
-                    user.setAvatar(user.getAvatarUrl());
-                }
                 userVO.setDescription(user.getDescription());
                 userVO.setSex(user.getSex());
                 video.setUser(userVO);
-                video.setUrl(video.getVideoUrl());
-                video.setCover(video.getCoverUrl());
+                final File file = fileMap.get(video.getUrl());
+                video.setDescription(file.getDuration());
+                video.setVideoType(file.getType());
             }
         }
 
