@@ -154,7 +154,7 @@ const pushVideo = (data) => {
     }
     
 }
-const uploadVideo = () => {
+const uploadVideo = async () => {
     if(!videoFileRef.value.files[0]) return;
     let curFile = videoFileRef.value.files[0]
     const curUploadInfo = {
@@ -173,7 +173,7 @@ const uploadVideo = () => {
     if(uploadList.value.length==1) {
         currentVideoIndex.value = 0
     }
-    curUploadInfo.subscription = apiVideoUpload(curFile, {
+    curUploadInfo.subscription = await apiVideoUpload(curFile, {
         next: (e) => {
             curUploadInfo.progress = e.total.percent
             uploadList.value = Object.assign([], uploadList.value)
