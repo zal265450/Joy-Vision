@@ -1,6 +1,7 @@
 package org.luckyjourney.service.audit;
 
 import com.github.benmanes.caffeine.cache.Cache;
+import org.luckyjourney.config.LocalCache;
 import org.luckyjourney.config.QiNiuConfig;
 import org.luckyjourney.constant.AuditStatus;
 import org.luckyjourney.entity.response.AuditResponse;
@@ -16,6 +17,7 @@ import org.luckyjourney.service.user.FollowService;
 import org.luckyjourney.util.FileUtil;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 
@@ -33,7 +35,8 @@ import java.util.function.Supplier;
  * @CreateTime: 2023-10-29 14:40
  */
 @Service
-public class VideoPublishAuditServiceImpl implements AuditService<VideoTask,VideoTask> , InitializingBean {
+public class VideoPublishAuditServiceImpl implements AuditService<VideoTask,VideoTask> , InitializingBean,BeanPostProcessor {
+
     @Autowired
     private FeedService feedService;
 
@@ -58,8 +61,7 @@ public class VideoPublishAuditServiceImpl implements AuditService<VideoTask,Vide
     @Autowired
     private FollowService followService;
 
-    @Autowired
-    private Cache cache;
+
 
     private int maximumPoolSize = 8;
 
@@ -115,7 +117,8 @@ public class VideoPublishAuditServiceImpl implements AuditService<VideoTask,Vide
 
                 // 加上uuid
                 final String uuid = UUID.randomUUID().toString();
-                cache.put(uuid,true);
+                // 应该用本地缓存
+                LocalCache.put(uuid,true);
                 final String duration = FileUtil.getVideoDuration(url+"?uuid="+uuid);
                 video.setDuration(duration);
                 video.setVideoType(fileService.getFileInfo(video.getUrl()).mimeType);

@@ -24,10 +24,10 @@ public interface VideoService extends IService<Video> {
     /**
      * 获取视频信息
      * @param id
-     * @param userId 当前用户id 当前视频和用户之间有什么关系
+     * @param userId 当前用户id
      * @return
      */
-    Video getVideoById(Long id,Long userId)  ;
+    Video getVideoById(Long id,Long userId);
 
     /**
      * 发布/修改视频

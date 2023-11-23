@@ -3,6 +3,7 @@ package org.luckyjourney.schedul;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.luckyjourney.constant.AuditStatus;
 import org.luckyjourney.constant.RedisConstant;
 import org.luckyjourney.entity.Setting;
 import org.luckyjourney.entity.video.Video;
@@ -60,7 +61,8 @@ public class HotRank {
         long id = 0;
         List<Video> videos = videoService.list(new LambdaQueryWrapper<Video>()
                 .select(Video::getId, Video::getShareCount, Video::getHistoryCount, Video::getStartCount, Video::getFavoritesCount,
-                        Video::getGmtCreated, Video::getTitle).gt(Video::getId, id).eq(Video::getOpen, 0).last("limit " + limit));
+                        Video::getGmtCreated, Video::getTitle).gt(Video::getId, id)
+                .eq(Video::getAuditStatus, AuditStatus.SUCCESS).eq(Video::getOpen, 0).last("limit " + limit));
 
         while (!ObjectUtils.isEmpty(videos)) {
             for (Video video : videos) {
@@ -73,8 +75,8 @@ public class HotRank {
                 // 随机获取6位数,用于去重
                 final double v = weightRandom();
                 final double hot = hot(shareCount + historyCount + startCount + favoritesCount + v, TimeUnit.MILLISECONDS.toDays(t));
-
                 final HotVideo hotVideo = new HotVideo(hot, video.getId(), video.getTitle());
+
                 topK.add(hotVideo);
             }
             id = videos.get(videos.size() - 1).getId();
@@ -83,10 +85,12 @@ public class HotRank {
         }
         final byte[] key = RedisConstant.HOT_RANK.getBytes();
         final List<HotVideo> hotVideos = topK.get();
+        final Double minHot = hotVideos.get(0).getHot();
         redisTemplate.executePipelined((RedisCallback<Object>) connection -> {
             for (HotVideo hotVideo : hotVideos) {
                 final Double hot = hotVideo.getHot();
                 try {
+                    hotVideo.setHot(null);
                     // 不这样写铁报错！序列化问题
                     connection.zAdd(key, hot, jackson2JsonRedisSerializer.serialize(om.writeValueAsString(hotVideo)));
                 } catch (JsonProcessingException e) {
@@ -95,7 +99,7 @@ public class HotRank {
             }
             return null;
         });
-        redisTemplate.opsForZSet().removeRangeByScore(RedisConstant.HOT_RANK,hotVideos.get(0).getHot(),0);
+        redisTemplate.opsForZSet().removeRangeByScore(RedisConstant.HOT_RANK, minHot,0);
 
 
     }
@@ -122,7 +126,7 @@ public class HotRank {
                 long t = date.getTime() - video.getGmtCreated().getTime();
                 final double hot = hot(shareCount + historyCount + startCount + favoritesCount, TimeUnit.MILLISECONDS.toDays(t));
 
-                // 大于1W热度说明是热门视频
+                // 大于X热度说明是热门视频
                 if (hot > hotLimit) {
                     hotVideos.add(video.getId());
                 }
@@ -131,9 +135,12 @@ public class HotRank {
             id = videos.get(videos.size() - 1).getId();
             videos = videoService.selectNDaysAgeVideo(id, 3, limit);
             // RedisConstant.HOT_VIDEO + 今日日期 作为key  达到元素过期效果
-            String key = RedisConstant.HOT_VIDEO + today;
-            redisTemplate.opsForSet().add(key, hotVideos.toArray(new Object[hotVideos.size()]));
-            redisTemplate.expire(key, 3, TimeUnit.DAYS);
+            if (!ObjectUtils.isEmpty(hotVideos)){
+                String key = RedisConstant.HOT_VIDEO + today;
+                redisTemplate.opsForSet().add(key, hotVideos.toArray(new Object[hotVideos.size()]));
+                redisTemplate.expire(key, 3, TimeUnit.DAYS);
+            }
+
         }
 
 
@@ -144,6 +151,7 @@ public class HotRank {
     public static double hot(double weight, double t) {
         return weight * Math.exp(-a * t);
     }
+
 
     public double weightRandom() {
         int i = (int) ((Math.random() * 9 + 1) * 100000);

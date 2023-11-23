@@ -42,7 +42,7 @@ public interface InterestPushService {
     void deleteSystemStockIn(Video video);
 
     /**
-     * 用户初始化模型
+     * 用户初始化模型 -> 订阅分类
      * @param userId 用户id
      * @param labels 标签名
      */
@@ -59,7 +59,7 @@ public interface InterestPushService {
     void updateUserModel(UserModel userModel);
 
     /**
-     * 用于给用户推送视频
+     * 用于给用户推送视频 -> 兴趣推送
      * 推送 X 视频,包含一条和性别有关
      * @param user 传id和sex
      * @return videoIds

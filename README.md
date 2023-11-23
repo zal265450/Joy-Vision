@@ -4,8 +4,9 @@
 
 幸运日是一款短视频平台，拥有热度排行榜，热门视频，兴趣推送，关注推送，内容审核等功能
 
+👍 [教学地址](https://www.bilibili.com/video/BV18M411Z72D/)
 
-👍 [项目地址](http://luckjourney.liuscraft.top/#/)
+👍 [项目地址](http://luckjourney.liuscraft.top/#/)  项目地址防止刷流量,已关闭
 
 
  **注意：该项目技术选型，方案实现，是基于当前项目体量以及实际场景选择，避免过度设计，增加服务器成本，开发成本，运营成本。优化地方下面会提出** 
@@ -33,7 +34,7 @@ Jdk1.8 + SpringBoot + MyBatis + MySql + Redis + 七牛云存储 + 七牛云审�
 
  **后端** 
 
-1.将docs中sql文件导入  **注: 如果导入全部数据的sql文件请联系我** 
+1.将docs中sql文件导入 
 
 2.配置参数： MySql数据源,redis数据源,邮箱参数,七牛云参数,七牛云CNAME
 

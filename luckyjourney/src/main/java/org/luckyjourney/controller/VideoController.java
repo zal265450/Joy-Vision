@@ -149,7 +149,7 @@ public class VideoController {
     }
 
     /**
-     * 初始化关注流
+     * 初始化收件箱
      * @return
      */
     @PostMapping("/init/follow/feed")
