@@ -31,11 +31,15 @@ const nextVideo = (idnex) =>{
     }
 }
 const getVideo =()=>{
-    apiGetFollowVideo().then(({ data }) => {
+    let time = Date.now()
+    if(videoList.value.length>0) {
+        time = new Date(videoList.value[videoList.value.length-1].gmtCreated).getTime()
+    }
+    apiGetFollowVideo(time).then(({ data }) => {
         if (!data.state) {
             return;
         }
-        videoList.value = data.data
+        videoList.value = videoList.value.concat(data.data)
     })
 }
 onMounted(() => {

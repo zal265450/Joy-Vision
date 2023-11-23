@@ -6,7 +6,7 @@
                 <v-card elevation="5">
                     <v-list :density="'compact'" lines="one" height="350px" style="background-color: #323443;">
                         <v-list-subheader>热度视频 排行榜</v-list-subheader>
-                    <v-list-item v-for="(rank, n) in rankList" :title="rank.title" :to="`/?play=${rank.videoId}`" :active="false">
+                    <v-list-item v-for="(rank, n) in rankList" :title="rank.title" :to="`/?play=${rank.videoId}&n=${n}`" :active="false">
                         <template #prepend>
                             <v-icon size="30">{{ `mdi-numeric-${n+1}` }}</v-icon>
                         </template>

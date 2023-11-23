@@ -95,7 +95,7 @@ const uploadAvatar = () => {
             }
         }, complete: (e) => {
             uploading.value = -1
-            currentVideo.cover = e.key
+            currentVideo.cover = `http://oss.luckjourney.liuscraft.top/${e.key}`
             snackbar.value = {
                 text: "上传完成",
                 show: true,

@@ -96,6 +96,7 @@
 </template>
 <script setup>
 import { computed, onMounted, ref } from 'vue';
+import { apiGetCdnAuthFile } from '../../../apis/user/auth';
 import { apiGetAuditQueueState, apiVideoUpload } from '../../../apis/video';
 import VideoEdit from './edit.vue';
 const snackbar = ref({
@@ -153,7 +154,7 @@ const pushVideo = (data) => {
     }
     
 }
-const uploadVideo = () => {
+const uploadVideo = async () => {
     if(!videoFileRef.value.files[0]) return;
     let curFile = videoFileRef.value.files[0]
     const curUploadInfo = {
@@ -172,7 +173,7 @@ const uploadVideo = () => {
     if(uploadList.value.length==1) {
         currentVideoIndex.value = 0
     }
-    curUploadInfo.subscription = apiVideoUpload(curFile, {
+    curUploadInfo.subscription = await apiVideoUpload(curFile, {
         next: (e) => {
             curUploadInfo.progress = e.total.percent
             uploadList.value = Object.assign([], uploadList.value)
@@ -185,7 +186,7 @@ const uploadVideo = () => {
             curUploadInfo.result = e
             curUploadInfo.status = 1
             curUploadInfo.url = e.key
-            curUploadInfo.cover = `http://oss.luckjourney.liuscraft.top/${e.key}?vframe/jpg/offset/1`
+            curUploadInfo.cover = apiGetCdnAuthFile(`http://oss.luckjourney.liuscraft.top/${e.key}?vframe/jpg/offset/1`)
             uploadList.value = Object.assign([], uploadList.value)
         }
     })

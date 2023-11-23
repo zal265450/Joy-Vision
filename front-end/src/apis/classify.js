@@ -25,3 +25,10 @@ export const apiClassifySubscribe = (id)=>{
     console.log(id)
     return request.post(`/customer/subscribe?types=${id}`)
 }
+/**
+ * 未订阅的分类
+ * @returns 
+ */
+export const apiGetNoSubscribe =()=>{
+    return request.get(`/customer/noSubscribe`)
+}

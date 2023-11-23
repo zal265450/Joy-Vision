@@ -5,11 +5,12 @@
                 <v-list-item class="pa-0" max-height="110px" style="overflow: hidden;">
                     <template v-slot:prepend>
                         <v-img width="200" height="100" class="mr-4" :src="apiGetCdnAuthFile(item.cover)" cover @click="playVideo(item)">
-                            <v-chip class="ma-2" color="warning" :variant="'flat'" v-if="item.auditStatus == 2">{{ item.msg
-                            }}</v-chip>
-                            <v-chip class="ma-2" color="warning" :variant="'flat'"
-                                v-else-if="item.auditStatus > 0">审核中</v-chip>
+                            
                         </v-img>
+                        <v-chip class="ma-2" color="warning" :variant="'flat'" v-if="item.auditStatus == 2">{{ item.msg
+                            }}</v-chip>
+                            <v-chip style="position: absolute; left: 0;top: 0;" class="ma-2" color="warning" :variant="'flat'"
+                                v-else-if="item.auditStatus > 0">审核中</v-chip>
                     </template>
 
                     <v-list-item-title class="font-weight-bold" v-text="item.title"></v-list-item-title>
@@ -75,7 +76,7 @@
     </v-card>
 </template>
 <script setup>
-import { onMounted, ref, watch } from 'vue';
+import { onMounted, onUpdated, ref, watch } from 'vue';
 import { apiGetCdnAuthFile } from '../../../apis/user/auth';
 import { apiRemoveVideo } from '../../../apis/user/videoManger';
 import { apiGetVideoByUser } from '../../../apis/video';
@@ -103,6 +104,9 @@ const getVideo = () => {
         pageInfo.value.pages = data.data.pages
     })
 }
+onUpdated(()=>{
+    getVideo()
+})
 onMounted(() => {
     getVideo()
 })
