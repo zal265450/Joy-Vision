@@ -10,6 +10,7 @@ import java.util.Set;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.luckyjourney.config.QiNiuConfig;
 import org.luckyjourney.entity.BaseEntity;
 
 import javax.validation.constraints.Email;
@@ -47,7 +48,7 @@ public class User extends BaseEntity {
     private Long defaultFavoritesId;
 
     // 头像
-    private String avatar;
+    private Long avatar;
 
     @TableField(exist = false)
     private Boolean each;

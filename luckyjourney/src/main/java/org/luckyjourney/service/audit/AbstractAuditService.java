@@ -2,6 +2,8 @@ package org.luckyjourney.service.audit;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.benmanes.caffeine.cache.Cache;
+import org.luckyjourney.config.LocalCache;
 import org.luckyjourney.config.QiNiuConfig;
 import org.luckyjourney.constant.AuditMsgMap;
 import org.luckyjourney.constant.AuditStatus;
@@ -15,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * @description:  统一封装审核逻辑，并留给子类进行编排或者调用普通逻辑
@@ -29,6 +32,7 @@ public abstract class AbstractAuditService<T,R> implements AuditService<T,R> {
 
     @Autowired
     protected SettingService settingService;
+
 
     protected ObjectMapper objectMapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
@@ -45,7 +49,7 @@ public abstract class AbstractAuditService<T,R> implements AuditService<T,R> {
         // 遍历的是通过,人工,失败的审核规则,我当前没有办法知道是什么状态
         for (ScoreJson scoreJson : scoreJsonList) {
             audit = audit(scoreJson, bodyJson);
-            // 如果为true,说明违规，提前返回
+            // 如果为true,说明命中得分，提前返回
             if (audit.getFlag()){
                 audit.setAuditStatus(scoreJson.getAuditStatus());
                 return audit;
@@ -83,11 +87,16 @@ public abstract class AbstractAuditService<T,R> implements AuditService<T,R> {
                         info = AuditMsgMap.getInfo(detail.getLabel());
                         auditResponse.setMsg(info);
                         auditResponse.setOffset(type.getOffset());
-                        auditResponse.setFlag(true);
                     }
+                    auditResponse.setFlag(true);
                 }
+
             }
         }
+        if (auditResponse.getFlag() && ObjectUtils.isEmpty(auditResponse.getMsg())){
+            auditResponse.setMsg("该视频违法幸运日平台规则");
+        }
+
         return auditResponse;
     }
 
@@ -173,4 +182,22 @@ public abstract class AbstractAuditService<T,R> implements AuditService<T,R> {
         return setting.getAuditOpen();
     }
 
+
+
+    protected String appendUUID(String url){
+
+        final Setting setting = settingService.list(null).get(0);
+
+        if (setting.getAuth()) {
+            final String uuid = UUID.randomUUID().toString();
+            LocalCache.put(uuid,true);
+            if (url.contains("?")){
+                url = url+"&uuid="+uuid;
+            }else {
+                url = url+"?uuid="+uuid;
+            }
+            return url;
+        }
+        return url;
+    }
 }

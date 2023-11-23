@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.luckyjourney.config.QiNiuConfig;
 import org.luckyjourney.constant.AuditStatus;
 import org.luckyjourney.constant.RedisConstant;
+import org.luckyjourney.entity.File;
 import org.luckyjourney.entity.response.AuditResponse;
 import org.luckyjourney.entity.user.Favorites;
 import org.luckyjourney.entity.user.Follow;
@@ -38,7 +39,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
 
-import javax.annotation.Resource;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -69,8 +69,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     private RedisCacheUtil redisCacheUtil;
 
     @Autowired
-    private RedisTemplate redisTemplate;
-
+    private FileService fileService;
 
     @Autowired
     private InterestPushService interestPushService;
@@ -106,7 +105,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         user.setEmail(registerVO.getEmail());
         user.setDescription("这个人很懒...");
         user.setPassword(registerVO.getPassword());
-        user.setAvatar("");
         save(user);
 
         // 创建默认收藏夹
@@ -138,11 +136,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         final long fansCount = followService.getFansCount(userId);
         userVO.setFollow(followCount);
         userVO.setFans(fansCount);
-        if (!ObjectUtils.isEmpty(userVO.getAvatar())){
-            if (!ObjectUtils.isEmpty(user.getAvatar())){
-                userVO.setAvatar(user.getAvatar());
-            }
-        }
         return userVO;
     }
 
@@ -166,15 +159,15 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         for (Long followId : followIds) {
             map.put(followId,fans.contains(followId));
         }
+
+        // 获取头像
+
         final ArrayList<User> users = new ArrayList<>();
         final Map<Long, User> userMap = getBaseInfoUserToMap(map.keySet());
+        final List<Long> avatarIds = userMap.values().stream().map(User::getAvatar).collect(Collectors.toList());
         for (Long followId : followIds) {
             final User user = userMap.get(followId);
             user.setEach(map.get(user.getId()));
-            if (!ObjectUtils.isEmpty(user.getAvatar())){
-                user.setAvatar(user.getAvatar());
-            }
-
             users.add(user);
         }
         page.setRecords(users);
@@ -203,7 +196,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         for (Long fansId : fansIds) {
             final User user = userMap.get(fansId);
             user.setEach(map.get(user.getId()));
-            user.setAvatar(user.getAvatar());
             users.add(user);
         }
 
@@ -215,7 +207,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     private Map<Long,User> getBaseInfoUserToMap(Collection<Long> userIds){
         List<User> users = new ArrayList<>();
         if (!ObjectUtils.isEmpty(userIds)){
-            users = list(new LambdaQueryWrapper<User>().in(User::getId, userIds).select(User::getId, User::getNickName, User::getDescription
+            users = list(new LambdaQueryWrapper<User>().in(User::getId, userIds)
+                    .select(User::getId, User::getNickName, User::getDescription
                     , User::getSex, User::getAvatar));
         }
         return users.stream().collect(Collectors.toMap(User::getId,Function.identity()));
@@ -262,8 +255,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Override
     public Collection<Type> listSubscribeType(Long userId) {
+        if (userId == null){
+            return Collections.EMPTY_SET;
+        }
         final List<Long> typeIds = userSubscribeService.list(new LambdaQueryWrapper<UserSubscribe>().eq(UserSubscribe::getUserId, userId))
                 .stream().map(UserSubscribe::getTypeId).collect(Collectors.toList());
+        if (ObjectUtils.isEmpty(typeIds)) return Collections.EMPTY_LIST;
         final List<Type> types = typeService.list(new LambdaQueryWrapper<Type>()
                 .in(Type::getId, typeIds).select(Type::getId, Type::getName, Type::getIcon));
         return types;
@@ -301,8 +298,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         update(user,new UpdateWrapper<User>().lambda().set(User::getPassword,findPWVO.getNewPassword()).eq(User::getEmail,findPWVO.getEmail()));
         return true;
     }
-    @Resource
-    private FileService fileService;
 
     @Override
     public void updateUser(UpdateUserVO user) {
@@ -326,11 +321,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             }
         }
         if (!ObjectUtils.isEmpty(user.getAvatar()) && !oldUser.getAvatar().equals(user.getAvatar())){
-            final AuditResponse audit = imageAuditService.audit(fileService.getOssFileAuthUrl(user.getAvatar()));
+            final AuditResponse audit = imageAuditService.audit(user.getAvatar());
             if (audit.getAuditStatus() != AuditStatus.SUCCESS) {
                 throw new BaseException(audit.getMsg());
             }
-            oldUser.setAvatar(user.getAvatar());
+
+            oldUser.setAvatar(fileService.savePhotoFile(user.getAvatar(),userId));
         }
 
         if (!ObjectUtils.isEmpty(user.getDefaultFavoritesId())){
@@ -369,6 +365,24 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if (userId!=null){
             redisCacheUtil.del(RedisConstant.USER_SEARCH_HISTORY+userId);
         }
+    }
+
+    @Override
+    public Collection<Type> listNoSubscribeType(Long userId) {
+
+        // 获取用户订阅的分类
+        final Set<Long> set = listSubscribeType(userId).stream().map(Type::getId).collect(Collectors.toSet());
+        // 获取所有分类
+        final List<Type> allType = typeService.list(null);
+
+        final ArrayList<Type> types = new ArrayList<>();
+        for (Type type : allType) {
+            if (!set.contains(type.getId())) {
+                types.add(type);
+            }
+        }
+
+        return types;
     }
 
 

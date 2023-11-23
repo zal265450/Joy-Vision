@@ -53,6 +53,7 @@ public class VideoAuditService extends AbstractAuditService<String,AuditResponse
         if (!isNeedAudit()) {
             return auditResponse;
         }
+        url = appendUUID(url);
 
         String body = videoBody.replace("${url}", url);
         String method = "POST";

@@ -71,6 +71,4 @@ public class R<T>{
         this.setData(result);
         return this;
     }
-
-
 }

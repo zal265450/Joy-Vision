@@ -98,6 +98,7 @@ public class PermissionServiceImpl extends ServiceImpl<PermissionMapper, Permiss
 
         // 保存用户权限
         AuthorityUtils.setAuthority(uId,set);
+
         MenuKey menuKey1 = new MenuKey();
         MenuKey menuKey2 = new MenuKey();
         menuKey1.setTitle("首页");

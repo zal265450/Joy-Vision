@@ -12,7 +12,9 @@ import java.net.URL;
  */
 public class FileUtil {
 
-
+    public static String getFormat(String fileName){
+        return fileName.substring(fileName.lastIndexOf(".") + 1);
+    }
     /**
      * 获取视频时长
      * @param fileUrl 网络url

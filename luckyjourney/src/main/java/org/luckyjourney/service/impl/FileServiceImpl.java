@@ -1,112 +1,71 @@
 package org.luckyjourney.service.impl;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.google.gson.Gson;
-import com.qiniu.common.QiniuException;
-import com.qiniu.http.Response;
-import com.qiniu.storage.BucketManager;
-import com.qiniu.storage.Configuration;
-import com.qiniu.storage.Region;
-import com.qiniu.storage.UploadManager;
-import com.qiniu.storage.model.DefaultPutRet;
 import com.qiniu.storage.model.FileInfo;
-import com.qiniu.util.Auth;
+import org.checkerframework.checker.units.qual.A;
+import org.luckyjourney.config.LocalCache;
 import org.luckyjourney.config.QiNiuConfig;
+import org.luckyjourney.entity.File;
+import org.luckyjourney.entity.video.Video;
+import org.luckyjourney.mapper.FileMapper;
 import org.luckyjourney.service.FileService;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import org.luckyjourney.service.QiNiuFileService;
+import org.luckyjourney.util.FileUtil;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ObjectUtils;
 
-import java.io.File;
-import java.util.Map;
 import java.util.UUID;
 
-
+/**
+ * <p>
+ *  服务实现类
+ * </p>
+ *
+ * @author xhy
+ * @since 2023-11-20
+ */
 @Service
-public class FileServiceImpl implements FileService {
+public class FileServiceImpl extends ServiceImpl<FileMapper, File> implements FileService {
 
     @Autowired
-    private QiNiuConfig qiNiuConfig;
-
-    @Autowired
-    private Cache cache;
+    private QiNiuFileService qiNiuFileService;
 
     @Override
-    public String getToken() {
-        return qiNiuConfig.videoUploadToken();
-    }
-
-    @Override
-    public String uploadFile(File file) {
-        Configuration cfg = new Configuration(Region.region2());
-        UploadManager uploadManager = new UploadManager(cfg);
+    public Long saveVideoFile(String url,Long userId) {
+        final String uuid = UUID.randomUUID().toString();
+        final File videoFile = new File();
         try {
-
-            Response response = uploadManager.put(file,null,qiNiuConfig.videoUploadToken());
-            //解析上传成功的结果
-            DefaultPutRet putRet = new Gson().fromJson(response.bodyString(), DefaultPutRet.class);
-           return putRet.key;
-        } catch (QiniuException ex) {
-            ex.printStackTrace();
-            if (ex.response != null) {
-                System.err.println(ex.response);
-
-                try {
-                    String body = ex.response.toString();
-                    System.err.println(body);
-                } catch (Exception ignored) {
-                }
-            }
+            final FileInfo videoFileInfo = qiNiuFileService.getFileInfo(url);
+            LocalCache.put(uuid,true);
+            final String duration = FileUtil.getVideoDuration(QiNiuConfig.CNAME+"/"+url+"?uuid="+uuid);
+            videoFile.setFileKey(url);
+            videoFile.setFormat(videoFileInfo.mimeType);
+            videoFile.setDuration(duration);
+            videoFile.setType("视频");
+            videoFile.setUserId(userId);
+            videoFile.setSize(videoFileInfo.fsize);
+            save(videoFile);
+        }finally {
+            LocalCache.rem(uuid);
         }
-        return null;
+
+        return videoFile.getId();
     }
+
+
 
     @Override
-    @Async
-    public void deleteFile(String url) {
-        Configuration cfg = new Configuration(Region.region0());
-        String bucket = qiNiuConfig.getBucketName();
-        final Auth auth = qiNiuConfig.buildAuth();
-        String key = url;
-        BucketManager bucketManager = new BucketManager(auth, cfg);
-        try {
-            bucketManager.delete(bucket, key);
-        } catch (QiniuException ex) {
-            //如果遇到异常，说明删除失败
-            System.err.println(ex.code());
-            System.err.println(ex.response.toString());
-        }
+    public Long savePhotoFile(String url, Long userId) {
+        FileInfo videoFileInfo = qiNiuFileService.getFileInfo(url);
 
+        final File videoFile = new File();
+        videoFile.setFileKey(url);
+        videoFile.setFormat(ObjectUtils.isEmpty(videoFileInfo.mimeType) ? "image/jpeg" : videoFileInfo.mimeType);
+        videoFile.setType("图片");
+        videoFile.setUserId(userId);
+        videoFile.setSize(videoFileInfo.fsize);
+        save(videoFile);
+        return videoFile.getId();
     }
-
-    @Override
-    public FileInfo getFileInfo(String url) {
-        Configuration cfg = new Configuration(Region.region0());
-//...其他参数参考类注释
-        final Auth auth = qiNiuConfig.buildAuth();
-        final String bucket = qiNiuConfig.getBucketName();
-
-        BucketManager bucketManager = new BucketManager(auth, cfg);
-        try {
-            FileInfo fileInfo = bucketManager.stat(bucket, url);
-            return fileInfo;
-        } catch (QiniuException ex) {
-            System.err.println(ex.response.toString());
-        }
-        return new FileInfo();
-    }
-
-    @Override
-    public String getOssFileAuthUrl(String key) {
-        final String s = UUID.randomUUID().toString();
-        cache.put(s,true);
-
-        if (key.contains("?")){
-            key = key+"&uuid="+s;
-        }else {
-            key = key+"?uuid="+s;
-        }
-        return QiNiuConfig.CNAME.concat(key);
-    }
-
 }

@@ -21,4 +21,8 @@ public class LocalCache {
         if (key == null) return false;
         return cache.containsKey(key);
     }
+
+    public static void rem(String key) {
+        cache.remove(key);
+    }
 }

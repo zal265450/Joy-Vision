@@ -47,6 +47,8 @@ public class ImageAuditService extends AbstractAuditService<String,AuditResponse
             return auditResponse;
         }
 
+        url = appendUUID(url);
+
         String body = imageBody.replace("${url}", url);
         String method = "POST";
         // 获取token
@@ -66,9 +68,12 @@ public class ImageAuditService extends AbstractAuditService<String,AuditResponse
             final ResultJson resultJson = new ResultJson();
             resultJson.setResult(result);
             bodyJson.setResult(resultJson);
+
             final Setting setting = settingService.getById(1);
             final SettingScoreJson settingScoreRule = objectMapper.readValue(setting.getAuditPolicy(), SettingScoreJson.class);
+
             final List<ScoreJson> auditRule = Arrays.asList(settingScoreRule.getManualScore(), settingScoreRule.getPassScore(), settingScoreRule.getSuccessScore());
+            // 审核
             auditResponse = audit(auditRule, bodyJson);
             return auditResponse;
         } catch (Exception e) {

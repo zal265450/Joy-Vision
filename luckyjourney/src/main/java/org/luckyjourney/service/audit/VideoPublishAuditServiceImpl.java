@@ -1,32 +1,29 @@
 package org.luckyjourney.service.audit;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import org.luckyjourney.config.QiNiuConfig;
+import org.luckyjourney.config.LocalCache;
 import org.luckyjourney.constant.AuditStatus;
 import org.luckyjourney.entity.response.AuditResponse;
-import org.luckyjourney.entity.response.VideoAuditResponse;
 import org.luckyjourney.entity.task.VideoTask;
 import org.luckyjourney.entity.video.Video;
+import org.luckyjourney.entity.vo.VideoVO;
 import org.luckyjourney.mapper.video.VideoMapper;
 import org.luckyjourney.service.FeedService;
-import org.luckyjourney.service.FileService;
+import org.luckyjourney.service.QiNiuFileService;
 import org.luckyjourney.service.InterestPushService;
-import org.luckyjourney.service.audit.AbstractAuditService;
 import org.luckyjourney.service.user.FollowService;
 import org.luckyjourney.util.FileUtil;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 
-import javax.annotation.Resource;
-import javax.validation.constraints.NotBlank;
 import java.util.Collection;
 import java.util.UUID;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Supplier;
 
 /**
  * @description: 视频发布审核
@@ -34,7 +31,8 @@ import java.util.function.Supplier;
  * @CreateTime: 2023-10-29 14:40
  */
 @Service
-public class VideoPublishAuditServiceImpl implements AuditService<VideoTask,VideoTask> , InitializingBean {
+public class VideoPublishAuditServiceImpl implements AuditService<VideoTask,VideoTask> , InitializingBean,BeanPostProcessor {
+
     @Autowired
     private FeedService feedService;
 
@@ -45,7 +43,7 @@ public class VideoPublishAuditServiceImpl implements AuditService<VideoTask,Vide
     private InterestPushService interestPushService;
 
     @Autowired
-    private FileService fileService;
+    private QiNiuFileService qiNiuFileService;
 
     @Autowired
     private TextAuditService textAuditService;
@@ -59,8 +57,7 @@ public class VideoPublishAuditServiceImpl implements AuditService<VideoTask,Vide
     @Autowired
     private FollowService followService;
 
-    @Autowired
-    private Cache cache;
+
 
     private int maximumPoolSize = 8;
 
@@ -88,8 +85,9 @@ public class VideoPublishAuditServiceImpl implements AuditService<VideoTask,Vide
     @Override
     public VideoTask audit(VideoTask videoTask) {
         executor.submit(()->{
-            final Video video = videoTask.getVideo();
-            final String url = fileService.getOssFileAuthUrl(video.getUrl());
+            final VideoVO video = videoTask.getVideo();
+            final Video video1 = new Video();
+            BeanUtils.copyProperties(video,video1);
             // 只有视频在新增或者公开时候才需要调用审核视频/封面
             // 新增 ： 必须审核
             // 修改: 新老状态不一致
@@ -109,23 +107,16 @@ public class VideoPublishAuditServiceImpl implements AuditService<VideoTask,Vide
             AuditResponse descAuditResponse = new AuditResponse(AuditStatus.SUCCESS,"正常");
 
             if (needAuditVideo){
-                  videoAuditResponse = videoAuditService.audit(url);
-                  coverAuditResponse = imageAuditService.audit(video.getCover());
-                interestPushService.pushSystemTypeStockIn(video);
-                interestPushService.pushSystemStockIn(video);
-
-                // 加上uuid
-                final String uuid = UUID.randomUUID().toString();
-                cache.put(uuid,true);
-                final String duration = FileUtil.getVideoDuration(url+"?uuid="+uuid);
-                video.setDuration(duration);
-                video.setVideoType(fileService.getFileInfo(video.getUrl()).mimeType);
+                  videoAuditResponse = videoAuditService.audit(video.getVideoUrl());
+                  coverAuditResponse = imageAuditService.audit(video.getCoverUrl());
+                interestPushService.pushSystemTypeStockIn(video1);
+                interestPushService.pushSystemStockIn(video1);
 
                 // 推入发件箱
-                feedService.pusOutBoxFeed(video.getUserId(),video.getId(),video.getGmtCreated().getTime());
+                feedService.pusOutBoxFeed(video.getUserId(),video.getId(),video1.getGmtCreated().getTime());
             }else if (videoTask.getNewState()){
-                interestPushService.deleteSystemStockIn(video);
-                interestPushService.deleteSystemTypeStockIn(video);
+                interestPushService.deleteSystemStockIn(video1);
+                interestPushService.deleteSystemTypeStockIn(video1);
                 // 删除发件箱以及收件箱
                 final Collection<Long> fans = followService.getFans(video.getUserId(), null);
                 feedService.deleteOutBoxFeed(video.getUserId(),fans,video.getId());
@@ -150,28 +141,28 @@ public class VideoPublishAuditServiceImpl implements AuditService<VideoTask,Vide
             boolean f4 = descAuditStatus == AuditStatus.SUCCESS;
 
             if (f1 && f2 && f3 && f4) {
-                video.setMsg("通过");
-                video.setAuditStatus(AuditStatus.SUCCESS);
+                video1.setMsg("通过");
+                video1.setAuditStatus(AuditStatus.SUCCESS);
                 // 填充视频时长
             }else {
-                video.setAuditStatus(AuditStatus.PASS);
+                video1.setAuditStatus(AuditStatus.PASS);
                 // 避免干扰
-                video.setMsg("");
+                video1.setMsg("");
                 if (!f1){
-                    video.setMsg("视频有违规行为: "+videoAuditResponse.getMsg());
+                    video1.setMsg("视频有违规行为: "+videoAuditResponse.getMsg());
                 }
                 if (!f2){
-                    video.setMsg(video.getMsg()+"\n封面有违规行为: " + coverAuditResponse.getMsg());
+                    video1.setMsg(video1.getMsg()+"\n封面有违规行为: " + coverAuditResponse.getMsg());
                 }
                 if (!f3){
-                    video.setMsg(video.getMsg()+"\n标题有违规行为: " + titleAuditResponse.getMsg());
+                    video1.setMsg(video1.getMsg()+"\n标题有违规行为: " + titleAuditResponse.getMsg());
                 }
                 if (!f4){
-                    video.setMsg(video.getMsg()+"\n简介有违规行为: " + descAuditResponse.getMsg());
+                    video1.setMsg(video1.getMsg()+"\n简介有违规行为: " + descAuditResponse.getMsg());
                 }
             }
 
-            videoMapper.updateById(video);
+            videoMapper.updateById(video1);
         });
 
         return null;

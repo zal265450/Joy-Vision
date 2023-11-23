@@ -1,48 +1,27 @@
 package org.luckyjourney.service;
 
-import com.qiniu.storage.model.FileInfo;
-import org.luckyjourney.util.R;
-import org.springframework.web.multipart.MultipartFile;
-
-import java.io.File;
-import java.io.InputStream;
-import java.util.Map;
+import org.luckyjourney.entity.File;
+import com.baomidou.mybatisplus.extension.service.IService;
+import org.luckyjourney.entity.video.Video;
 
 /**
+ * <p>
+ *  服务类
+ * </p>
+ *
  * @author xhy
+ * @since 2023-11-20
  */
-public interface FileService {
-
-
-    /**
-     * 获取签名
-     * @return
-     */
-    String   getToken();
+public interface FileService extends IService<File> {
 
     /**
-     * 上传文件
-     * @param file
-     */
-    String uploadFile(File file);
-
-    /**
-     * 删除文件
+     * 保存文件信息
      * @param url
+     * @param userId
+     * @return 新增记录后的id
      */
-    void deleteFile(String url);
+    Long saveVideoFile(String url,Long userId);
 
-    /**
-     * 获取文件信息
-     * @param url
-     * @return
-     */
-    FileInfo getFileInfo(String url);
+    Long savePhotoFile(String url,Long userId);
 
-    /**
-     * 根据文件Key获取授权的url，用于访问文件
-     * @param key 文件Key
-     * @return 授权的url地址
-     */
-    String getOssFileAuthUrl(String key);
 }
