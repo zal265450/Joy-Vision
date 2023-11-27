@@ -176,8 +176,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
         LocalCache.put(uuid, true);
 
         try {
-            final String fileKey = fileService.getById(video.getUrl()).getFileKey();
-            final String duration = FileUtil.getVideoDuration(QiNiuConfig.CNAME + "/" + fileKey + "?uuid=" + uuid);
+            final String duration = FileUtil.getVideoDuration(fileService.getFileTrustUrl(video.getUrl()));
             video.setDuration(duration);
         } finally {
             LocalCache.rem(uuid);
@@ -189,7 +188,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
         videoTask.setOldVideo(video);
         videoTask.setVideo(video);
         videoTask.setIsAdd(isAdd);
-        videoTask.setOldState(isAdd ? oldVideo.getOpen() : video.getOpen());
+        videoTask.setOldState(isAdd ? video.getOpen() : oldVideo.getOpen());
         videoTask.setNewState(video.getOpen());
         videoPublishAuditService.audit(videoTask, false);
     }
