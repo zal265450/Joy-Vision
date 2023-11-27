@@ -325,8 +325,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             if (audit.getAuditStatus() != AuditStatus.SUCCESS) {
                 throw new BaseException(audit.getMsg());
             }
-
-            oldUser.setAvatar(fileService.savePhotoFile(user.getAvatar(),userId));
         }
 
         if (!ObjectUtils.isEmpty(user.getDefaultFavoritesId())){
