@@ -72,7 +72,7 @@ public class FileController implements InitializingBean {
         response.sendRedirect(url);
     }
 
-    @PostMapping
+    @PostMapping("/auth")
     public void auth(@RequestParam(required = false) String uuid, HttpServletResponse response) throws IOException {
         if (uuid == null || LocalCache.containsKey(uuid) == null){
             response.sendError(401);
