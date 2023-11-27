@@ -55,6 +55,12 @@ public class QiNiuConfig {
     }
 
 
+    public String uploadToken(String type){
+        final Auth auth = buildAuth();
+        return auth.uploadToken(bucketName, null, 300, new
+                StringMap().put("mimeLimit", "video/*;image/*"));
+    }
+
     public String videoUploadToken() {
         final Auth auth = buildAuth();
         return auth.uploadToken(bucketName, null, 300, new

@@ -76,7 +76,6 @@ public class QiNiuFileServiceImpl implements QiNiuFileService {
     @Override
     public FileInfo getFileInfo(String url) {
         Configuration cfg = new Configuration(Region.region0());
-//...其他参数参考类注释
         final Auth auth = qiNiuConfig.buildAuth();
         final String bucket = qiNiuConfig.getBucketName();
 
@@ -87,7 +86,7 @@ public class QiNiuFileServiceImpl implements QiNiuFileService {
         } catch (QiniuException ex) {
             System.err.println(ex.response.toString());
         }
-        return new FileInfo();
+        return null;
     }
 
 }

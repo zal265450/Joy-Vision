@@ -49,7 +49,7 @@ public class VideoController {
      */
     @PostMapping
     @Limit(limit = 5,time = 3600L,msg = "发布视频一小时内不可超过5次")
-    public R publishVideo(@RequestBody @Validated VideoVO video){
+    public R publishVideo(@RequestBody @Validated Video video){
         videoService.publishVideo(video);
         return R.ok().message("发布成功,请等待审核");
     }

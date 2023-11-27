@@ -35,7 +35,7 @@ public interface VideoService extends IService<Video> {
      * 修改无法更换视频源
      * @param video
      */
-    void publishVideo(VideoVO video);
+    void publishVideo(Video video);
 
     /**
      * 删除视频

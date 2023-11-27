@@ -13,7 +13,7 @@ import org.luckyjourney.entity.vo.VideoVO;
 public class VideoTask {
 
     // 新视频
-    private VideoVO video;
+    private Video video;
 
     // 老视频
     private Video oldVideo;
