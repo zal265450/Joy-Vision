@@ -69,7 +69,7 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import { apiGetCdnAuthFile } from '../../apis/user/auth';
+import { apiFileGet } from '../../apis/file';
 import { apiChangeUserInfo, apiGetUserInfo, apiUploadAvatar } from '../../apis/user/user';
 import router from '../../router';
 import { useUserStore } from '../../stores';
@@ -101,7 +101,7 @@ const avatarImg = computed(() => {
         return "/logo.png"
     }
     if (userInfo.value.avatar == null || userInfo.value.avatar.indexOf("null") != -1) return "/logo.png"
-    return apiGetCdnAuthFile(userInfo.value.avatar)
+    return apiFileGet(userInfo.value.avatar)
 })
 const uploadAvatar = () => {
     if (!avatarFileRef.value.files[0]) return;

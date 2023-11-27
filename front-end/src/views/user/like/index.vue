@@ -11,7 +11,7 @@
       <template v-for="item in currentItems">
         <v-list-item :to="`/user?lookId=${item.id}`" :title="item.nickName" :subtitle="item.description || '这个人很懒，没有任何描述'">
           <template v-slot:prepend>
-            <v-avatar :image="item.avatar?apiGetCdnAuthFile(item.avatar): '/logo.png'" :color="item.sex ? 'blue' : 'pink'">
+            <v-avatar :image="item.avatar?apiFileGet(item.avatar): '/logo.png'" :color="item.sex ? 'blue' : 'pink'">
               <v-icon color="white">{{ item.sex ? 'mdi-human-male' : 'mdi-human-female' }}</v-icon>
             </v-avatar>
           </template>
@@ -46,7 +46,7 @@
 </template>
 <script setup>
 import { ref, watch } from 'vue';
-import { apiGetCdnAuthFile } from '../../../apis/user/auth';
+import { apiFileGet } from '../../../apis/file';
 import { apiFollows, apiGetLike } from '../../../apis/user/like';
 import { useUserStore } from '../../../stores';
 const currentType = ref("fans")

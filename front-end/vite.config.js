@@ -15,7 +15,7 @@ export default defineConfig({
     port: 5378,
     proxy: {
       '/api': {
-        target: 'http://luckjourney.liuscraft.top/api',
+        target: 'http://localhost:8882/luckyjourney',
         rewrite: (path) => path.replace(/^\/api/, ""),
         changeOrigin: true
       }

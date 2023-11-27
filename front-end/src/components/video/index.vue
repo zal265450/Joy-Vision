@@ -8,8 +8,8 @@
     </v-navigation-drawer>
     <v-main>
       <v-card rounded="0" width="100%" height="100%">
-        <video ref="video" class="video-js vjs-default-skin" controls :poster="apiGetCdnAuthFile(currentVideo.cover)">
-          <source :src="apiGetCdnAuthFile(currentVideo.url)" :type="currentVideo.videoType || 'video/mp4'" />
+        <video ref="video" class="video-js vjs-default-skin" controls :poster="apiFileGet(currentVideo.cover)">
+          <source :src="apiFileGet(currentVideo.url)" :type="currentVideo.videoType || 'video/mp4'" />
         </video>
         <div style="position: absolute;left: 15px;top: 15px;z-index: 99999;">
           <v-btn size="40" color="bg" icon v-if="!hideClose" @click="closeVideo">
@@ -19,7 +19,7 @@
         <v-card class="pa-2" elevation="0" style="display: flex; flex-direction: column;
     gap: 12px;position: absolute; background-color: transparent; right: 25px; bottom: 25px;z-index: 99999;">
           <v-badge color="red" icon="mdi-plus" location="bottom" @click="likeUser()">
-            <v-avatar class="elevation-2" :image="currentVideo.user.avatar?apiGetCdnAuthFile(currentVideo.user.avatar): '/logo.png'"></v-avatar>
+            <v-avatar class="elevation-2" :image="currentVideo.user.avatar?apiFileGet(currentVideo.user.avatar): '/logo.png'"></v-avatar>
           </v-badge>
           <v-btn size="40" color="blue" icon @click="openRgihtD()">
             <v-icon :size="20">mdi-more</v-icon>
@@ -62,7 +62,7 @@
 </template>
 <script setup>
 import { computed, getCurrentInstance, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
-import { apiGetCdnAuthFile } from '../../apis/user/auth';
+import { apiFileGet } from '../../apis/file';
 import { apiFollows } from '../../apis/user/like';
 import { apiAddHistory, apiGetVideoBySimilar, apiInitFollowFeed, apiSetUserVideoModel, apiShareVideo, apiStarVideo } from '../../apis/video';
 import FavoriteCom from '../../components/favorite/index.vue';
@@ -127,8 +127,8 @@ const currentIndex = ref(0)
 const currentVideo = computed(() => {
 
   let temp = currentIndex.value >= 0 ? similarList.value[currentIndex.value] : props.videoInfo
-  temp.playUrl = apiGetCdnAuthFile(temp.url)
-  temp.playCover = apiGetCdnAuthFile(temp.cover)
+  temp.playUrl = apiFileGet(temp.url)
+  temp.playCover = apiFileGet(temp.cover)
   return temp
 })
 const openRgihtD = () => {
