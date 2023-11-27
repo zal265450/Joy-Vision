@@ -1,7 +1,9 @@
 import * as qiniu from 'qiniu-js'
 import request from './request'
 const apiFileGetToken = async() => await request.get("/file/getToken")
-
+const Config = {
+    qiniuOSS: {}
+}
 /**
  * 上传文件
  * @param {file} file 文件
@@ -18,8 +20,10 @@ export const apiUploadFile = async (file, callBack={next:()=>{},error:()=>{}, co
     return subscription;
 }
 const apiPushFile = async (fileKey, callback=()=>{})=>{
-    let result = (await request.post(`/file`, {
-        fileKey
+    let result = (await request.post(`/file`,null, {
+        params: {
+            fileKey
+        }
     }))
     callback(result.data)
 } 

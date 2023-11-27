@@ -176,7 +176,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
         LocalCache.put(uuid, true);
 
         try {
-            final String duration = FileUtil.getVideoDuration(fileService.getFileTrustUrl(video.getUrl()));
+            final String duration = FileUtil.getVideoDuration(fileService.getFileTrustUrl(video.getUrl()).getFileKey());
             video.setDuration(duration);
         } finally {
             LocalCache.rem(uuid);

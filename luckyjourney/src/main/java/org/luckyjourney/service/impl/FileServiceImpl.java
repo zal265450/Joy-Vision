@@ -67,7 +67,7 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File> implements Fi
     }
 
     @Override
-    public String getFileTrustUrl(Long fileId) {
+    public File getFileTrustUrl(Long fileId) {
         File file = getById(fileId);
         if (Objects.isNull(file)) {
             throw new BaseException("未找到该文件");
@@ -81,6 +81,7 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File> implements Fi
         }else {
             url = url+"?uuid="+s;
         }
-        return url;
+        file.setFileKey(url);
+        return file;
     }
 }

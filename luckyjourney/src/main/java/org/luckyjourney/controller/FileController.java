@@ -2,6 +2,7 @@ package org.luckyjourney.controller;
 
 import org.luckyjourney.config.LocalCache;
 import org.luckyjourney.config.QiNiuConfig;
+import org.luckyjourney.entity.File;
 import org.luckyjourney.entity.Setting;
 import org.luckyjourney.holder.UserHolder;
 import org.luckyjourney.service.FileService;
@@ -59,8 +60,9 @@ public class FileController implements InitializingBean {
             return;
         }*/
         // 如果不是指定ip调用的该接口，则不返回
-        String url = fileService.getFileTrustUrl(fileId);
-        response.sendRedirect(url);
+        File url = fileService.getFileTrustUrl(fileId);
+        response.setContentType(url.getType());
+        response.sendRedirect(url.getFileKey());
     }
 
     @PostMapping("/auth")
