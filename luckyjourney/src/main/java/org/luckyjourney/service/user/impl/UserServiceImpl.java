@@ -320,7 +320,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                 throw new BaseException(audit.getMsg());
             }
         }
-        if (!ObjectUtils.isEmpty(user.getAvatar()) && !oldUser.getAvatar().equals(user.getAvatar())){
+        if (!Objects.equals(user.getAvatar(),oldUser.getAvatar())){
             final AuditResponse audit = imageAuditService.audit(user.getAvatar());
             if (audit.getAuditStatus() != AuditStatus.SUCCESS) {
                 throw new BaseException(audit.getMsg());
