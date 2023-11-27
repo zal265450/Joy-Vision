@@ -7,7 +7,6 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.qiniu.storage.model.FileInfo;
 import org.luckyjourney.config.LocalCache;
 import org.luckyjourney.config.QiNiuConfig;
 import org.luckyjourney.constant.AuditStatus;
@@ -19,7 +18,10 @@ import org.luckyjourney.entity.video.Type;
 import org.luckyjourney.entity.video.Video;
 import org.luckyjourney.entity.video.VideoShare;
 import org.luckyjourney.entity.video.VideoStar;
-import org.luckyjourney.entity.vo.*;
+import org.luckyjourney.entity.vo.BasePage;
+import org.luckyjourney.entity.vo.HotVideo;
+import org.luckyjourney.entity.vo.UserModel;
+import org.luckyjourney.entity.vo.UserVO;
 import org.luckyjourney.exception.BaseException;
 import org.luckyjourney.holder.UserHolder;
 import org.luckyjourney.mapper.video.VideoMapper;
@@ -37,7 +39,6 @@ import org.luckyjourney.service.video.VideoShareService;
 import org.luckyjourney.service.video.VideoStarService;
 import org.luckyjourney.util.FileUtil;
 import org.luckyjourney.util.RedisCacheUtil;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
@@ -45,7 +46,6 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 
-import javax.validation.constraints.NotBlank;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.function.Function;
@@ -62,8 +62,6 @@ import java.util.stream.Collectors;
 @Service
 public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements VideoService {
 
-    @Autowired
-    private QiNiuFileService qiNiuFileService;
 
     @Autowired
     private TypeService typeService;
@@ -107,9 +105,8 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
     final ObjectMapper objectMapper = new ObjectMapper();
 
 
-
     @Override
-    public Video getVideoById(Long videoId,Long userId)   {
+    public Video getVideoById(Long videoId, Long userId) {
         final Video video = this.getOne(new LambdaQueryWrapper<Video>().eq(Video::getId, videoId));
         if (video == null) throw new BaseException("指定视频不存在");
 
@@ -120,41 +117,36 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
         // 这里需要优化 如果这里开线程获取则系统g了(因为这里的场景不适合) -> 请求数很多
         // 正确做法: 视频存储在redis中，点赞收藏等行为异步放入DB, 定时任务扫描DB中不重要更新redis
         video.setStart(videoStarService.starState(videoId, userId));
-        video.setFavorites(favoritesService.favoritesState(videoId,userId));
-        video.setFollow(followService.isFollows(video.getUserId(),userId));
+        video.setFavorites(favoritesService.favoritesState(videoId, userId));
+        video.setFollow(followService.isFollows(video.getUserId(), userId));
         return video;
     }
 
 
-
     @Override
-    public void publishVideo(VideoVO videoVO) {
+    public void publishVideo(Video video) {
 
         final Long userId = UserHolder.get();
-
-        Video video = new Video();
+        Video oldVideo = null;
         // 不允许修改视频
-        final Long videoId = videoVO.getId();
-        if (videoId !=null){
+        final Long videoId = video.getId();
+        if (videoId != null) {
             // url不能一致
-            video = this.getOne(new LambdaQueryWrapper<Video>().eq(Video::getId, videoId).eq(Video::getUserId, userId));
-            if (!(video.getVideoUrl()).equals(videoVO.getVideoUrl()) || !(video.getCoverUrl().equals(videoVO.getCoverUrl()))){
+            oldVideo = this.getOne(new LambdaQueryWrapper<Video>().eq(Video::getId, videoId).eq(Video::getUserId, userId));
+            if (!(video.getVideoUrl()).equals(video.getVideoUrl()) || !(video.getCoverUrl().equals(video.getCoverUrl()))) {
                 throw new BaseException("不能更换视频源,只能修改视频信息");
             }
         }
         // 判断对应分类是否存在
-        final Type type = typeService.getById(videoVO.getTypeId());
-        if (type == null){
+        final Type type = typeService.getById(video.getTypeId());
+        if (type == null) {
             throw new BaseException("分类不存在");
         }
         // 校验标签最多不能超过5个
-        if (videoVO.buildLabel().size() > 5){
+        if (video.buildLabel().size() > 5) {
             throw new BaseException("标签最多只能选择5个");
         }
 
-        final String url =videoVO.getUrl();
-        String cover = videoVO.getCover();
-        BeanUtils.copyProperties(videoVO,video);
         // 修改状态
         video.setAuditStatus(AuditStatus.PROCESS);
         video.setUserId(userId);
@@ -164,59 +156,64 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
         // 校验
         video.setYv(null);
 
-        if (!isAdd){
+        if (!isAdd) {
             video.setVideoType(null);
             video.setLabelNames(null);
             video.setUrl(null);
             video.setCover(null);
-        }else {
-            video.setUrl(fileService.saveVideoFile(url,video.getUserId()));
+        } else {
 
             // 如果没设置封面,我们帮他设置一个封面
-            if (ObjectUtils.isEmpty(cover)){
-                cover = url+"?vframe/jpg/offset/1";
+            if (ObjectUtils.isEmpty(video.getCover())) {
+                video.setCover(fileService.generatePhoto(video.getUrl(), userId));
             }
-            video.setCover(fileService.savePhotoFile(cover,video.getUserId()));
 
-            video.setYv("YV"+UUID.randomUUID().toString().replace("-","").substring(8));
+            video.setYv("YV" + UUID.randomUUID().toString().replace("-", "").substring(8));
+        }
+
+        // 填充视频时长
+        final String uuid = UUID.randomUUID().toString();
+        LocalCache.put(uuid, true);
+
+        try {
+            final String fileKey = fileService.getById(video.getUrl()).getFileKey();
+            final String duration = FileUtil.getVideoDuration(QiNiuConfig.CNAME + "/" + fileKey + "?uuid=" + uuid);
+            video.setDuration(duration);
+        } finally {
+            LocalCache.rem(uuid);
         }
 
         this.saveOrUpdate(video);
 
         final VideoTask videoTask = new VideoTask();
         videoTask.setOldVideo(video);
-        videoVO.setGmtCreated(video.getGmtCreated());
-        videoVO.setId(video.getId());
-        videoTask.setVideo(videoVO);
+        videoTask.setVideo(video);
         videoTask.setIsAdd(isAdd);
-        videoTask.setOldState(isAdd ? videoVO.getOpen() : video.getOpen());
-        videoTask.setNewState(videoVO.getOpen());
-        videoPublishAuditService.audit(videoTask,false);
+        videoTask.setOldState(isAdd ? oldVideo.getOpen() : video.getOpen());
+        videoTask.setNewState(video.getOpen());
+        videoPublishAuditService.audit(videoTask, false);
     }
-
-
-
 
 
     @Override
     public void deleteVideo(Long id) {
 
-        if (id == null){
+        if (id == null) {
             throw new BaseException("删除指定的视频不存在");
         }
 
         final Long userId = UserHolder.get();
         final Video video = this.getOne(new LambdaQueryWrapper<Video>().eq(Video::getId, id).eq(Video::getUserId, userId));
-        if (video == null){
+        if (video == null) {
             throw new BaseException("删除指定的视频不存在");
         }
         final boolean b = removeById(id);
-        if (b){
+        if (b) {
             // 解耦
-            new Thread(()->{
+            new Thread(() -> {
                 // 删除分享量 点赞量
-                videoShareService.remove(new LambdaQueryWrapper<VideoShare>().eq(VideoShare::getVideoId,id).eq(VideoShare::getUserId,userId));
-                videoStarService.remove(new LambdaQueryWrapper<VideoStar>().eq(VideoStar::getVideoId,id).eq(VideoStar::getUserId,userId));
+                videoShareService.remove(new LambdaQueryWrapper<VideoShare>().eq(VideoShare::getVideoId, id).eq(VideoShare::getUserId, userId));
+                videoStarService.remove(new LambdaQueryWrapper<VideoStar>().eq(VideoStar::getVideoId, id).eq(VideoStar::getUserId, userId));
                 interestPushService.deleteSystemStockIn(video);
                 interestPushService.deleteSystemTypeStockIn(video);
             }).start();
@@ -226,13 +223,13 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
     @Override
     public Collection<Video> pushVideos(Long userId) {
         User user = null;
-        if (userId!=null){
+        if (userId != null) {
             user = userService.getById(userId);
         }
         Collection<Long> videoIds = interestPushService.listVideoIdByUserModel(user);
         Collection<Video> videos = new ArrayList<>();
 
-        if (ObjectUtils.isEmpty(videoIds)){
+        if (ObjectUtils.isEmpty(videoIds)) {
             videoIds = list(new LambdaQueryWrapper<Video>().orderByDesc(Video::getGmtCreated)).stream().map(Video::getId).collect(Collectors.toList());
             videoIds = new HashSet<>(videoIds).stream().limit(10).collect(Collectors.toList());
         }
@@ -248,7 +245,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
         if (type == null) return Collections.EMPTY_LIST;
 
         Collection<Long> videoIds = interestPushService.listVideoIdByTypeId(typeId);
-        if (ObjectUtils.isEmpty(videoIds)){
+        if (ObjectUtils.isEmpty(videoIds)) {
             return Collections.EMPTY_LIST;
         }
         final Collection<Video> videos = listByIds(videoIds);
@@ -258,22 +255,22 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
     }
 
     @Override
-    public IPage<Video> searchVideo(String search, BasePage basePage,Long userId) {
+    public IPage<Video> searchVideo(String search, BasePage basePage, Long userId) {
         final IPage p = basePage.page();
         // 如果带YV则精准搜该视频
         final LambdaQueryWrapper<Video> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(Video::getAuditStatus,AuditStatus.SUCCESS);
-        if (search.contains("YV")){
-            wrapper.eq(Video::getYv,search);
-        }else {
-            wrapper.like(!ObjectUtils.isEmpty(search),Video::getTitle, search);
+        wrapper.eq(Video::getAuditStatus, AuditStatus.SUCCESS);
+        if (search.contains("YV")) {
+            wrapper.eq(Video::getYv, search);
+        } else {
+            wrapper.like(!ObjectUtils.isEmpty(search), Video::getTitle, search);
         }
         IPage<Video> page = this.page(p, wrapper);
 
         final List<Video> videos = page.getRecords();
         setUserVoAndUrl(videos);
 
-        userService.addSearchHistory(userId,search);
+        userService.addSearchHistory(userId, search);
         return page;
     }
 
@@ -284,7 +281,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
         interestPushService.pushSystemStockIn(video);
         interestPushService.pushSystemTypeStockIn(video);
         // 推送该视频博主的发件箱
-        feedService.pushInBoxFeed(video.getUserId(),video.getId(),video.getGmtCreated().getTime());
+        feedService.pushInBoxFeed(video.getUserId(), video.getId(), video.getGmtCreated().getTime());
     }
 
     @Override
@@ -296,7 +293,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
         videoStar.setVideoId(videoId);
         videoStar.setUserId(UserHolder.get());
         final boolean result = videoStarService.starVideo(videoStar);
-        updateStar(video,result ? 1L : -1L);
+        updateStar(video, result ? 1L : -1L);
         // 获取标签
         final List<String> labels = video.buildLabel();
 
@@ -309,7 +306,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
     @Override
     public boolean favoritesVideo(Long fId, Long vId) {
         final Video video = getById(vId);
-        if (video == null){
+        if (video == null) {
             throw new BaseException("指定视频不存在");
         }
         final boolean favorites = favoritesService.favorites(fId, vId);
@@ -328,22 +325,22 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
         final Video video = getById(videoShare.getVideoId());
         if (video == null) throw new BaseException("指定视频不存在");
         final boolean result = videoShareService.share(videoShare);
-        updateShare(video,result ? 1L : 0L);
+        updateShare(video, result ? 1L : 0L);
         return result;
     }
 
     @Override
     @Async
-    public void historyVideo(Long videoId,Long userId)   {
+    public void historyVideo(Long videoId, Long userId) {
         String key = RedisConstant.HISTORY_VIDEO + videoId + ":" + userId;
         final Object o = redisCacheUtil.get(key);
-        if (o == null){
-            redisCacheUtil.set(key,videoId,RedisConstant.HISTORY_TIME);
+        if (o == null) {
+            redisCacheUtil.set(key, videoId, RedisConstant.HISTORY_TIME);
             final Video video = getById(videoId);
             video.setUser(userService.getInfo(video.getUserId()));
             video.setTypeName(typeService.getById(video.getTypeId()).getName());
-            redisCacheUtil.zadd(RedisConstant.USER_HISTORY_VIDEO+userId,new Date().getTime(),video,RedisConstant.HISTORY_TIME);
-            updateHistory(video,1L);
+            redisCacheUtil.zadd(RedisConstant.USER_HISTORY_VIDEO + userId, new Date().getTime(), video, RedisConstant.HISTORY_TIME);
+            updateHistory(video, 1L);
         }
     }
 
@@ -353,17 +350,17 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
         final Long userId = UserHolder.get();
         String key = RedisConstant.USER_HISTORY_VIDEO + userId;
         final Set<ZSetOperations.TypedTuple<Object>> typedTuples = redisCacheUtil.zSetGetByPage(key, basePage.getPage(), basePage.getLimit());
-        if (ObjectUtils.isEmpty(typedTuples)){
+        if (ObjectUtils.isEmpty(typedTuples)) {
             return new LinkedHashMap<>();
         }
         List<Video> temp = new ArrayList<>();
         final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
-        final LinkedHashMap<String,List<Video>> result = new LinkedHashMap<>();
+        final LinkedHashMap<String, List<Video>> result = new LinkedHashMap<>();
         for (ZSetOperations.TypedTuple<Object> typedTuple : typedTuples) {
             final Date date = new Date(typedTuple.getScore().longValue());
             final String format = simpleDateFormat.format(date);
             if (!result.containsKey(format)) {
-                result.put(format,new ArrayList<>());
+                result.put(format, new ArrayList<>());
             }
             final Video video = (Video) typedTuple.getValue();
             result.get(format).add(video);
@@ -377,7 +374,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
     @Override
     public Collection<Video> listVideoByFavorites(Long favoritesId) {
         final List<Long> videoIds = favoritesService.listVideoIds(favoritesId, UserHolder.get());
-        if (ObjectUtils.isEmpty(videoIds)){
+        if (ObjectUtils.isEmpty(videoIds)) {
             return Collections.EMPTY_LIST;
         }
         final Collection<Video> videos = listByIds(videoIds);
@@ -386,18 +383,16 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
     }
 
 
-
-
     @Override
     public List<HotVideo> hotRank() {
 
-        final Set<ZSetOperations.TypedTuple<Object>> zSet = redisTemplate.opsForZSet().reverseRangeWithScores(RedisConstant.HOT_RANK,0,-1);
+        final Set<ZSetOperations.TypedTuple<Object>> zSet = redisTemplate.opsForZSet().reverseRangeWithScores(RedisConstant.HOT_RANK, 0, -1);
         final ArrayList<HotVideo> hotVideos = new ArrayList<>();
         for (ZSetOperations.TypedTuple<Object> objectTypedTuple : zSet) {
             final HotVideo hotVideo;
             try {
                 hotVideo = objectMapper.readValue(objectTypedTuple.getValue().toString(), HotVideo.class);
-                hotVideo.setHot((double)objectTypedTuple.getScore().intValue());
+                hotVideo.setHot((double) objectTypedTuple.getScore().intValue());
                 hotVideo.hotFormat();
                 hotVideos.add(hotVideo);
             } catch (JsonProcessingException e) {
@@ -406,7 +401,6 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
         }
         return hotVideos;
     }
-
 
 
     @Override
@@ -424,7 +418,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
         // 去重
         videoIds.remove(video.getId());
 
-        if (!ObjectUtils.isEmpty(videoIds)){
+        if (!ObjectUtils.isEmpty(videoIds)) {
             videos = listByIds(videoIds);
             setUserVoAndUrl(videos);
         }
@@ -433,10 +427,10 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
 
     @Override
     public IPage<Video> listByUserIdOpenVideo(Long userId, BasePage basePage) {
-        if (userId==null){
+        if (userId == null) {
             return new Page<>();
         }
-        final IPage<Video> page = page(basePage.page(), new LambdaQueryWrapper<Video>().eq(Video::getUserId, userId).eq(Video::getAuditStatus,AuditStatus.SUCCESS).orderByDesc(Video::getGmtCreated));
+        final IPage<Video> page = page(basePage.page(), new LambdaQueryWrapper<Video>().eq(Video::getUserId, userId).eq(Video::getAuditStatus, AuditStatus.SUCCESS).orderByDesc(Video::getGmtCreated));
         final List<Video> videos = page.getRecords();
         setUserVoAndUrl(videos);
         return page;
@@ -448,8 +442,8 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
     }
 
     @Override
-    public List<Video> selectNDaysAgeVideo(long id,int days,int limit) {
-        return videoMapper.selectNDaysAgeVideo(id,days,limit);
+    public List<Video> selectNDaysAgeVideo(long id, int days, int limit) {
+        return videoMapper.selectNDaysAgeVideo(id, days, limit);
     }
 
     @Override
@@ -460,9 +454,9 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
 
         final HashMap<String, Integer> map = new HashMap<>();
         // 优先推送今日的
-        map.put(RedisConstant.HOT_VIDEO+today,10);
-        map.put(RedisConstant.HOT_VIDEO+(today-1),3);
-        map.put(RedisConstant.HOT_VIDEO+(today-2),2);
+        map.put(RedisConstant.HOT_VIDEO + today, 10);
+        map.put(RedisConstant.HOT_VIDEO + (today - 1), 3);
+        map.put(RedisConstant.HOT_VIDEO + (today - 2), 2);
 
         // 游客不用记录
         // 获取今天日期
@@ -478,8 +472,8 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
         final ArrayList<Long> videoIds = new ArrayList<>();
         // 会返回结果有null，做下校验
         for (Object videoId : hotVideoIds) {
-            if (!ObjectUtils.isEmpty(videoId)){
-                videoIds.addAll((List)videoId);
+            if (!ObjectUtils.isEmpty(videoId)) {
+                videoIds.addAll((List) videoId);
             }
         }
         final Collection<Video> videos = listByIds(videoIds);
@@ -489,19 +483,19 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
     }
 
     @Override
-    public Collection<Video> followFeed(Long userId,Long lastTime) {
+    public Collection<Video> followFeed(Long userId, Long lastTime) {
 
         // 是否存在
-         Set<Long> set = redisTemplate.opsForZSet()
-                 .reverseRangeByScore(RedisConstant.IN_FOLLOW + userId,
-                         0, lastTime == null ? new Date().getTime() : lastTime,lastTime == null ? 0 :1, 5);
-        if (ObjectUtils.isEmpty(set)){
+        Set<Long> set = redisTemplate.opsForZSet()
+                .reverseRangeByScore(RedisConstant.IN_FOLLOW + userId,
+                        0, lastTime == null ? new Date().getTime() : lastTime, lastTime == null ? 0 : 1, 5);
+        if (ObjectUtils.isEmpty(set)) {
             // 可能只是缓存中没有了,缓存只存储7天内的关注视频,继续往后查看关注的用户太少了,不做考虑 - feed流必然会产生的问题
             return Collections.EMPTY_LIST;
         }
 
         // 这里不会按照时间排序，需要手动排序
-        final Collection<Video> videos = list(new LambdaQueryWrapper<Video>().in(Video::getId,set).orderByDesc(Video::getGmtCreated));
+        final Collection<Video> videos = list(new LambdaQueryWrapper<Video>().in(Video::getId, set).orderByDesc(Video::getGmtCreated));
 
         setUserVoAndUrl(videos);
         return videos;
@@ -510,8 +504,8 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
     @Override
     public void initFollowFeed(Long userId) {
         // 获取所有关注的人
-        final Collection<Long> followIds = followService.getFollow(userId,null);
-        feedService.initFollowFeed(userId,followIds);
+        final Collection<Long> followIds = followService.getFollow(userId, null);
+        feedService.initFollowFeed(userId, followIds);
     }
 
     @Override
@@ -525,7 +519,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
     @Override
     public Collection<Long> listVideoIdByUserId(Long userId) {
 
-        final List<Long> ids = list(new LambdaQueryWrapper<Video>().eq(Video::getUserId, userId).eq(Video::getOpen,0).select(Video::getId))
+        final List<Long> ids = list(new LambdaQueryWrapper<Video>().eq(Video::getUserId, userId).eq(Video::getOpen, 0).select(Video::getId))
                 .stream().map(Video::getId).collect(Collectors.toList());
         return ids;
     }
@@ -545,28 +539,28 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
         interestPushService.deleteSystemStockIn(video);
         // 获取视频发布者id,删除对应的发件箱
         final Long userId = video.getUserId();
-        redisTemplate.opsForZSet().remove(RedisConstant.OUT_FOLLOW+userId,id);
+        redisTemplate.opsForZSet().remove(RedisConstant.OUT_FOLLOW + userId, id);
 
         // 获取视频发布者粉丝，删除对应的收件箱
         final Collection<Long> fansIds = followService.getFans(userId, null);
-        feedService.deleteInBoxFeed(userId,Collections.singletonList(id));
-        feedService.deleteOutBoxFeed(userId,fansIds,id);
+        feedService.deleteInBoxFeed(userId, Collections.singletonList(id));
+        feedService.deleteOutBoxFeed(userId, fansIds, id);
 
         // 热门视频以及热度排行榜视频
         Calendar calendar = Calendar.getInstance();
         int today = calendar.get(Calendar.DATE);
         final Long videoId = video.getId();
         // 尝试去找到删除
-        redisTemplate.opsForSet().remove(RedisConstant.HOT_VIDEO+today,videoId);
-        redisTemplate.opsForSet().remove(RedisConstant.HOT_VIDEO+(today-1),videoId);
-        redisTemplate.opsForSet().remove(RedisConstant.HOT_VIDEO+(today-2),videoId);
-        redisTemplate.opsForZSet().remove(RedisConstant.HOT_RANK,videoId);
+        redisTemplate.opsForSet().remove(RedisConstant.HOT_VIDEO + today, videoId);
+        redisTemplate.opsForSet().remove(RedisConstant.HOT_VIDEO + (today - 1), videoId);
+        redisTemplate.opsForSet().remove(RedisConstant.HOT_VIDEO + (today - 2), videoId);
+        redisTemplate.opsForZSet().remove(RedisConstant.HOT_RANK, videoId);
         // 修改视频
         updateById(video);
     }
 
-    public void setUserVoAndUrl(Collection<Video> videos){
-        if (!ObjectUtils.isEmpty(videos)){
+    public void setUserVoAndUrl(Collection<Video> videos) {
+        if (!ObjectUtils.isEmpty(videos)) {
             Set<Long> userIds = new HashSet<>();
             final ArrayList<Long> fileIds = new ArrayList<>();
             for (Video video : videos) {
@@ -585,7 +579,6 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
                 userVO.setSex(user.getSex());
                 video.setUser(userVO);
                 final File file = fileMap.get(video.getUrl());
-                video.setDescription(file.getDuration());
                 video.setVideoType(file.getType());
             }
         }
@@ -593,50 +586,48 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
     }
 
 
-
-
     /**
      * 点赞数
+     *
      * @param video
      */
-    public void updateStar(Video video,Long value){
+    public void updateStar(Video video, Long value) {
         final UpdateWrapper<Video> updateWrapper = new UpdateWrapper<>();
         updateWrapper.setSql("start_count = start_count + " + value);
-        updateWrapper.lambda().eq(Video::getId,video.getId()).eq(Video::getStartCount,video.getStartCount());
-        update(video,updateWrapper);
+        updateWrapper.lambda().eq(Video::getId, video.getId()).eq(Video::getStartCount, video.getStartCount());
+        update(video, updateWrapper);
     }
 
     /**
      * 分享数
+     *
      * @param video
      */
-    public void updateShare(Video video,Long value){
+    public void updateShare(Video video, Long value) {
         final UpdateWrapper<Video> updateWrapper = new UpdateWrapper<>();
         updateWrapper.setSql("share_count = share_count + " + value);
-        updateWrapper.lambda().eq(Video::getId,video.getId()).eq(Video::getShareCount,video.getShareCount());
-        update(video,updateWrapper);
+        updateWrapper.lambda().eq(Video::getId, video.getId()).eq(Video::getShareCount, video.getShareCount());
+        update(video, updateWrapper);
     }
 
     /**
      * 浏览量
+     *
      * @param video
      */
-    public void updateHistory(Video video,Long value){
+    public void updateHistory(Video video, Long value) {
         final UpdateWrapper<Video> updateWrapper = new UpdateWrapper<>();
         updateWrapper.setSql("history_count = history_count + " + value);
-        updateWrapper.lambda().eq(Video::getId,video.getId()).eq(Video::getHistoryCount,video.getHistoryCount());
-        update(video,updateWrapper);
+        updateWrapper.lambda().eq(Video::getId, video.getId()).eq(Video::getHistoryCount, video.getHistoryCount());
+        update(video, updateWrapper);
     }
 
-    public void updateFavorites(Video video,Long value){
+    public void updateFavorites(Video video, Long value) {
         final UpdateWrapper<Video> updateWrapper = new UpdateWrapper<>();
         updateWrapper.setSql("favorites_count = favorites_count + " + value);
-        updateWrapper.lambda().eq(Video::getId,video.getId()).eq(Video::getFavoritesCount,video.getFavoritesCount());
-        update(video,updateWrapper);
+        updateWrapper.lambda().eq(Video::getId, video.getId()).eq(Video::getFavoritesCount, video.getFavoritesCount());
+        update(video, updateWrapper);
     }
-
-
-
 
 
 }

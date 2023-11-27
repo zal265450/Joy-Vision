@@ -14,14 +14,13 @@ import org.luckyjourney.entity.video.Video;
  */
 public interface FileService extends IService<File> {
 
+
+    Long save(String fileKey,Long userId);
+
     /**
-     * 保存文件信息
-     * @param url
-     * @param userId
-     * @return 新增记录后的id
+     * 根据视频id生成图片
+     * @param fileId
+     * @return
      */
-    Long saveVideoFile(String url,Long userId);
-
-    Long savePhotoFile(String url,Long userId);
-
+    Long generatePhoto(Long fileId,Long userId);
 }

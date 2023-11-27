@@ -33,9 +33,6 @@ public class File extends BaseEntity implements Serializable {
     // 文件类型
     private String type;
 
-    // 如果是视频则视频时长
-    private String duration;
-
     // 文件大小
     private Long size;
 

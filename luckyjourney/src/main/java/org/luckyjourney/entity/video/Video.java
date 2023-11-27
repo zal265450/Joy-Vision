@@ -69,7 +69,6 @@ public class Video extends BaseEntity {
     private Long favoritesCount;
 
     // 视频时长
-    @TableField(exist = false)
     private String duration;
 
     // 视频分类

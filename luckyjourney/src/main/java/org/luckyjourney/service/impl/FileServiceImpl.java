@@ -6,6 +6,7 @@ import org.luckyjourney.config.LocalCache;
 import org.luckyjourney.config.QiNiuConfig;
 import org.luckyjourney.entity.File;
 import org.luckyjourney.entity.video.Video;
+import org.luckyjourney.holder.UserHolder;
 import org.luckyjourney.mapper.FileMapper;
 import org.luckyjourney.service.FileService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -32,40 +33,39 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File> implements Fi
     private QiNiuFileService qiNiuFileService;
 
     @Override
-    public Long saveVideoFile(String url,Long userId) {
-        final String uuid = UUID.randomUUID().toString();
-        final File videoFile = new File();
-        try {
-            final FileInfo videoFileInfo = qiNiuFileService.getFileInfo(url);
-            LocalCache.put(uuid,true);
-            final String duration = FileUtil.getVideoDuration(QiNiuConfig.CNAME+"/"+url+"?uuid="+uuid);
-            videoFile.setFileKey(url);
-            videoFile.setFormat(videoFileInfo.mimeType);
-            videoFile.setDuration(duration);
-            videoFile.setType("视频");
-            videoFile.setUserId(userId);
-            videoFile.setSize(videoFileInfo.fsize);
-            save(videoFile);
-        }finally {
-            LocalCache.rem(uuid);
+    public Long save(String fileKey,Long userId) {
+
+        // 判断文件
+        final FileInfo videoFileInfo = qiNiuFileService.getFileInfo(fileKey);
+
+        if (videoFileInfo == null){
+            throw new IllegalArgumentException("参数不正确");
         }
+
+
+
+        final File videoFile = new File();
+        String type = videoFileInfo.mimeType;
+        videoFile.setFileKey(fileKey);
+        videoFile.setFormat(type);
+        videoFile.setType(type.contains("video") ? "视频" : "图片");
+        videoFile.setUserId(userId);
+        videoFile.setSize(videoFileInfo.fsize);
+        save(videoFile);
 
         return videoFile.getId();
     }
 
-
-
     @Override
-    public Long savePhotoFile(String url, Long userId) {
-        FileInfo videoFileInfo = qiNiuFileService.getFileInfo(url);
-
-        final File videoFile = new File();
-        videoFile.setFileKey(url);
-        videoFile.setFormat(ObjectUtils.isEmpty(videoFileInfo.mimeType) ? "image/jpeg" : videoFileInfo.mimeType);
-        videoFile.setType("图片");
-        videoFile.setUserId(userId);
-        videoFile.setSize(videoFileInfo.fsize);
-        save(videoFile);
-        return videoFile.getId();
+    public Long generatePhoto(Long fileId,Long userId) {
+        final File file = getById(fileId);;
+        final String fileKey = file.getFileKey() + "?vframe/jpg/offset/1";
+        final File fileInfo = new File();
+        fileInfo.setFileKey(fileKey);
+        file.setFormat("image/*");
+        file.setType("图片");
+        file.setUserId(userId);
+        save(fileInfo);
+        return fileInfo.getId();
     }
 }

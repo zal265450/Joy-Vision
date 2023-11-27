@@ -85,7 +85,7 @@ public class VideoPublishAuditServiceImpl implements AuditService<VideoTask,Vide
     @Override
     public VideoTask audit(VideoTask videoTask) {
         executor.submit(()->{
-            final VideoVO video = videoTask.getVideo();
+            final Video video = videoTask.getVideo();
             final Video video1 = new Video();
             BeanUtils.copyProperties(video,video1);
             // 只有视频在新增或者公开时候才需要调用审核视频/封面
