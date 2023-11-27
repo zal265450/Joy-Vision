@@ -2,7 +2,6 @@ package org.luckyjourney.service;
 
 import org.luckyjourney.entity.File;
 import com.baomidou.mybatisplus.extension.service.IService;
-import org.luckyjourney.entity.video.Video;
 
 /**
  * <p>
@@ -23,4 +22,11 @@ public interface FileService extends IService<File> {
      * @return
      */
     Long generatePhoto(Long fileId,Long userId);
+
+    /**
+     * 获取文件真实URL
+     * @param fileId 文件id
+     * @return
+     */
+    String getFileTrustUrl(Long fileId);
 }

@@ -1,6 +1,5 @@
 package org.luckyjourney.controller;
 
-import org.checkerframework.checker.units.qual.A;
 import org.luckyjourney.config.LocalCache;
 import org.luckyjourney.config.QiNiuConfig;
 import org.luckyjourney.entity.Setting;
@@ -15,7 +14,6 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.UUID;
 
 /**
  * @description:
@@ -61,14 +59,7 @@ public class FileController implements InitializingBean {
             return;
         }*/
         // 如果不是指定ip调用的该接口，则不返回
-        final String s = UUID.randomUUID().toString();
-        LocalCache.put(s,true);
-        String url = QiNiuConfig.CNAME + "/" + fileService.getById(fileId).getFileKey();
-        if (url.contains("?")){
-            url = url+"&uuid="+s;
-        }else {
-            url = url+"?uuid="+s;
-        }
+        String url = fileService.getFileTrustUrl(fileId);
         response.sendRedirect(url);
     }
 
