@@ -54,8 +54,7 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue';
 import { apiClassifyGetAll } from '../../../apis/classify';
-import { apiGetCdnAuthFile } from '../../../apis/user/auth';
-import { apiUploadAvatar } from '../../../apis/user/user';
+import { apiFileGet, apiUploadFile } from '../../../apis/file';
 import { apiVideoPush } from '../../../apis/user/videoManger';
 const avatarFileRef = ref()
 const uploading = ref(-1)
@@ -83,7 +82,7 @@ const clearUp = () => {
 }
 const uploadAvatar = () => {
     if (!avatarFileRef.value.files[0]) return;
-    apiUploadAvatar(avatarFileRef.value.files[0], {
+    apiUploadFile(avatarFileRef.value.files[0], {
         next: (e) => {
             uploading.value = e.total.percent
         }, error: () => {
@@ -93,9 +92,16 @@ const uploadAvatar = () => {
                 show: true,
                 color: "error"
             }
-        }, complete: (e) => {
+        }, complete: (e,fileId) => {
+            if(!fileId.state) {
+                snackbar.value = {
+                    text: fileId.message,
+                    show: true
+                }
+                return;
+            }
             uploading.value = -1
-            currentVideo.cover = `http://oss.luckjourney.liuscraft.top/${e.key}`
+            currentVideo.cover = fileId.data
             snackbar.value = {
                 text: "上传完成",
                 show: true,
@@ -115,7 +121,7 @@ const coverImg = computed(() => {
     if (currentVideo.cover == null || currentVideo.cover == "") {
         return "/logo.png"
     }
-    return apiGetCdnAuthFile(currentVideo.cover)
+    return apiFileGet(currentVideo.cover)
 })
 onMounted(() => {
     apiClassifyGetAll().then(({ data }) => {

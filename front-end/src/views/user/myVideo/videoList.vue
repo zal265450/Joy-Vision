@@ -4,7 +4,7 @@
             <template v-for="(item) in videoList">
                 <v-list-item class="pa-0" max-height="110px" style="overflow: hidden;">
                     <template v-slot:prepend>
-                        <v-img width="200" height="100" class="mr-4" :src="apiGetCdnAuthFile(item.cover)" cover @click="playVideo(item)">
+                        <v-img width="200" height="100" class="mr-4" :src="apiFileGet(item.cover)" cover @click="playVideo(item)">
                             
                         </v-img>
                         <v-chip class="ma-2" color="warning" :variant="'flat'" v-if="item.auditStatus == 2">{{ item.msg
@@ -77,7 +77,7 @@
 </template>
 <script setup>
 import { onMounted, onUpdated, ref, watch } from 'vue';
-import { apiGetCdnAuthFile } from '../../../apis/user/auth';
+import { apiFileGet } from '../../../apis/file';
 import { apiRemoveVideo } from '../../../apis/user/videoManger';
 import { apiGetVideoByUser } from '../../../apis/video';
 import Video from '../../../components/video/index.vue';

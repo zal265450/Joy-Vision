@@ -96,8 +96,8 @@
 </template>
 <script setup>
 import { computed, onMounted, ref } from 'vue';
-import { apiGetCdnAuthFile } from '../../../apis/user/auth';
-import { apiGetAuditQueueState, apiVideoUpload } from '../../../apis/video';
+import { apiUploadFile } from '../../../apis/file';
+import { apiGetAuditQueueState } from '../../../apis/video';
 import VideoEdit from './edit.vue';
 const snackbar = ref({
     show: false,
@@ -173,7 +173,7 @@ const uploadVideo = async () => {
     if(uploadList.value.length==1) {
         currentVideoIndex.value = 0
     }
-    curUploadInfo.subscription = await apiVideoUpload(curFile, {
+    curUploadInfo.subscription = await apiUploadFile(curFile, {
         next: (e) => {
             curUploadInfo.progress = e.total.percent
             uploadList.value = Object.assign([], uploadList.value)
@@ -182,11 +182,18 @@ const uploadVideo = async () => {
             curUploadInfo.msg = "上传失败：" + e
             uploadList.value = Object.assign([], uploadList.value)
         },
-        complete: (e) => {
+        complete: (e,fileId) => {
+            if(!fileId.state) {
+                snackbar.value = {
+                    text: fileId.message,
+                    show: true
+                }
+                return;
+            }
             curUploadInfo.result = e
             curUploadInfo.status = 1
-            curUploadInfo.url = e.key
-            curUploadInfo.cover = apiGetCdnAuthFile(`http://oss.luckjourney.liuscraft.top/${e.key}?vframe/jpg/offset/1`)
+            curUploadInfo.url = fileId.data
+            curUploadInfo.cover = null
             uploadList.value = Object.assign([], uploadList.value)
         }
     })

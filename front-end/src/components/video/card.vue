@@ -1,7 +1,7 @@
 <template>
     <v-card ref="cardRef" v-if="props.videoInfo"  hover ripple :elevation="0" rounded="lg">
         
-        <v-img :src="props.videoInfo.cover?apiGetCdnAuthFile(props.videoInfo.cover):'/not-found.png'" class="align-end"
+        <v-img :src="props.videoInfo.cover?apiFileGet(props.videoInfo.cover):'/not-found.png'" class="align-end"
             gradient="to bottom, rgba(0,0,0,.1), rgba(0,0,0,.5)" height="300px" cover>
             <!-- <v-avatar :image="props.videoInfo.user.head||'/logo.png'" style="position:absolute;top:10px;right:10px"></v-avatar> -->
             <v-card-text class="text-white pa-0" v-if="!overlay">
@@ -82,7 +82,7 @@
 
 <script setup>
 import { onMounted, ref, watch } from 'vue';
-import { apiGetCdnAuthFile } from '../../apis/user/auth';
+import { apiFileGet } from '../../apis/file';
 import { useUserStore } from '../../stores';
 import strUtils from '../../utils/strUtil';
 const showDescription = ref(false)

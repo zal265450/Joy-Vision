@@ -50,12 +50,9 @@ export const apiCheckCode = (data)=>{
  * 访问文件
  * @returns 
  */
-export const apiGetCdnAuthFile = (url)=>{
+export const apiGetCdnAuthFile = (fileId)=>{
     return request.getUri({
-        url: "/cdn/auth/get",
-        params: {
-            url
-        }
+        url: `/cdn/auth/get/${fileId}`
     })
 
 }
