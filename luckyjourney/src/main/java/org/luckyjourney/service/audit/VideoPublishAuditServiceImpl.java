@@ -1,6 +1,7 @@
 package org.luckyjourney.service.audit;
 
 import org.luckyjourney.config.LocalCache;
+import org.luckyjourney.config.QiNiuConfig;
 import org.luckyjourney.constant.AuditStatus;
 import org.luckyjourney.entity.response.AuditResponse;
 import org.luckyjourney.entity.task.VideoTask;
@@ -8,6 +9,7 @@ import org.luckyjourney.entity.video.Video;
 import org.luckyjourney.entity.vo.VideoVO;
 import org.luckyjourney.mapper.video.VideoMapper;
 import org.luckyjourney.service.FeedService;
+import org.luckyjourney.service.FileService;
 import org.luckyjourney.service.QiNiuFileService;
 import org.luckyjourney.service.InterestPushService;
 import org.luckyjourney.service.user.FollowService;
@@ -57,7 +59,8 @@ public class VideoPublishAuditServiceImpl implements AuditService<VideoTask,Vide
     @Autowired
     private FollowService followService;
 
-
+    @Autowired
+    private FileService fileService;
 
     private int maximumPoolSize = 8;
 
@@ -107,8 +110,9 @@ public class VideoPublishAuditServiceImpl implements AuditService<VideoTask,Vide
             AuditResponse descAuditResponse = new AuditResponse(AuditStatus.SUCCESS,"正常");
 
             if (needAuditVideo){
-                  videoAuditResponse = videoAuditService.audit(video.getVideoUrl());
-                  coverAuditResponse = imageAuditService.audit(video.getCoverUrl());
+
+                  videoAuditResponse = videoAuditService.audit(QiNiuConfig.CNAME+"/"+fileService.getById(video.getUrl()).getFileKey());
+                  coverAuditResponse = imageAuditService.audit(QiNiuConfig.CNAME+"/"+fileService.getById(video.getCover()).getFileKey());
                 interestPushService.pushSystemTypeStockIn(video1);
                 interestPushService.pushSystemStockIn(video1);
 

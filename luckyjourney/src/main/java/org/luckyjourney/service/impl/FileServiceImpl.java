@@ -39,8 +39,6 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File> implements Fi
             throw new IllegalArgumentException("参数不正确");
         }
 
-
-
         final File videoFile = new File();
         String type = videoFileInfo.mimeType;
         videoFile.setFileKey(fileKey);

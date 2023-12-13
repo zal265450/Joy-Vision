@@ -28,7 +28,6 @@ import org.luckyjourney.mapper.video.VideoMapper;
 import org.luckyjourney.service.FeedService;
 import org.luckyjourney.service.FileService;
 import org.luckyjourney.service.InterestPushService;
-import org.luckyjourney.service.QiNiuFileService;
 import org.luckyjourney.service.audit.VideoPublishAuditServiceImpl;
 import org.luckyjourney.service.user.FavoritesService;
 import org.luckyjourney.service.user.FollowService;
@@ -133,7 +132,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
         if (videoId != null) {
             // url不能一致
             oldVideo = this.getOne(new LambdaQueryWrapper<Video>().eq(Video::getId, videoId).eq(Video::getUserId, userId));
-            if (!(video.getVideoUrl()).equals(video.getVideoUrl()) || !(video.getCoverUrl().equals(video.getCoverUrl()))) {
+            if (!(video.buildVideoUrl()).equals(oldVideo.buildVideoUrl()) || !(video.buildCoverUrl().equals(oldVideo.buildCoverUrl()))) {
                 throw new BaseException("不能更换视频源,只能修改视频信息");
             }
         }
@@ -169,18 +168,18 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
             }
 
             video.setYv("YV" + UUID.randomUUID().toString().replace("-", "").substring(8));
+            // 填充视频时长
+            final String uuid = UUID.randomUUID().toString();
+            LocalCache.put(uuid, true);
+            try {
+                final String fileKey = fileService.getById(video.getUrl()).getFileKey();
+                final String duration = FileUtil.getVideoDuration(QiNiuConfig.CNAME + "/" + fileKey + "?uuid=" + uuid);
+                video.setDuration(duration);
+            } finally {
+                LocalCache.rem(uuid);
+            }
         }
 
-        // 填充视频时长
-        final String uuid = UUID.randomUUID().toString();
-        LocalCache.put(uuid, true);
-
-        try {
-            final String duration = FileUtil.getVideoDuration(fileService.getFileTrustUrl(video.getUrl()).getFileKey());
-            video.setDuration(duration);
-        } finally {
-            LocalCache.rem(uuid);
-        }
 
         this.saveOrUpdate(video);
 
@@ -188,8 +187,8 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
         videoTask.setOldVideo(video);
         videoTask.setVideo(video);
         videoTask.setIsAdd(isAdd);
-        videoTask.setOldState(isAdd ? video.getOpen() : oldVideo.getOpen());
-        videoTask.setNewState(video.getOpen());
+        videoTask.setOldState(isAdd ? true : video.getOpen());
+        videoTask.setNewState(true);
         videoPublishAuditService.audit(videoTask, false);
     }
 
@@ -475,6 +474,10 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
                 videoIds.addAll((List) videoId);
             }
         }
+        if (ObjectUtils.isEmpty(videoIds)){
+           return Collections.EMPTY_LIST;
+
+        }
         final Collection<Video> videos = listByIds(videoIds);
         // 和浏览记录做交集? 不需要做交集，热门视频和兴趣推送不一样
         setUserVoAndUrl(videos);
@@ -578,7 +581,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
                 userVO.setSex(user.getSex());
                 video.setUser(userVO);
                 final File file = fileMap.get(video.getUrl());
-                video.setVideoType(file.getType());
+                video.setVideoType(file.getFormat());
             }
         }
 

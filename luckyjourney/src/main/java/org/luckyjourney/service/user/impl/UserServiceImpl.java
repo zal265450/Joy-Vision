@@ -321,16 +321,18 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             }
         }
         if (!Objects.equals(user.getAvatar(),oldUser.getAvatar())){
-            final AuditResponse audit = imageAuditService.audit(user.getAvatar());
+            final AuditResponse audit = imageAuditService.audit(fileService.getById(user.getAvatar()).getFileKey());
             if (audit.getAuditStatus() != AuditStatus.SUCCESS) {
                 throw new BaseException(audit.getMsg());
             }
+            oldUser.setAvatar(user.getAvatar());
         }
 
         if (!ObjectUtils.isEmpty(user.getDefaultFavoritesId())){
             // 校验收藏夹
             favoritesService.exist(userId,user.getDefaultFavoritesId());
         }
+
 
 
         oldUser.setSex(user.getSex());

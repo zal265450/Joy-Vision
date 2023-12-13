@@ -17,7 +17,7 @@ public class UpdateUserVO {
     @NotBlank(message = "昵称不可为空")
     private String nickName;
 
-    private String avatar;
+    private Long avatar;
 
     private Boolean sex;
 
