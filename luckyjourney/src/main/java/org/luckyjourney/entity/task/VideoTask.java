@@ -2,6 +2,7 @@ package org.luckyjourney.entity.task;
 
 import lombok.Data;
 import org.luckyjourney.entity.video.Video;
+import org.luckyjourney.entity.vo.VideoVO;
 
 /**
  * @description: 封装发布视频

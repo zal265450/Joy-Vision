@@ -3,9 +3,10 @@ package org.luckyjourney.controller;
 
 import org.luckyjourney.entity.video.Video;
 import org.luckyjourney.entity.vo.BasePage;
+import org.luckyjourney.entity.vo.VideoVO;
 import org.luckyjourney.holder.UserHolder;
 import org.luckyjourney.limit.Limit;
-import org.luckyjourney.service.FileService;
+import org.luckyjourney.service.QiNiuFileService;
 import org.luckyjourney.service.video.VideoService;
 import org.luckyjourney.util.R;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +32,7 @@ public class VideoController {
 
 
     @Autowired
-    private FileService fileService;
+    private QiNiuFileService fileService;
 
     /**
      * 获取文件上传token

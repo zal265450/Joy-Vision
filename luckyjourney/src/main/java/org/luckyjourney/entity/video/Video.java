@@ -1,8 +1,10 @@
 package org.luckyjourney.entity.video;
 
 import com.baomidou.mybatisplus.annotation.TableField;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.luckyjourney.config.QiNiuConfig;
 import org.luckyjourney.entity.BaseEntity;
 import org.luckyjourney.entity.user.User;
 import org.luckyjourney.entity.vo.UserVO;
@@ -36,12 +38,11 @@ public class Video extends BaseEntity {
 
     private String description;
 
-    @NotBlank(message = "url不能为空")
-    private String url;
+    private Long url;
 
     private Long userId;
 
-    private String cover;
+    private Long cover;
     /**
      * 公开/私密，0：公开，1：私密，默认为0
      */
@@ -72,12 +73,11 @@ public class Video extends BaseEntity {
     private String duration;
 
     // 视频分类
+    @TableField(exist = false)
     private String videoType;
 
-    @NotBlank(message = "给个标签吧,不然没人看到你的视频")
     private String labelNames;
 
-    @NotNull(message = "分类不能为空")
     private Long typeId;
 
     // 关联的用户
@@ -116,5 +116,16 @@ public class Video extends BaseEntity {
         if (ObjectUtils.isEmpty(this.labelNames)) return Collections.EMPTY_LIST;
         return Arrays.asList(this.labelNames.split(","));
     }
+
+    // 和get方法分开，避免发生歧义
+    public String buildVideoUrl(){
+        return QiNiuConfig.CNAME + "/" + this.url;
+    }
+
+    public String buildCoverUrl(){
+        return QiNiuConfig.CNAME + "/" + this.cover;
+    }
+
+
 }
 

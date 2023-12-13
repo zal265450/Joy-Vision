@@ -1,21 +1,12 @@
 package org.luckyjourney;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.google.gson.Gson;
-import com.qiniu.common.QiniuException;
-import com.qiniu.http.Response;
-import com.qiniu.storage.Configuration;
-import com.qiniu.storage.Region;
-import com.qiniu.storage.UploadManager;
-import com.qiniu.storage.model.DefaultPutRet;
-import com.qiniu.util.Auth;
 import org.junit.jupiter.api.Test;
 import org.luckyjourney.config.QiNiuConfig;
 import org.luckyjourney.constant.AuditStatus;
 import org.luckyjourney.entity.video.Video;
 import org.luckyjourney.schedul.HotRank;
 import org.luckyjourney.service.FeedService;
-import org.luckyjourney.service.FileService;
+import org.luckyjourney.service.QiNiuFileService;
 import org.luckyjourney.service.InterestPushService;
 import org.luckyjourney.service.audit.VideoAuditService;
 import org.luckyjourney.service.video.VideoService;
@@ -23,12 +14,7 @@ import org.luckyjourney.util.FileUtil;
 import org.luckyjourney.util.RedisCacheUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.web.server.Http2;
-import org.springframework.dao.DataAccessException;
-import org.springframework.data.redis.connection.RedisConnection;
-import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.util.ObjectUtils;
 
 import java.io.File;
 import java.util.*;
@@ -49,7 +35,7 @@ class LuckyJourneyApplicationTests {
     private VideoAuditService videoAuditService;
 
     @Autowired
-    private FileService fileService;
+    private QiNiuFileService fileService;
 
     @Test
     void contextLoads() throws InterruptedException {
@@ -84,10 +70,10 @@ class LuckyJourneyApplicationTests {
         video.setHistoryCount((long)random.nextInt(1000) + 1000);
         video.setShareCount((long)random.nextInt(1000));
         video.setYv("YV"+UUID.randomUUID().toString().replace("-","").substring(8));
-        video.setUrl(key);
+//        video.setUrl(key);
         // 解析封面
         String url = QiNiuConfig.CNAME+"/"+key;
-        video.setCover(url+"?vframe/jpg/offset/1");
+//        video.setCover(url+"?vframe/jpg/offset/1");
         // 解析时长 生成UUID
         video.setDuration(FileUtil.getVideoDuration(url));
         // 解析类型

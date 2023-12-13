@@ -42,7 +42,7 @@ public class QiNiuConfig {
      */
     private String bucketName;
 
-    public static final String CNAME = "http://oss.luckjourney.liuscraft.top";
+    public static final String CNAME = "s4ep712zo.hn-bkt.clouddn.com";
     public static final String VIDEO_URL = "http://ai.qiniuapi.com/v3/video/censor";
     public static final String IMAGE_URL = "http://ai.qiniuapi.com/v3/image/censor";
 
@@ -54,6 +54,12 @@ public class QiNiuConfig {
         return Auth.create(accessKey, secretKey);
     }
 
+
+    public String uploadToken(String type){
+        final Auth auth = buildAuth();
+        return auth.uploadToken(bucketName, null, 300, new
+                StringMap().put("mimeLimit", "video/*;image/*"));
+    }
 
     public String videoUploadToken() {
         final Auth auth = buildAuth();

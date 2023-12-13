@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import org.luckyjourney.entity.video.VideoShare;
 import org.luckyjourney.entity.vo.BasePage;
 import org.luckyjourney.entity.vo.HotVideo;
+import org.luckyjourney.entity.vo.VideoVO;
 import org.luckyjourney.schedul.HotRank;
 
 import java.util.*;
