@@ -12,12 +12,12 @@
                 </v-list>
             </v-img>
             <v-tabs v-model="tab" color="#7bbfea">
-                <v-tab value="aa" :to="`/user/home${isSelf?'':'?lookId='+userInfo.id}`">主页</v-tab>
+                <v-tab value="aa" :to="`/user/home${isSelf ? '' : '?lookId=' + userInfo.id}`">主页</v-tab>
                 <v-tab value="one" to="/user/video" v-if="isSelf">创作中心</v-tab>
                 <v-tab value="two" to="/user/favorites" v-if="isSelf">收藏夹</v-tab>
                 <v-tab value="3" to="/user/history" v-if="isSelf">历史记录</v-tab>
                 <v-tab value="two3" to="/user/classify" v-if="isSelf">订阅分类</v-tab>
-                <v-tab value="4" :to="`/user/like${isSelf?'':'?lookId='+userInfo.id}`">关注/粉丝</v-tab>
+                <v-tab value="4" :to="`/user/like${isSelf ? '' : '?lookId=' + userInfo.id}`">关注/粉丝</v-tab>
                 <v-spacer></v-spacer>
                 <v-btn class="ma-2" variant="text" @click="editDialog = !editDialog" v-if="isSelf">编辑信息</v-btn>
             </v-tabs>
@@ -69,8 +69,8 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import { apiFileGet } from '../../apis/file';
-import { apiChangeUserInfo, apiGetUserInfo, apiUploadAvatar } from '../../apis/user/user';
+import { apiFileGet, apiUploadFile } from '../../apis/file';
+import { apiChangeUserInfo, apiGetUserInfo } from '../../apis/user/user';
 import router from '../../router';
 import { useUserStore } from '../../stores';
 const tab = ref()
@@ -100,12 +100,13 @@ const avatarImg = computed(() => {
     if (userInfo.value == null) {
         return "/logo.png"
     }
-    if (userInfo.value.avatar == null || userInfo.value.avatar.indexOf("null") != -1) return "/logo.png"
+    if (userInfo.value.avatar == null) return "/logo.png"
+    
     return apiFileGet(userInfo.value.avatar)
 })
 const uploadAvatar = () => {
     if (!avatarFileRef.value.files[0]) return;
-    apiUploadAvatar(avatarFileRef.value.files[0], {
+    apiUploadFile(avatarFileRef.value.files[0], {
         next: (e) => {
             uploading.value = e.total.percent
         }, error: () => {
@@ -115,9 +116,17 @@ const uploadAvatar = () => {
                 show: true,
                 color: "error"
             }
-        }, complete: (e) => {
+        }, complete: (_e, fileId) => {
             uploading.value = -1
-            userInfo.value.avatar = e.key
+            if (!fileId.state) {
+                snackbar.value = {
+                    text: fileId.message,
+                    show: true
+                }
+                return;
+            }
+
+            userInfo.value.avatar = fileId.data
             snackbar.value = {
                 text: "上传完成",
                 show: true,
@@ -164,7 +173,7 @@ const saveInfo = () => {
 }
 watch(() => route.query, () => {
     getUserInfo()
-    
+
 }, {
     immediate: true
 })
@@ -172,7 +181,7 @@ onMounted(() => {
     if (!userStore.$state.token) {
         router.push({ path: "/" })
     }
-    
+
     userStore.$patch({
         lookId: route.query.lookId || userStore.info.id
     })

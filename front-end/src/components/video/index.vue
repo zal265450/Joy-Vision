@@ -8,8 +8,8 @@
     </v-navigation-drawer>
     <v-main>
       <v-card rounded="0" width="100%" height="100%">
-        <video ref="video" class="video-js vjs-default-skin" controls :poster="apiFileGet(currentVideo.cover)">
-          <source :src="apiFileGet(currentVideo.url)" :type="currentVideo.videoType || 'video/mp4'" />
+        <video ref="video" class="video-js vjs-default-skin" controls :poster="currentVideo.playCover">
+          <source :src="currentVideo.playUrl" :type="currentVideo.videoType || 'video/mp4'" />
         </video>
         <div style="position: absolute;left: 15px;top: 15px;z-index: 99999;">
           <v-btn size="40" color="bg" icon v-if="!hideClose" @click="closeVideo">
@@ -129,6 +129,7 @@ const currentVideo = computed(() => {
   let temp = currentIndex.value >= 0 ? similarList.value[currentIndex.value] : props.videoInfo
   temp.playUrl = apiFileGet(temp.url)
   temp.playCover = apiFileGet(temp.cover)
+  console.log(temp, "aa")
   return temp
 })
 const openRgihtD = () => {
@@ -182,6 +183,7 @@ onUnmounted(() => {
 })
 
 const firstInitVideo = () => {
+  console.log(currentVideo)
   if (videoPlayer.value || !currentVideo.value) return;
   videoPlayer.value = instance.$video(video.value, {
     playbackRates: [0.5, 1, 1.5, 2],
