@@ -1,6 +1,7 @@
 package org.luckyjourney.entity.video;
 
 import com.baomidou.mybatisplus.annotation.TableField;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.luckyjourney.config.QiNiuConfig;
@@ -117,11 +118,11 @@ public class Video extends BaseEntity {
     }
 
     // 和get方法分开，避免发生歧义
-    public String getVideoUrl(){
+    public String buildVideoUrl(){
         return QiNiuConfig.CNAME + "/" + this.url;
     }
 
-    public String getCoverUrl(){
+    public String buildCoverUrl(){
         return QiNiuConfig.CNAME + "/" + this.cover;
     }
 
