@@ -27,6 +27,24 @@ CREATE TABLE `captcha` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='系统验证码';
 
 -- ----------------------------
+-- Table structure for file
+-- ----------------------------
+DROP TABLE IF EXISTS `file`;
+CREATE TABLE `file` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `file_key` varchar(255) DEFAULT NULL,
+  `format` varchar(20) DEFAULT NULL,
+  `type` varchar(20) DEFAULT NULL,
+  `duration` varchar(20) DEFAULT NULL,
+  `size` bigint(20) DEFAULT NULL,
+  `user_id` bigint(20) DEFAULT NULL,
+  `is_deleted` tinyint(4) DEFAULT NULL,
+  `gmt_created` datetime DEFAULT NULL,
+  `gmt_updated` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=81 DEFAULT CHARSET=utf8mb4;
+
+-- ----------------------------
 -- Table structure for favorites
 -- ----------------------------
 DROP TABLE IF EXISTS `favorites`;
