@@ -62,15 +62,16 @@ public class CaptchaServiceImpl extends ServiceImpl<CaptchaMapper, Captcha> impl
         captcha = this.getOne(new LambdaQueryWrapper<Captcha>().eq(Captcha::getUuid, captcha.getUuid()));
         if (captcha == null) throw new BaseException("uuId为空");
 
-        this.removeById(captcha.getUuid());
-
-        if (!captcha.getCode().equalsIgnoreCase(captcha.getCode()) && captcha.getExpireTime().getTime() >= System.currentTimeMillis()){
+        this.remove(new LambdaQueryWrapper<Captcha>().eq(Captcha::getUuid, captcha.getUuid()));
+        if(!captcha.getCode().equals(code1)){
+            throw new BaseException("code错误");
+        }
+        if(captcha.getExpireTime().getTime()<=System.currentTimeMillis()){
             throw new BaseException("uuid过期");
         }
         if (!code1.equals(captcha.getCode())){
             return false;
         }
-
 
         String code = getSixCode();
         redisCacheUtil.set(RedisConstant.EMAIL_CODE+email,code,RedisConstant.EMAIL_CODE_TIME);
