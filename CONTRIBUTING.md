@@ -1,136 +1,99 @@
-# Contributing to 幸运日
+# 为幸运日做贡献
 
-Welcome to 幸运日 world, here is a list of contributing guide for you. If you find something incorrect or missing
- content on the page, please submit an issue or PR to fix it.
+欢迎来到幸运日，这里是为你准备的贡献指南列表。如果您发现页面上有不正确或缺失的内容，请提交问题或 PR 进行修复。
 
 
-## What can you do 
-Every action to make the project better is encouraged. On GitHub, every improvement for the project could be via a PR 
-(short 
-for pull request).
+## 你能做些什么
+鼓励采取一切行动来使项目变得更好。在 GitHub 上，项目的每一项改进都可以通过 PR（pull request 的缩写）进行。
 
-* If you find a typo, try to fix it!
-* If you find a bug, try to fix it!
-* If you find some redundant codes, try to remove them!
-* If you find some test cases missing, try to add them!
-* If you could enhance a feature, please **DO NOT** hesitate!
-* If you find code implicit, try to add comments to make it clear!
-* If you find code ugly, try to refactor that!
-* If you can help to improve documents, it could not be better!
-* If you find the document incorrect, just do it and fix that!
+
+* 如果您发现错别字，请尝试修复它！
+* 如果您发现错误，请尝试修复它！
+* 如果您发现一些多余的代码，请尝试删除它们！
+* 如果您发现缺少某些测试用例，请尝试添加它们！
+* 如果您可以增强功能，请不要犹豫！
+* 如果您发现代码是隐式的，请尝试添加注释以使其清晰！
+* 如果你觉得代码很丑陋，试着重构它！
+* 如果你能帮助改进文件，那就再好不过了！
+* 如果您发现文档不正确，请执行并修复它！
 * ...
 
-Actually, it is impossible to list them completely. Just remember one principle:
-
-**WE ARE LOOKING FORWARD TO ANY PR FROM YOU.**
 
 
-## Contributing
-### Preparation
+
+## 贡献
+### 设备
 Before you contribute, you need to register a Github ID. Prepare the following environment:
-* JDK 1.6+
+* JDK 1.8
 * git
 
 ### Workflow
-We use the `master` branch as the development branch, which indicates that this is an unstable branch.
+
 
 Here are the workflow for contributors:
 
-1. Fork to your own
-2. Clone fork to the local repository
-3. Create a new branch and work on it
-4. Keep your branch in sync
-5. Commit your changes (make sure your commit message concise)
-6. Push your commits to your forked repository
-7. Create a pull request
+1. Fork 到你的仓库
+2. 将 fork 克隆到本地存储库
+3. 创建一个新分支并对其进行处理
+4. 让您的分支保持同步
+5. 提交更改（确保提交消息简洁）
+6. 将提交推送到分叉存储库
+7. 创建PR
 
-Please follow [the pull request template](./.github/PULL_REQUEST_TEMPLATE.md).
-Please make sure the PR has a corresponding issue.
+请遵循拉取请求模板。请确保 PR 有相应的问题。
+创建 PR 后，将向拉取请求分配一个或多个审阅者。审阅者将审阅代码。
+在合并 PR 之前，请删除任何修复审查反馈、拼写错误、合并和变基的提交。最终的提交信息应该简洁明了
 
-After creating a PR, one or more reviewers will be assigned to the pull request.
-The reviewers will review the code.
 
-Before merging a PR, squash any fix review feedback, typo, merged, and rebased sorts of commits.
-The final commit message should be clear and concise.
 
-### Compile
-In the project root directory, execute the following command to compile
-```bash
-Sh build.sh
-```
+### 提交规则
+#### 提交消息
 
-The compilation result will be stored in the target directory.
+提交消息可以帮助审阅者更好地理解提交 PR 的目的是什么。它还可以帮助加快代码审查过程。我们鼓励贡献者使用 EXPLICIT 提交消息，而不是模棱两可的消息。一般来说，我们提倡以下提交消息类型：
 
-### Code Style
-We suggest that all contributors should install [p3c](https://github.com/alibaba/p3c) plugin to unify code style and 
-analyze code quality.
+* feat: 新功能
+* fix: 修复错误
+* docs: 更改文档
+* style: 不影响代码含义的更改（空格、格式、缺少分号等）
+* refactor:重构：既不修复错误也不添加功能的代码更改
+* perf: 提高性能的代码更改
+* test: 添加缺失的测试或更正现有测试
+* chore: 对构建过程或辅助工具和库（如文档生成）的更改(杂活：7788)
 
-### Commit Rules
-#### Commit Message
+另一方面，我们不鼓励贡献者通过以下方式提交消息：
 
-Commit message could help reviewers better understand what is the purpose of submitted PR. It could help accelerate the code review procedure as well. We encourage contributors to use **EXPLICIT** commit message rather than an ambiguous message. In general, we advocate the following commit message type:
+* ~~fix bug 修复bug~~
+* ~~update 更新~~
+* ~~add doc 添加文档~~
 
-* feat: A new feature
-* fix: A bug fix
-* docs: Documentation only changes
-* style: Changes that do not affect the meaning of the code (white-space, formatting, missing semi-colons, etc)
-* refactor: A code change that neither fixes a bug nor adds a feature
-* perf: A code change that improves performance
-* test: Adding missing or correcting existing tests
-* chore: Changes to the build process or auxiliary tools and libraries such as documentation generation
 
-On the other side, we discourage contributors from committing message like the following ways:
 
-* ~~fix bug~~
-* ~~update~~
-* ~~add doc~~
 
-If you get lost, please see [How to Write a Git Commit Message](http://chris.beams.io/posts/git-commit/) for a start.
+#### 提交内容
 
-#### Commit Content
+提交内容表示一次提交中包含的所有内容更改。我们最好将内容包含在一个提交中，这样可以支持审阅者的完整审查，而无需任何其他提交的帮助。换句话说，单个提交中的内容可以通过 CI 以避免代码混乱。简而言之，我们需要牢记两条小规则：
 
-Commit content represents all content changes included in one commit. We had better include things in one single commit which could support reviewer's complete review without any other commits' help. In another word, contents in one single commit can pass the CI to avoid code mess. In brief, there are two minor rules for us to keep in mind:
+* 避免在提交中发生非常大的更改;
+* 每次提交都完整且可查看。
 
-* avoid very large change in a commit;
-* complete and reviewable for each commit.
-
-No matter commit message or commit content, we do take more emphasis on code review.
+无论是提交消息还是提交内容，我们确实更重视代码审查。
 
 
 ### Pull Request
 
-Note that a single PR should not be too large. If heavy changes are required, it's better to separate the changes
-to a few individual PRs.
-
+请注意，单个 PR 不应太大。如果需要进行大量更改，最好将更改分隔到几个单独的 PR 中。
 
 ### Code Review
-All code should be well reviewed by one or more committers. Some principles:
+所有代码都应由一个或多个提交者进行仔细审查。一些原则：
 
-- Readability: Important code should be well-documented. Comply with our code style.
-- Elegance: New functions, classes or components should be well designed.
-- Testability: Important code should be well-tested (high unit test coverage).
-
-## Community
-### Contact Us 
-#### Mailing list
-If you have any questions or advice, please contact chaosblade.io.01@gmail.com.
-
-#### DingDing
-You can also search the ID: `23177705` in dingding(钉钉) app to join the ChaosBlade group.
-
-
-## Others
-### Code of Conduct
-*"In the interest of fostering an open and welcoming environment, we as contributors and maintainers pledge to making 
-participation in our project and our community a harassment-free experience for everyone, regardless of age, body 
-size, disability, ethnicity, sex characteristics, gender identity and expression, level of experience, education, 
-socio-economic status, nationality, personal appearance, race, religion, or sexual identity and orientation..."*
+- 可读性：重要的代码应该有很好的文档记录。遵守我们的代码风格。
+- 优雅：新的函数、类或组件应该设计得很好。
+- 可测试性：重要代码应经过充分测试（高单元测试覆盖率）。
 
 
 
-### Sign your work
-The sign-off is a simple line at the end of the explanation for the patch, which certifies that you wrote it or otherwise have the right to pass it on as an open-source patch.
-The rules are pretty simple: if you can certify the below (from [developercertificate.org](http://developercertificate.org/)):
+### 为您的作品签名
+签字是补丁解释末尾的一行简单，证明您编写了它或有权将其作为开源补丁传递。规则非常简单：如果您能证明以下内容 (from [developercertificate.org](http://developercertificate.org/)):
 
 ```
 Developer Certificate of Origin
@@ -170,12 +133,12 @@ By making a contribution to this project, I certify that:
     this project or the open source license(s) involved.
 ```
 
-Then you just add a line to every git commit message:
+然后，您只需在每条git commit消息中添加一行：
 
 ```
 Signed-off-by: Joe Smith <joe.smith@email.com>
 ```
 
-Use your real name (sorry, no pseudonyms or anonymous contributions.)
+使用您的真实姓名（对不起，没有化名或匿名贡献。
 
-If you set your `user.name` and `user.email` git configs, you can sign your commit automatically with `git commit -s`.
+如果设置了 和 user.name user.email git 配置，则可以使用 git commit -s 自动对提交进行签名。
