@@ -520,3 +520,8 @@ VideoPublishAuditServiceImpl: 发布视频审核设计
 ### 分享
 
 分享未做短链接,实际应该做短链接处理,存储视频信息,用户信息等
+
+
+# Contributing
+
+We welcome every contribution, even if it is just a punctuation. See details of [CONTRIBUTING](https://gitee.com/XhyQAQ/lucky-journey/blob/master/CONTRIBUTING.md)
