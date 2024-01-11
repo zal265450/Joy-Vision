@@ -1,6 +1,6 @@
-# Contributing to chaosblade-exec-jvm
+# Contributing to 幸运日
 
-Welcome to ChaosBlade world, here is a list of contributing guide for you. If you find something incorrect or missing
+Welcome to 幸运日 world, here is a list of contributing guide for you. If you find something incorrect or missing
  content on the page, please submit an issue or PR to fix it.
 
 
@@ -98,15 +98,6 @@ No matter commit message or commit content, we do take more emphasis on code rev
 
 
 ### Pull Request
-We use [GitHub Issues](https://github.com/chaosblade-io/chaosblade-exec-jvm/issues) and [Pull Requests](https://github.com/chaosblade-io/chaosblade-exec-jvm/pulls) for trackers.
-
-If you find a typo in the document, find a bug in code, or want new features, or want to give suggestions,
-you can [open an issue on GitHub](https://github.com/chaosblade-io/chaosblade-exec-jvm/issues/new) to report it.
-Please follow the guideline message in the issue template.
-
-If you want to contribute, please follow the [contribution workflow](#Workflow) and create a new pull request.
-If your PR contains large changes, e.g. component refactor or new components, please write detailed documents
-about its design and usage.
 
 Note that a single PR should not be too large. If heavy changes are required, it's better to separate the changes
 to a few individual PRs.
@@ -135,7 +126,7 @@ participation in our project and our community a harassment-free experience for 
 size, disability, ethnicity, sex characteristics, gender identity and expression, level of experience, education, 
 socio-economic status, nationality, personal appearance, race, religion, or sexual identity and orientation..."*
 
-See details of [CONTRIBUTOR COVENANT CODE OF CONDUCT](https://github.com/chaosblade-io/chaosblade-exec-jvm/blob/master/CODE_OF_CONDUCT.md)
+
 
 ### Sign your work
 The sign-off is a simple line at the end of the explanation for the patch, which certifies that you wrote it or otherwise have the right to pass it on as an open-source patch.
