@@ -46,17 +46,23 @@ public class ImageAuditService extends AbstractAuditService<String,AuditResponse
         if (!isNeedAudit()) {
             return auditResponse;
         }
+        String body=null;
+        if(!url.contains(QiNiuConfig.CNAME)) {
+            String fileName = url;
+            String encodedFileName = URLEncoder.encode(fileName, "utf-8").replace("+", "%20");
+            String domainOfBucket = QiNiuConfig.CNAME;
+            String publicUrl = String.format("%s/%s", domainOfBucket, encodedFileName);
+            Auth auth = Auth.create(qiNiuConfig.getAccessKey(), qiNiuConfig.getSecretKey());
+            long expireInSeconds = 3600;//1小时，可以自定义链接过期时间
+            String finalUrl = auth.privateDownloadUrl(publicUrl, expireInSeconds);
+            System.out.println(finalUrl);
+            finalUrl = appendUUID(finalUrl);//竟然是拿来回源鉴权的
+            body = imageBody.replace("${url}", finalUrl);
+        } else {
+            url = appendUUID(url);
+            body = imageBody.replace("${url}", url);
+        }
 
-        String fileName = url;
-        String encodedFileName = URLEncoder.encode(fileName, "utf-8").replace("+", "%20");
-        String domainOfBucket = QiNiuConfig.CNAME;
-        String publicUrl = String.format("%s/%s", domainOfBucket, encodedFileName);
-        Auth auth = Auth.create(qiNiuConfig.getAccessKey(), qiNiuConfig.getSecretKey());
-        long expireInSeconds = 3600;//1小时，可以自定义链接过期时间
-        String finalUrl = auth.privateDownloadUrl(publicUrl, expireInSeconds);
-        System.out.println(finalUrl);
-
-        String body = imageBody.replace("${url}", finalUrl);
         String method = "POST";
         // 获取token
         final String token = qiNiuConfig.getToken(imageUlr, method, body, contentType);
