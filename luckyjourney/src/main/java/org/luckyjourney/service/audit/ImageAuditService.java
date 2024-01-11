@@ -47,9 +47,16 @@ public class ImageAuditService extends AbstractAuditService<String,AuditResponse
             return auditResponse;
         }
 
-        url = appendUUID(url);
+        String fileName = url;
+        String encodedFileName = URLEncoder.encode(fileName, "utf-8").replace("+", "%20");
+        String domainOfBucket = QiNiuConfig.CNAME;
+        String publicUrl = String.format("%s/%s", domainOfBucket, encodedFileName);
+        Auth auth = Auth.create(qiNiuConfig.getAccessKey(), qiNiuConfig.getSecretKey());
+        long expireInSeconds = 3600;//1小时，可以自定义链接过期时间
+        String finalUrl = auth.privateDownloadUrl(publicUrl, expireInSeconds);
+        System.out.println(finalUrl);
 
-        String body = imageBody.replace("${url}", url);
+        String body = imageBody.replace("${url}", finalUrl);
         String method = "POST";
         // 获取token
         final String token = qiNiuConfig.getToken(imageUlr, method, body, contentType);
