@@ -23,14 +23,11 @@
 
 ## 贡献
 ### 设备
-Before you contribute, you need to register a Github ID. Prepare the following environment:
+在贡献之前，您需要注册一个 Github ID。 准备以下环境：
 * JDK 1.8
 * git
 
 ### Workflow
-
-
-Here are the workflow for contributors:
 
 1. Fork 到你的仓库
 2. 将 fork 克隆到本地存储库
