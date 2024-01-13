@@ -46,7 +46,10 @@ public class ImageAuditService extends AbstractAuditService<String,AuditResponse
         if (!isNeedAudit()) {
             return auditResponse;
         }
-
+        if(!url.contains(QiNiuConfig.CNAME)) {
+            String encodedFileName = URLEncoder.encode(url, "utf-8").replace("+", "%20");
+            url = String.format("%s/%s", QiNiuConfig.CNAME, encodedFileName);
+        }
         url = appendUUID(url);
 
         String body = imageBody.replace("${url}", url);
