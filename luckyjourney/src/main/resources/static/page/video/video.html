@@ -151,6 +151,9 @@
                     $.ajax({
                         url: ipURL + '/admin/video/audit',
                         method: 'post',
+                        // 指定内容类型为JSON
+                        data: JSON.stringify(data),
+                        contentType: 'application/json',  
                         beforeSend: function (request) {
                             request.setRequestHeader("token", localStorage.token);
                         },
