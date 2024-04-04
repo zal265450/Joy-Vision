@@ -296,7 +296,7 @@ CREATE TABLE `user` (
 -- ----------------------------
 -- Records of user
 -- ----------------------------
-INSERT INTO `user` VALUES ('1', 'xhy@qq.com', 'xhy', '55555', '也太六反族组速技却支点只青万路。王政林品级标生业器生达体片。论少间七产据存组红厂都次易代中什。张非国按九提第级候建工高技但具手细。', '0', 'Fv8aJm4mQv-PxoF_mgdredPGBevn', '4', null, null, '2023-11-07 17:16:51');
+INSERT INTO `user` VALUES ('1', 'admin@xhyovo.cn', 'admin', '123456', '没啥描述', '0', '', '4', null, null, '2023-11-07 17:16:51');
 
 
 -- ----------------------------
