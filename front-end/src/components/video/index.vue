@@ -1,7 +1,7 @@
 <template>
   <v-layout v-if="currentVideo" full-height>
     <v-navigation-drawer app permanent v-model="drawer" location="right" :width="350" style="background-color: #252632;">
-      <v-card color="background" class="pa-4" id="videoPlayList">
+      <v-card elevation="0" color="background" class="pa-4" id="videoPlayList">
         <VideoCard :overlay="currentIndex == index" class="mb-4" :video-info="videoItem"
           v-for="(videoItem, index) in similarList" :key="index" @click="currentIndex = index" />
       </v-card>
