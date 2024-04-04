@@ -3,7 +3,7 @@
     <VideoListVue :video-list="videoList" :showHot="currentClassify == 0" />
     <v-dialog :model-value="dialog" fullscreen transition="dialog-bottom-transition">
       <v-card v-if="dialog">
-        <Video :video-info="searchVideoInfo" :close-video="() => searchVideoInfo = null" />
+        <Video :video-info="searchVideoInfo" :close-video="closeVideo" />
       </v-card>
     </v-dialog>
   </v-container>
@@ -15,6 +15,7 @@ import { apiGetClassifyByUser } from '../../apis/classify';
 import { apiGetVideoById, apiSearchVideo, apiVideoByClassfiy } from '../../apis/video';
 import Video from '../../components/video/index.vue';
 import VideoListVue from '../../components/video/list.vue';
+import router from "../../router/index.js";
 const userClassifys = ref([])
 const isLoading = ref(true)
 const videoList = ref([])
@@ -34,6 +35,11 @@ const getCurrentClassifyVideo = () => {
     videoList.value = videoList.value.concat(data.data)
     isLoading.value = false
   })
+}
+function closeVideo() {
+  // clear query
+  router.back()
+  searchVideoInfo.value = null
 }
 const getSearchVideo = () => {
   apiSearchVideo(route.params.key, pageInfo.value.page, pageInfo.value.limit).then(({ data }) => {
