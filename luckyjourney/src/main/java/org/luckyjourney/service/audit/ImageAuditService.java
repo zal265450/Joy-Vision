@@ -5,12 +5,15 @@ import com.qiniu.http.Response;
 import com.qiniu.storage.Configuration;
 import com.qiniu.storage.Region;
 import com.qiniu.util.StringMap;
+import org.luckyjourney.config.QiNiuConfig;
 import org.luckyjourney.constant.AuditStatus;
 import org.luckyjourney.entity.Setting;
 import org.luckyjourney.entity.json.*;
 import org.luckyjourney.entity.response.AuditResponse;
 import org.springframework.stereotype.Service;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -42,27 +45,26 @@ public class ImageAuditService extends AbstractAuditService<String,AuditResponse
     public AuditResponse audit(String url) {
         AuditResponse auditResponse = new AuditResponse();
         auditResponse.setAuditStatus(AuditStatus.SUCCESS);
-
         if (!isNeedAudit()) {
             return auditResponse;
         }
-        if(!url.contains(QiNiuConfig.CNAME)) {
-            String encodedFileName = URLEncoder.encode(url, "utf-8").replace("+", "%20");
-            url = String.format("%s/%s", QiNiuConfig.CNAME, encodedFileName);
-        }
-        url = appendUUID(url);
-
-        String body = imageBody.replace("${url}", url);
-        String method = "POST";
-        // 获取token
-        final String token = qiNiuConfig.getToken(imageUlr, method, body, contentType);
-        StringMap header = new StringMap();
-        header.put("Host", "ai.qiniuapi.com");
-        header.put("Authorization", token);
-        header.put("Content-Type", contentType);
-        Configuration cfg = new Configuration(Region.region2());
-        final Client client = new Client(cfg);
         try {
+            if(!url.contains(QiNiuConfig.CNAME)) {
+                String encodedFileName = URLEncoder.encode(url, "utf-8").replace("+", "%20");
+                url = String.format("%s/%s", QiNiuConfig.CNAME, encodedFileName);
+            }
+            url = appendUUID(url);
+
+            String body = imageBody.replace("${url}", url);
+            String method = "POST";
+            // 获取token
+            final String token = qiNiuConfig.getToken(imageUlr, method, body, contentType);
+            StringMap header = new StringMap();
+            header.put("Host", "ai.qiniuapi.com");
+            header.put("Authorization", token);
+            header.put("Content-Type", contentType);
+            Configuration cfg = new Configuration(Region.region2());
+            final Client client = new Client(cfg);
             Response response = client.post(imageUlr, body.getBytes(), header, contentType);
 
             final Map map = objectMapper.readValue(response.getInfo().split(" \n")[2], Map.class);
