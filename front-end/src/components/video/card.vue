@@ -44,26 +44,20 @@
                 </v-card-subtitle>
 
                 <v-card-actions class="pb-0 pt-0">
-                    <v-btn color="orange-lighten-2" variant="text">
+                  <v-chip variant="plain" :density="'compact'" @click="copyUrl()">YV: {{ props.videoInfo.yv }}</v-chip>
+                    <v-chip color="orange-lighten-2" variant="text">
                         描述
-                    </v-btn>
+                    </v-chip>
 
                     <v-spacer></v-spacer>
-
-                    <v-btn :icon="showDescription ? 'mdi-chevron-up' : 'mdi-chevron-down'"
-                        @click="showDescription = !showDescription"></v-btn>
                 </v-card-actions>
 
                 <v-expand-transition>
                     <div v-show="showDescription">
                         <v-divider></v-divider>
-
                         <v-card-text>
                             {{ props.videoInfo.description || "作者很懒，没有给一点描述" }}
                         </v-card-text>
-                        <v-card-actions>
-                            <v-chip :density="'compact'" @click="copyUrl()">YV: {{ props.videoInfo.yv }}</v-chip>
-                        </v-card-actions>
                     </div>
                 </v-expand-transition>
             </v-card>
