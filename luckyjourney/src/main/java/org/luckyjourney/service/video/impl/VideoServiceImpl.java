@@ -176,7 +176,9 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
             final String uuid = UUID.randomUUID().toString();
             LocalCache.put(uuid, true);
             try {
-                final String fileKey = fileService.getById(oldVideo.getUrl()).getFileKey();
+                Long url = video.getUrl();
+                if (url == null || url == 0) url = oldVideo.getUrl();
+                final String fileKey = fileService.getById(url).getFileKey();
                 final String duration = FileUtil.getVideoDuration(QiNiuConfig.CNAME + "/" + fileKey + "?uuid=" + uuid);
                 video.setDuration(duration);
             } finally {
