@@ -1,7 +1,7 @@
 package org.luckyjourney.util;
 
-import ws.schild.jave.MultimediaInfo;
 import ws.schild.jave.MultimediaObject;
+import ws.schild.jave.info.MultimediaInfo;
 
 import java.net.URL;
 

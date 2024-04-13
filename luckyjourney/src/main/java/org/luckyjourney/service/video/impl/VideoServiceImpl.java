@@ -44,6 +44,7 @@ import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
+import org.springframework.util.StringUtils;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -168,18 +169,22 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
             }
 
             video.setYv("YV" + UUID.randomUUID().toString().replace("-", "").substring(8));
-            // 填充视频时长
+        }
+
+        // 填充视频时长 (若上次发布视频不存在Duration则会尝试获取)
+        if (isAdd || !StringUtils.hasLength(oldVideo.getDuration())) {
             final String uuid = UUID.randomUUID().toString();
             LocalCache.put(uuid, true);
             try {
-                final String fileKey = fileService.getById(video.getUrl()).getFileKey();
+                Long url = video.getUrl();
+                if (url == null || url == 0) url = oldVideo.getUrl();
+                final String fileKey = fileService.getById(url).getFileKey();
                 final String duration = FileUtil.getVideoDuration(QiNiuConfig.CNAME + "/" + fileKey + "?uuid=" + uuid);
                 video.setDuration(duration);
             } finally {
                 LocalCache.rem(uuid);
             }
         }
-
 
         this.saveOrUpdate(video);
 
