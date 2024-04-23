@@ -33,7 +33,7 @@
             </div>
         </fieldset>
 
-        
+
         <table class="layui-hide" id="currentTableId" lay-filter="currentTableFilter"></table>
 
 
@@ -41,10 +41,13 @@
     </div>
 </div>
 <script type="text/html" id="sexTpl">
-    <!-- 这里的 checked 的状态只是演示 -->
-
-    <span class="">${d.sex} == true ? '男' : '女'</span>
+    {{# if(d.sex) { }}
+    男
+    {{# } else { }}
+    女
+    {{# } }}
 </script>
+
 
 <script src="../lib/layui-v2.7.3/layui/layui.js" charset="utf-8"></script>
 <script src="../js/vue.js"></script>
@@ -70,24 +73,24 @@
             table = layui.table;
         table.render({
             elem: '#currentTableId',
-            // url: '../api/table.json',	
-			url:ipURL+"/admin/user/list",
+            // url: '../api/table.json',
+            url:ipURL+"/admin/user/list",
             headers:{token:localStorage.token},
-			parseData: function(res){ //res 即为原始返回的数据
-			    return {
-			      "code": res.code, //解析接口状态
-			      "msg": res.message, //解析提示文本
-			      "count": res.count, //解析数据长度
-			      "data": res.data,//解析数据列表
-				  
-			    };	
-				
-			},
-			
-			response: {
-			            statusCode: 0//规定成功的状态码，默认：0
-			        },
-			text:{none: '无数据'},
+            parseData: function(res){ //res 即为原始返回的数据
+                return {
+                    "code": res.code, //解析接口状态
+                    "msg": res.message, //解析提示文本
+                    "count": res.count, //解析数据长度
+                    "data": res.data,//解析数据列表
+
+                };
+
+            },
+
+            response: {
+                statusCode: 0//规定成功的状态码，默认：0
+            },
+            text:{none: '无数据'},
             toolbar: '#toolbarDemo',
             defaultToolbar: ['filter', 'exports', 'print', {
                 title: '提示',
@@ -98,7 +101,7 @@
                 {type: "checkbox", width: 50},
                 {field: 'id', width: 80, title: 'ID', sort: true,hide:true},
                 {field: 'nickName', width: 150, title: '昵称'},
-                {field: 'sex', width: 80, title: '性别',template:"sexTpl"},
+                {field: 'sex', width: 80, title: '性别',templet:"#sexTpl"},
                 {field: 'email', width: 150, title: '邮箱'},
                 {title: '操作', minWidth: 150, toolbar: '#currentTableBar', align: "center"}
             ]],
@@ -111,16 +114,16 @@
 
 
 
-        
+
 
         // 监听搜索操作
         form.on('submit(data-search-btn)', function (data) {
-			
-			var userName = $('input[name="userName"]').val()
-			var email = $('input[name="email"]').val()
+
+            var userName = $('input[name="userName"]').val()
+            var email = $('input[name="email"]').val()
             //执行搜索重载
             table.reload('currentTableId', {
-				
+
                 page: {
                     curr: 1
                 }
@@ -136,7 +139,7 @@
 
 
 
-  
+
 
 
     });
