@@ -52,7 +52,7 @@ Jdk1.8 + SpringBoot + MyBatis + MySql + Redis + 七牛云存储 + 七牛云审�
 
 2.vite.config.js 更改proxy服务为后端的正确ip:port/luckyjourney
 
-3.执行 `yarn` 下载依赖 
+3.执行 `npm install` 下载依赖 (yarn：该命令下载依赖会导致vuetify有问题)
 
 4.执行 `yarn dev` 运行dev项目
 
@@ -64,7 +64,7 @@ Jdk1.8 + SpringBoot + MyBatis + MySql + Redis + 七牛云存储 + 七牛云审�
 
 1.进入front-end文件夹
 
-3.执行 `yarn` 下载依赖 
+3.执行 `npm install` 下载依赖 (yarn：该命令下载依赖会导致vuetify有问题)
 
 4.执行 `yarn build` 构建项目
 
