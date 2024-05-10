@@ -7,7 +7,7 @@
             <v-card v-if="!currentVideo.id" v-bind="props" class="mb-2 mx-auto" height="150px" width="150px" :rounded="10"
                 @click="avatarFileRef.click()">
                 视频封面:
-                <v-img :rounded="10" :src="coverImg" />
+                <v-img :key="currentVideo.cover" :rounded="10" :src="coverImg" />
                 <v-overlay :model-value="isHovering == true || uploading > -1" contained scrim="black"
                     class="align-center justify-center">
                     <v-icon v-if="uploading == -1">mdi-upload</v-icon>
@@ -107,6 +107,8 @@ const uploadAvatar = () => {
                 show: true,
                 color: "success"
             }
+            // 清除文件输入框的内容
+            avatarFileRef.value.value = null;
         }
     })
 }
