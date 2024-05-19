@@ -229,7 +229,10 @@
                                         success: function (res) {
                                             layer.msg(res.message);
                                             layer.close(index);
-                                            treeData();
+                                            // treeData();
+                                            table.reload('currentTableId', {
+                                                data: res.data,
+                                            });
 
                                         },
                                         error: function (data) {
